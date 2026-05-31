@@ -20,8 +20,8 @@ def _make_layer_stub() -> MagicMock:
 
     # get_stats
     stats = MagicMock()
-    stats.duckdb = {"raw_messages": 10, "raw_notes": 5}
-    stats.total_duckdb_rows = 15
+    stats.sqlite = {"raw_messages": 10, "raw_notes": 5}
+    stats.total_sqlite_rows = 15
     stats.kuzu_nodes = {"Person": 3}
     stats.total_kuzu_nodes = 3
     stats.chromadb = {"personal": 8}
@@ -85,7 +85,7 @@ class TestCmdHealth:
         assert len(output["checks"]) == 7
 
         components = [c["component"] for c in output["checks"]]
-        assert "duckdb" in components
+        assert "sqlite" in components
         assert "kuzu" in components
         assert "chromadb" in components
         assert "pipeline" in components
@@ -93,8 +93,8 @@ class TestCmdHealth:
         assert "connectors" in components
         assert "tool_registry" in components
 
-    def test_duckdb_failure_degrades(self, capsys):
-        """DuckDB failure marks overall ok=False."""
+    def test_sqlite_failure_degrades(self, capsys):
+        """SQLite failure marks overall ok=False."""
         layer = MagicMock()
         layer.get_stats.side_effect = RuntimeError("DB locked")
         layer.get_pipeline_status.return_value = {
@@ -107,12 +107,12 @@ class TestCmdHealth:
 
         output = json.loads(capsys.readouterr().out)
         assert output["ok"] is False
-        duckdb_check = next(
+        sqlite_check = next(
             c for c in output["checks"]
-            if c["component"] == "duckdb"
+            if c["component"] == "sqlite"
         )
-        assert duckdb_check["ok"] is False
-        assert "DB locked" in duckdb_check["error"]
+        assert sqlite_check["ok"] is False
+        assert "DB locked" in sqlite_check["error"]
 
     @patch("src.models.ollama_manager.OllamaManager")
     @patch("src.extensions.connectors.registry.ExtensionRegistry")
