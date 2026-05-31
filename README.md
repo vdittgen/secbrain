@@ -172,4 +172,4 @@ Apache-2.0 — see [LICENSE](LICENSE) for details.
 
 ---
 
-Built by **Newton Data Intelligence**
+Built by **Vinicius Dittgen**
