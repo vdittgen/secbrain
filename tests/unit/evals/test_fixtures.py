@@ -43,20 +43,24 @@ def test_fixture_list_filters_by_match() -> None:
     engine = FakeQueryEngine([
         {
             "match": "renovation",
-            "structured_data": [{"table": "raw_messages", "rows": [1]}],
+            "structured_data": [
+                {"table": "raw_messages", "rows": [{"id": 1}]},
+            ],
         },
         {
             "match": "schedule",
-            "structured_data": [{"table": "raw_calendar_events", "rows": [2]}],
+            "structured_data": [
+                {"table": "raw_calendar_events", "rows": [{"id": 2}]},
+            ],
         },
     ])
     ctx_a = engine.query("Tell me about the renovation timeline")
     ctx_b = engine.query("What's on my schedule today?")
     ctx_c = engine.query("Cookbook recipes")
     assert len(ctx_a.structured_data) == 1
-    assert ctx_a.structured_data[0]["table"] == "raw_messages"
+    assert ctx_a.structured_data[0]["source_table"] == "raw_messages"
     assert len(ctx_b.structured_data) == 1
-    assert ctx_b.structured_data[0]["table"] == "raw_calendar_events"
+    assert ctx_b.structured_data[0]["source_table"] == "raw_calendar_events"
     assert ctx_c.structured_data == []
 
 

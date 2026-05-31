@@ -220,19 +220,20 @@ def test_route_chosen_by_egress_firewall(monkeypatch) -> None:
         return fake_agent
 
     monkeypatch.setattr(brain, "_get_pa_agent", fake_get)
-    # Plain Tier 1 prompt under remote-default → remote.
+    # SecBrain is local-only: every tier resolves to the local route
+    # regardless of the (legacy) remote-default policy field.
     brain.ask("Summarize today's weather", max_sensitivity_tier=1)
-    assert captured["route"] == "remote"
+    assert captured["route"] == "local"
 
-    # Tier 3 prompt under remote-default → still remote (redacted).
+    # A sensitive prompt also stays local — nothing leaves the device.
     captured.clear()
     brain.ask(
         "I have depression and need to talk.",
         max_sensitivity_tier=2,
     )
-    assert captured["route"] == "remote"
+    assert captured["route"] == "local"
 
-    # Tier 3 under local-only → local.
+    # Explicit local-only opt-in → local (unchanged).
     captured.clear()
     reset_egress_firewall_for_tests(
         policy=EgressPolicy(
