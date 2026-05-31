@@ -25,7 +25,11 @@ from src.core.chromadb.engine import VectorEngine
 from src.core.data_layer import DataLayer
 from src.core.kuzu.engine import GraphEngine
 from src.core.kuzu.schema import create_schema
-from src.core.query_engine import QueryEngine
+from src.core.query_engine import (
+    DuckDBQuerySpec,
+    QueryEngine,
+    RetrievalPlan,
+)
 from src.core.sqlite.engine import DatabaseEngine
 from src.core.sqlite.schemas import create_all_tables
 
@@ -50,6 +54,42 @@ def _make_mock_llm_provider(plan_json: dict | None = None) -> MagicMock:
         }
     provider.chat_json.return_value = plan_json
     return provider
+
+
+def _install_plan(engine: QueryEngine, plan_json: dict | None = None) -> None:
+    """Pin the engine's LLM router to a fixed plan (no network call).
+
+    The router now delegates to a pydantic-ai ``QueryRouterAgent`` rather
+    than calling ``LLMProvider.chat_json``, so the mock provider alone no
+    longer steers routing — inject the resolved plan directly.
+    """
+    if plan_json is None:
+        plan_json = {
+            "duckdb_queries": [],
+            "chromadb_collections": [
+                "personal", "work", "health", "social", "ideas",
+            ],
+            "use_graph": True,
+            "reasoning": "mock: search all collections",
+        }
+    plan = RetrievalPlan(
+        duckdb_queries=[
+            DuckDBQuerySpec(
+                table=q["table"],
+                columns=q["columns"],
+                where=q.get("where"),
+                order_by=q.get("order_by"),
+                limit=q.get("limit", 10),
+            )
+            for q in plan_json.get("duckdb_queries", [])
+        ],
+        chromadb_collections=list(plan_json.get("chromadb_collections", [])),
+        use_graph=bool(plan_json.get("use_graph", False)),
+        reasoning=plan_json.get("reasoning", ""),
+    )
+    engine._llm_router.plan = (  # type: ignore[method-assign]
+        lambda question, reference_date=None: plan
+    )
 
 
 # ============================================================================
@@ -84,11 +124,12 @@ def engines(tmp_path_factory: pytest.TempPathFactory):
 def query_engine(engines):
     """QueryEngine wired to real engines with fixture data."""
     duck, kuzu, chroma = engines
-    provider = _make_mock_llm_provider()
-    return QueryEngine(
+    engine = QueryEngine(
         duckdb=duck, kuzu=kuzu, chromadb=chroma,
-        llm_provider=provider,
+        llm_provider=_make_mock_llm_provider(),
     )
+    _install_plan(engine)
+    return engine
 
 
 @pytest.fixture(scope="module")

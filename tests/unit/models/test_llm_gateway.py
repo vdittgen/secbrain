@@ -84,7 +84,10 @@ def _capture_provider() -> tuple[MagicMock, list[str]]:
     return MagicMock(), captured
 
 
-def test_safe_prompt_routes_remote_under_remote_default() -> None:
+def test_safe_prompt_routes_local() -> None:
+    """SecBrain is local-only: even under the legacy remote-default
+    policy field, a safe prompt resolves to the local route.
+    """
     _, captured = _capture_provider()
     try:
         resp = chat_via_firewalls(
@@ -94,16 +97,23 @@ def test_safe_prompt_routes_remote_under_remote_default() -> None:
             agent_max_tier=1,
         )
         assert resp.content == "ok"
-        assert captured == ["remote"]
+        assert captured == ["local"]
     finally:
         set_provider_factory_for_tests(None)
 
 
-def test_tier3_prompt_routes_remote_with_redaction() -> None:
-    """Tier 3 under remote-default still goes remote — but redacted."""
-    sent: list[list[dict[str, str]]] = []
+def test_tier3_prompt_stays_local_without_redaction() -> None:
+    """A Tier 3 prompt routes to the local model and is sent verbatim.
 
-    def factory(_route: str):
+    The placeholder redactor is a pass-through extension point in the
+    OSS build (see docs/PRIVACY.md), so no ``__PERSON_n__`` tokens are
+    substituted before the (local) model sees the prompt.
+    """
+    sent: list[list[dict[str, str]]] = []
+    routes: list[str] = []
+
+    def factory(route: str):
+        routes.append(route)
         provider = MagicMock()
 
         def chat(messages, model=None):  # noqa: ARG001
@@ -128,19 +138,26 @@ def test_tier3_prompt_routes_remote_with_redaction() -> None:
             agent_max_tier=1,
         )
         assert resp.content == "placeholder reply"
+        assert routes == ["local"]
         assert sent, "provider never invoked"
         outbound_text = sent[0][0]["content"]
-        assert "Bob Smith" not in outbound_text
-        assert "bob@x.com" not in outbound_text
-        assert "__PERSON_1__" in outbound_text
-        assert "__EMAIL_1__" in outbound_text
+        # Pass-through: the original entities reach the local model
+        # unredacted — nothing leaves the device, so nothing is scrubbed.
+        assert "Bob Smith" in outbound_text
+        assert "bob@x.com" in outbound_text
+        assert "__PERSON_1__" not in outbound_text
+        assert "__EMAIL_1__" not in outbound_text
     finally:
         set_provider_factory_for_tests(None)
 
 
-def test_redaction_detail_persisted_for_audit_drilldown() -> None:
-    """After a redacted call, the per-call detail blob is reachable
-    via the same payload_hash that both audit rows carry.
+def test_call_detail_persisted_for_audit_drilldown() -> None:
+    """Every call's prompt detail is reachable via the same
+    payload_hash the egress_decision audit row carries.
+
+    SecBrain never redacts (local-only pass-through), but the
+    drilldown must still line up: the stored blob equals the original
+    and the egress_decision row shares its hash.
     """
     import json
 
@@ -168,20 +185,18 @@ def test_redaction_detail_persisted_for_audit_drilldown() -> None:
     assert detail["agent_id"] == "brain.test"
     assert detail["lane"] == "interactive"
     assert detail["original_messages"][0]["content"] == user_text
-    redacted = detail["redacted_messages"][0]["content"]
-    assert "Alice Carter" not in redacted
-    assert any(k.startswith("__") for k in detail["placeholder_map"])
+    # Local-only pass-through: nothing is redacted, so the stored
+    # redacted copy equals the original and the placeholder map is empty.
+    assert detail["redacted_messages"] == detail["original_messages"]
+    assert detail["placeholder_map"] == {}
 
-    # The egress_redaction audit row now carries the same payload_hash
-    # so the frontend can match clicked row → stored blob.
     lines = default_chain().path.read_text(encoding="utf-8").splitlines()
     rows = [json.loads(ln) for ln in lines if ln.strip()]
-    redaction_rows = [r for r in rows if r["event_type"] == "egress_redaction"]
-    assert redaction_rows, "expected an egress_redaction audit row"
-    assert redaction_rows[-1]["payload_hash"] == expected_hash
+    # No redaction happens locally, so there is no egress_redaction row.
+    assert not [r for r in rows if r["event_type"] == "egress_redaction"]
 
-    # And the egress_decision row that precedes it already had the
-    # same hash from the egress firewall — they line up.
+    # The egress_decision row carries the same payload_hash so the
+    # frontend can match a clicked row → stored detail blob.
     decision_rows = [r for r in rows if r["event_type"] == "egress_decision"]
     assert decision_rows[-1]["payload_hash"] == expected_hash
 
@@ -317,6 +332,6 @@ def test_block_does_not_affect_siblings(tmp_path: Path) -> None:
             agent_max_tier=1,
         )
         assert resp.content == "ok"
-        assert captured == ["remote"]
+        assert captured == ["local"]
     finally:
         set_provider_factory_for_tests(None)
