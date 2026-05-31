@@ -1,7 +1,7 @@
 # SecBrain
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-431%20passing-brightgreen.svg)]()
+[![CI](https://github.com/vdittgen/secbrain/actions/workflows/ci.yml/badge.svg)]()
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)]()
 [![Rust 2021](https://img.shields.io/badge/rust-2021-orange.svg)]()
 
@@ -172,4 +172,4 @@ Apache-2.0 — see [LICENSE](LICENSE) for details.
 
 ---
 
-Built by **Newton Data Intelligence**
+Built by **Vinicius Dittgen**
