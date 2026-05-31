@@ -62,7 +62,7 @@ Set `eval_strategy` to `deterministic`, `llm_judge`, or `hybrid` accordingly.
 
 Produce 6 to 12 cases. Each case is a YAML mapping with:
 - `name` — unique kebab-case slug. MUST NOT collide with any name in `existing_case_names`. Names are short and describe the scenario ("happy-path-clear-question", "edge-empty-input", "ambiguous-pronoun", "out-of-scope-medical").
-- `inputs` — the raw input the agent receives. Type matches what the agent expects (string for prose-input agents, dict for structured-input agents).
+- `inputs` — the raw input the agent receives, **always as a string**. User agents accept a single string at runtime, so every case's `inputs` MUST be a string scalar — never a dict, list, number, or null. When the realistic input is structured (e.g. an email payload), serialise it to a JSON string the agent would see, or describe it in natural language. The structural validator rejects non-string `inputs`.
 - `expected_output` — optional dict that deterministic evaluators compare against. Omit for pure LLM-judge cases.
 - `evaluators` — list of evaluator entries. Either a bare string (when the evaluator has no arguments) or a mapping `{name: EvaluatorName, arguments: {...}}`. The key is `arguments` (the full word), not `args` — it must match the pydantic-evals dataset schema verbatim.
 
