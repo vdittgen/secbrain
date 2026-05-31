@@ -1,0 +1,74 @@
+# Schema-discovery eval suite.
+#
+# Each case checks the target_table the agent picks, the rough
+# number of mapped fields, and a couple of canonical column names.
+# Fabricated column names are caught by FieldListContains on the
+# field name set.
+#
+# sensitivity_tier: N/A
+
+cases:
+  - name: strava_activity_maps_to_workouts
+    inputs:
+      tool_name: strava-list-activities
+      sample_records:
+        - {id: "1", name: "Morning run", distance_m: 5000, moving_time: 1800, avg_hr: 152, type: Run}
+        - {id: "2", name: "Evening ride", distance_m: 22000, moving_time: 4500, avg_hr: 138, type: Ride}
+      known_tables: [raw_workouts]
+    expected_output:
+      target_table: raw_workouts
+      expected_columns: [workout_type, duration_min, heart_rate_avg]
+    evaluators:
+      - {FieldEquals: {field: target_table, value: raw_workouts}}
+      - {ContainsIds: {field: fields, id_key: target_column, expected_key: expected_columns}}
+      - {ListLengthInRange: {field: fields, min_n: 3, max_n: 12}}
+
+  - name: spotify_track_maps_to_listening
+    inputs:
+      tool_name: spotify-recently-played
+      sample_records:
+        - {track_id: t1, track_name: "Foo", artist: "Bar", duration_ms: 230000}
+      known_tables: [raw_listening_history]
+    expected_output:
+      target_table: raw_listening_history
+      expected_columns: [track_name, artist, duration_ms]
+    evaluators:
+      - {FieldEquals: {field: target_table, value: raw_listening_history}}
+      - {ContainsIds: {field: fields, id_key: target_column, expected_key: expected_columns}}
+
+  - name: new_domain_creates_ext_table
+    inputs:
+      tool_name: notion-list-pages
+      sample_records:
+        - {page_id: p1, title: "Notes", parent: "Workspace", last_edited: "2026-05-12"}
+      known_tables: []
+    expected_output: null
+    evaluators:
+      - {FieldNotEmpty: {field: target_table}}
+      - {FieldContains: {field: target_table, substring: ext_}}
+
+  - name: github_issues
+    inputs:
+      tool_name: github-list-issues
+      sample_records:
+        - {number: 42, title: "Bug in foo", state: "open", labels: ["bug"]}
+      known_tables: []
+    expected_output: null
+    evaluators:
+      - {FieldNotEmpty: {field: target_table}}
+      - {ListLengthInRange: {field: fields, min_n: 2, max_n: 10}}
+
+  - name: emails_existing_table
+    inputs:
+      tool_name: gmail-list-messages
+      sample_records:
+        - {id: m1, from: "a@b.com", subject: "hi", date: "2026-05-12T08:00:00Z"}
+      known_tables: [raw_emails]
+    expected_output:
+      target_table: raw_emails
+      expected_columns: [subject, from_address]
+    evaluators:
+      - {FieldEquals: {field: target_table, value: raw_emails}}
+      - {ContainsIds: {field: fields, id_key: target_column, expected_key: expected_columns}}
+
+evaluators: []

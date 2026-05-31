@@ -1,0 +1,55 @@
+# Dependencies
+node_modules/
+.venv/
+
+# Build outputs
+dist/
+target/
+src-tauri/target/
+
+# Bundled Python runtime — fetched by scripts/fetch-python-runtime.sh
+python_runtime/
+
+# Claude Code session data + runtime logs
+.claude/
+logs/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Database files (stored in ~/.secondbrain/data/)
+*.duckdb
+*.duckdb.wal
+
+# Tauri generated
+src-tauri/gen/
+
+# npm debug
+npm-debug.log*
+
+# SQLMesh
+.cache/
+
+# pyenv / asdf
+.python-version
+# .tool-versions is tracked — it pins the Node version (asdf/mise) for a working `cargo tauri dev`

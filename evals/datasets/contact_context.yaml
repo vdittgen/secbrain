@@ -1,0 +1,97 @@
+# Contact-context summariser eval suite.
+#
+# Each case lists the contacts feeding into the agent and the
+# contact_ids we expect to receive a context summary. The judge
+# grades the prose for groundedness in the supplied topic data and
+# absence of fabricated details.
+#
+# sensitivity_tier: N/A
+
+cases:
+  - name: high_priority_health
+    inputs:
+      contacts:
+        - {id: c1, name: Mom, messages_7d: 18, last_message_at: "2026-05-09"}
+      topics:
+        c1:
+          contact: Mom
+          topics: ["father's cancer treatment"]
+          max_importance: 9
+    expected_output:
+      ids: [c1]
+    evaluators:
+      - {ContainsIds: {field: contexts, id_key: contact_id, exact: true}}
+      - {IntInRange: {field: contexts.0.context_priority, lo: 2, hi: 3}}
+      - LLMJudgeOnField:
+          field: contexts.0.active_context
+          threshold: 7
+          rubric: >
+            The summary must reference Mom and the cancer-treatment
+            topic. Fabricating a hospital, doctor, or treatment
+            detail scores 0-2. Score 7+ when grounded in the given
+            topic and not embellished.
+
+  - name: no_situation
+    inputs:
+      contacts:
+        - {id: c1, name: Dan, messages_7d: 1, last_message_at: "2026-05-04"}
+      topics: {}
+    expected_output:
+      ids: []
+    evaluators:
+      - {ContainsIds: {field: contexts, id_key: contact_id, exact: true}}
+
+  - name: prioritise_active_over_chatty
+    inputs:
+      contacts:
+        - {id: c1, name: Alice, messages_7d: 10}
+        - {id: c2, name: Bob, messages_7d: 5}
+        - {id: c3, name: Carol, messages_7d: 1}
+      topics:
+        c1:
+          contact: Alice
+          topics: ["renovation"]
+          max_importance: 7
+    expected_output:
+      ids: [c1]
+    evaluators:
+      - {ContainsIds: {field: contexts, id_key: contact_id}}
+      - {ListLengthInRange: {field: contexts, min_n: 1, max_n: 3}}
+
+  - name: work_domain_tagging
+    inputs:
+      contacts:
+        - {id: c1, name: Boss, messages_7d: 8, last_message_at: "2026-05-12"}
+      topics:
+        c1:
+          contact: Boss
+          topics: ["Acme renewal contract", "Q3 OKRs"]
+          max_importance: 8
+    expected_output:
+      ids: [c1]
+    evaluators:
+      - {ContainsIds: {field: contexts, id_key: contact_id, exact: true}}
+      - LLMJudgeOnField:
+          field: contexts.0.active_context
+          threshold: 7
+          rubric: >
+            Must reference at least one of "Acme renewal" or "Q3
+            OKRs" verbatim or close to it. Inventing other work
+            topics (a new hire, a different project) scores 0-2.
+            Score 7+ when grounded in the supplied topics.
+
+  - name: family_with_birthday
+    inputs:
+      contacts:
+        - {id: c1, name: Sister, messages_7d: 3, birthday: "2026-05-20"}
+      topics:
+        c1:
+          contact: Sister
+          topics: ["planning birthday dinner"]
+          max_importance: 6
+    expected_output:
+      ids: [c1]
+    evaluators:
+      - {ContainsIds: {field: contexts, id_key: contact_id, exact: true}}
+
+evaluators: []

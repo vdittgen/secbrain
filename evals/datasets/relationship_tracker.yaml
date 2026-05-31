@@ -1,0 +1,98 @@
+# Relationship-tracker eval suite.
+#
+# Each case carries a contact + last-contact age + shared topics.
+# Structural checks ensure the agent stamps a contact_name and a
+# nudge; LLM judge grades the nudge prose for warmth + specificity.
+#
+# sensitivity_tier: N/A
+
+cases:
+  - name: weeks_since_alice
+    inputs: |
+      Contact: Alice. Last contact: 6 weeks ago.
+      Relationship: childhood friend.
+      Shared topics: planning a trip to Garopaba.
+    expected_output: null
+    evaluators:
+      - {FieldNotEmpty: {field: contact_name}}
+      - {FieldContains: {field: contact_name, substring: Alice}}
+      - LLMJudgeOnField:
+          field: nudge
+          threshold: 7
+          rubric: >
+            Must reference Alice by name and reference the Garopaba
+            trip topic. Warm, conversational tone (1-3 sentences).
+            Generic "you should reach out" scores 0-3.
+      - LLMJudgeOnField:
+          field: suggested_topic
+          threshold: 6
+          rubric: >
+            Should reference Garopaba or the trip. A nudge with no
+            suggested_topic at all is acceptable (judge "skipped").
+            Fabricated topics score 0.
+
+  - name: father_in_law_health
+    inputs: |
+      Contact: Robert (father-in-law). Last contact: 10 weeks ago.
+      Relationship: family.
+      Shared topics: woodworking, his health.
+    expected_output: null
+    evaluators:
+      - {FieldContains: {field: contact_name, substring: Robert}}
+      - LLMJudgeOnField:
+          field: nudge
+          threshold: 7
+          rubric: >
+            Must mention Robert and either woodworking or his health.
+            Health phrasing must be sensitive (no clinical detail
+            beyond what's given). Fabricating a medical condition
+            scores 0.
+
+  - name: recent_contact_skip
+    inputs: |
+      Contact: Bob. Last contact: 3 days ago.
+      Relationship: coworker.
+      Shared topics: Q3 OKRs.
+    expected_output: null
+    evaluators:
+      - LLMJudgeOnField:
+          field: nudge
+          threshold: 6
+          rubric: >
+            With contact only 3 days ago, the agent should either
+            output an empty nudge or acknowledge the contact is
+            recent. A "you haven't talked in ages" nudge is wrong
+            and scores 0-2.
+
+  - name: birthday_window
+    inputs: |
+      Contact: Sister Sara. Last contact: 4 weeks ago.
+      Relationship: sister. Birthday in 3 days.
+      Shared topics: birthday plans.
+    expected_output: null
+    evaluators:
+      - {FieldContains: {field: contact_name, substring: Sara}}
+      - LLMJudgeOnField:
+          field: nudge
+          threshold: 7
+          rubric: >
+            Must reference the upcoming birthday. Inventing presents,
+            party plans, or a different relationship scores 0-3.
+
+  - name: long_silence_serious_topic
+    inputs: |
+      Contact: Mom. Last contact: 14 weeks ago.
+      Relationship: family.
+      Shared topics: father's cancer treatment.
+    expected_output: null
+    evaluators:
+      - {FieldContains: {field: contact_name, substring: Mom}}
+      - LLMJudgeOnField:
+          field: nudge
+          threshold: 7
+          rubric: >
+            Must reference Dad's treatment with appropriate gravity.
+            Cheerful "let's catch up!" tone scores 0-3. Fabricated
+            medical details score 0.
+
+evaluators: []

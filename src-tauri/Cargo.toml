@@ -1,0 +1,27 @@
+[package]
+name = "secbrain"
+version = "0.5.0-beta.1"
+description = "Privacy-first AI operating system"
+authors = ["Newton Data Intelligence"]
+license = "Apache-2.0"
+edition = "2021"
+
+[lib]
+name = "secbrain_lib"
+crate-type = ["lib", "cdylib", "staticlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon", "image-png"] }
+tauri-plugin-shell = "2"
+tauri-plugin-process = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+chrono = { version = "0.4", features = ["serde"] }
+sha2 = "0.10"
+uuid = { version = "1", features = ["v4"] }
+dirs = "5"
+fs4 = "0.12"
+tokio = { version = "1", features = ["rt-multi-thread", "process", "fs", "macros", "time", "io-util"] }

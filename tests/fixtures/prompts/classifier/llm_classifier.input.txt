@@ -1,0 +1,6 @@
+{"type": "object", "properties": {"x": {"type": "string"}}}
+
+Text:
+Hello world
+
+Respond with ONLY a JSON object matching the schema (no markdown, no explanation).

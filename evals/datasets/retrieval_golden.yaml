@@ -1,0 +1,58 @@
+# Retrieval-quality golden set — SCAFFOLD ONLY.
+#
+# This file in the repo contains zero real user data. Per the
+# project privacy posture (evals/README.md: "no real user data and
+# are shipped open-source"), labelled cases — which reference real
+# record IDs, contact names, etc. — live OUTSIDE the repo at:
+#
+#     ~/.secbrain/evals/retrieval_golden.yaml
+#
+# The runner (evals/retrieval/runner.py) checks the local override
+# first; this committed scaffold is the fallback / documentation.
+#
+# To populate your local labelled set:
+#
+#     python -m evals.retrieval.seeder --from-raw \
+#         --samples-per-table 10 --questions-per-record 3 \
+#         --out ~/.secbrain/evals/retrieval_golden.yaml
+#
+# Then:
+#
+#     make eval-retrieval-baseline   # locks in your local baseline
+#
+# sensitivity_tier: 1
+
+name: retrieval_golden
+description: >
+  Scaffold for retrieval-quality evals. Real labelled cases live in
+  ~/.secbrain/evals/retrieval_golden.yaml (gitignored by being
+  outside the repo). The runner prefers the local file when present.
+
+default_k: 10
+
+cases:
+  # Stand-in cases — REPLACE_ME ids are skipped by the runner so the
+  # scaffold never reports artificial pass/fail. Real cases go in
+  # the local override file.
+
+  - name: example_doctor_appointment
+    query: "when is my next doctor appointment"
+    expected_doc_ids:
+      - "evt_REPLACE_ME"
+    expected_collections:
+      - "health"
+    min_tier_reachable: 2
+    notes: |
+      Stand-in. The runner skips cases with REPLACE_ME ids so the
+      scaffold scores cleanly as "no real cases yet".
+
+  - name: example_proper_noun_query
+    query: "who is X"
+    expected_doc_ids:
+      - "contact_REPLACE_ME"
+    expected_collections:
+      - "personal"
+    min_tier_reachable: 2
+    notes: |
+      Stand-in for proper-noun queries — the canonical case BM25
+      hybrid retrieval is meant to fix.

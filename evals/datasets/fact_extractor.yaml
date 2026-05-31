@@ -1,0 +1,116 @@
+# Fact-extractor eval suite.
+#
+# Each case lists the facts we expect the agent to extract as
+# (category, subject, predicate) triples. FactSetMatches checks the
+# expected facts are present (extras allowed by default). The LLM
+# judge grades the agent's atomicity + categorisation on the
+# combined output text.
+#
+# Requires a real LLM via FactExtractorAgent.
+#
+# sensitivity_tier: N/A
+
+cases:
+  - name: single_preference
+    inputs: |
+      User: I really love sushi, it's my favourite food.
+      Assistant: Noted!
+    expected_output:
+      facts:
+        - {category: preference, subject: self, predicate: favorite_food}
+    evaluators:
+      - FactSetMatches
+      - {ListLengthInRange: {field: facts, min_n: 1, max_n: 3}}
+
+  - name: relationship_disclosure
+    inputs: |
+      User: My sister Alice just moved to Berlin for a new job.
+      Assistant: That's exciting.
+    expected_output:
+      facts:
+        - {category: relationship, subject: alice, predicate: sister}
+        - {category: location, subject: alice, predicate: lives_in}
+    evaluators:
+      - FactSetMatches:
+          predicate_alternatives:
+            lives_in:
+              - moved_to
+              - relocated_to
+              - now_lives_in
+              - location
+              - city
+              - resides_in
+      - {ListLengthInRange: {field: facts, min_n: 2, max_n: 5}}
+
+  - name: empty_smalltalk
+    inputs: |
+      User: Hey!
+      Assistant: Hi there, what's on your mind today?
+      User: Nothing really.
+    expected_output:
+      facts: []
+    evaluators:
+      - {ListLengthInRange: {field: facts, min_n: 0, max_n: 1}}
+
+  - name: location_and_work
+    inputs: |
+      User: I work at Acme Corp in downtown São Paulo.
+      Assistant: Cool job.
+    expected_output:
+      facts:
+        - {category: work, subject: self, predicate: works_at}
+    evaluators:
+      - {FactSetMatches: {predicate_alternatives: {works_at: [employed_at, works_for]}}}
+      - {ListLengthInRange: {field: facts, min_n: 1, max_n: 5}}
+
+  - name: health_disclosure_high_sensitivity
+    inputs: |
+      User: My doctor started me on sertraline last week.
+      Assistant: Take care.
+    expected_output:
+      facts:
+        - {category: health, subject: self, predicate: medication}
+    evaluators:
+      - FactSetMatches:
+          predicate_alternatives:
+            medication:
+              - takes_medication
+              - taking_medication
+              - taking_sertraline
+              - prescribed_medication
+              - started_medication
+              - medication_started
+              - medication_sertraline
+              - sertraline
+              - on_medication
+      - {IntInRange: {field: facts.0.sensitivity_tier, lo: 3, hi: 3}}
+
+  - name: question_is_not_a_fact
+    inputs: |
+      User: What's the best place to eat ramen?
+      Assistant: Tokyo has great ramen.
+    expected_output:
+      facts: []
+    evaluators:
+      - {ListLengthInRange: {field: facts, min_n: 0, max_n: 1}}
+
+  - name: opinion_disclosure
+    inputs: |
+      User: I think remote work makes most teams less productive.
+      Assistant: Interesting take.
+    expected_output:
+      facts:
+        - {category: opinion, subject: self, predicate: remote_work}
+    evaluators:
+      - FactSetMatches:
+          predicate_alternatives:
+            remote_work:
+              - view_on_remote_work
+              - opinion_on_remote_work
+              - believes_remote_work_unproductive
+              - remote_work_productivity
+              - remote_work_view
+              - remote_work_opinion
+      - {ListLengthInRange: {field: facts, min_n: 1, max_n: 2}}
+
+evaluators: []

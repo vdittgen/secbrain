@@ -1,0 +1,10 @@
+# Eval result JSONs contain real record IDs and query text from
+# the user's data — same privacy posture as the labelled golden
+# YAML. Keep them out of the repo by default.
+#
+# To track a baseline reference deliberately, force-add with:
+#   git add -f evals/retrieval/results/baseline.json
+# but first scrub IDs by hand.
+
+*.json
+!.gitkeep

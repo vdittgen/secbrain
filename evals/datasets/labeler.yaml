@@ -1,0 +1,48 @@
+# Emotional labeler eval suite.
+#
+# Each case is a short text with the expected primary_emotion +
+# domain. Intensity is loosely checked through the
+# EmotionalLabelStructural tolerance.
+#
+# Requires a real LLM; runs through LabelerAgent.label().
+#
+# sensitivity_tier: N/A
+
+cases:
+  - name: positive_news
+    inputs: "Got the promotion today — can't believe it!"
+    expected_output:
+      primary_emotion: joy
+      intensity: 0.8
+      domain: work
+
+  - name: sad_loss
+    inputs: "Grandma passed away yesterday. I'm heartbroken."
+    expected_output:
+      primary_emotion: sadness
+      intensity: 0.85
+      domain: personal
+
+  - name: anxious_work
+    inputs: "Deadline tomorrow and the build is still red."
+    expected_output:
+      primary_emotion: fear
+      intensity: 0.6
+      domain: work
+
+  - name: calm_routine
+    inputs: "Quiet Sunday — finished my book over coffee."
+    expected_output:
+      primary_emotion: trust
+      intensity: 0.3
+      domain: personal
+
+  - name: health_worry
+    inputs: "Cardiologist found something unusual on the scan."
+    expected_output:
+      primary_emotion: fear
+      intensity: 0.75
+      domain: health
+
+evaluators:
+  - {EmotionalLabelStructural: {intensity_tolerance: 0.35}}

@@ -1,0 +1,55 @@
+# Egress firewall eval suite (locked agent, manual-only).
+#
+# Inputs carry the prompt + the calling agent's max_tier; the firewall
+# returns an EgressDecision (route in {remote, local}, plus
+# requires_redaction / requires_consent booleans). The suite runs
+# entirely offline — the firewall is rule-based.
+#
+# In SecBrain every prompt routes to the local Ollama backend
+# regardless of tier, and nothing is redacted because nothing leaves
+# the device. Tier classification is still asserted since it drives
+# the audit log.
+#
+# sensitivity_tier: N/A
+
+cases:
+  - name: tier1_routes_local_clean
+    inputs:
+      prompt: "Summarize my preferences."
+      agent_max_tier: 1
+    expected_output: null
+    evaluators:
+      - {FieldEquals: {field: route, value: local}}
+      - {FieldEquals: {field: requires_redaction, value: false}}
+      - {IntInRange: {field: max_tier, lo: 1, hi: 1}}
+
+  - name: tier2_routes_local
+    inputs:
+      prompt: "Tell me about my meeting with Alice tomorrow."
+      agent_max_tier: 2
+    expected_output: null
+    evaluators:
+      - {FieldEquals: {field: route, value: local}}
+      - {FieldEquals: {field: requires_redaction, value: false}}
+
+  - name: tier3_health_routes_local
+    inputs:
+      prompt: "I have been struggling with depression."
+      agent_max_tier: 2
+    expected_output: null
+    evaluators:
+      - {FieldEquals: {field: route, value: local}}
+      - {FieldEquals: {field: requires_redaction, value: false}}
+      - {IntInRange: {field: max_tier, lo: 3, hi: 3}}
+
+  - name: tier3_finance_routes_local
+    inputs:
+      prompt: "My bank routing number is 123456."
+      agent_max_tier: 1
+    expected_output: null
+    evaluators:
+      - {FieldEquals: {field: route, value: local}}
+      - {FieldEquals: {field: requires_redaction, value: false}}
+      - {IntInRange: {field: max_tier, lo: 3, hi: 3}}
+
+evaluators: []

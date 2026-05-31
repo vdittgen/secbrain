@@ -1,0 +1,70 @@
+# Query-router eval suite.
+#
+# Each case lists the tables the retrieval plan should hit (reused
+# ContainsIds against the `table` key of each DuckDBQuerySpec).
+# `use_graph` and `chromadb_collections` get checked where the
+# question type makes them deterministic.
+#
+# sensitivity_tier: N/A
+
+cases:
+  - name: today_schedule
+    inputs: "What's on my schedule today?"
+    expected_output:
+      tables: [raw_calendar_events]
+    evaluators:
+      - {FieldNotEmpty: {field: reasoning}}
+      - {ContainsIds: {field: duckdb_queries, id_key: table, expected_key: tables}}
+      - {ListLengthInRange: {field: duckdb_queries, min_n: 1, max_n: 5}}
+
+  - name: messages_from_alice
+    inputs: "List my recent messages from Alice."
+    expected_output:
+      tables: [raw_messages]
+    evaluators:
+      - {FieldNotEmpty: {field: reasoning}}
+      - {ContainsIds: {field: duckdb_queries, id_key: table, expected_key: tables}}
+      - LLMJudgeOnField:
+          field: reasoning
+          threshold: 6
+          rubric: >
+            Reasoning should explain it queries the messages table
+            with a sender filter for Alice. Generic "we look at
+            messages" without naming Alice scores 0-3.
+
+  - name: relationship_graph_question
+    inputs: "Who do I talk to most often about work?"
+    expected_output: null
+    evaluators:
+      - {FieldNotEmpty: {field: reasoning}}
+      - {FieldEquals: {field: use_graph, value: true}}
+
+  - name: semantic_lookup
+    inputs: "Tell me what I know about renewable energy."
+    expected_output: null
+    evaluators:
+      - {FieldNotEmpty: {field: reasoning}}
+      - {ListLengthInRange: {field: chromadb_collections, min_n: 1, max_n: 10}}
+
+  - name: health_metrics_query
+    inputs: "What was my resting heart rate this week?"
+    expected_output:
+      tables: [raw_health_metrics]
+    evaluators:
+      - {ContainsIds: {field: duckdb_queries, id_key: table, expected_key: tables}}
+
+  - name: emails_lookup
+    inputs: "Did I get an email from the bank yesterday?"
+    expected_output:
+      tables: [raw_emails]
+    evaluators:
+      - {ContainsIds: {field: duckdb_queries, id_key: table, expected_key: tables}}
+
+  - name: combined_messages_and_calendar
+    inputs: "Look at my messages and calendar: when did Alice and I last meet?"
+    expected_output:
+      tables: [raw_messages, raw_calendar_events]
+    evaluators:
+      - {ContainsIds: {field: duckdb_queries, id_key: table, expected_key: tables}}
+
+evaluators: []

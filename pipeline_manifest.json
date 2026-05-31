@@ -1,0 +1,253 @@
+{
+  "version": 1,
+  "description": "SecBrain pipeline manifest — defines all SQL/Python transforms in dependency order.",
+  "models": [
+    {
+      "name": "stg_messages",
+      "layer": "staging",
+      "sql_file": "src/pipeline/staging/stg_messages.sql",
+      "depends_on": ["raw_messages"],
+      "grain": ["id"],
+      "audits": {
+        "not_null": ["id", "source", "sender", "recipient", "content", "timestamp", "sensitivity_tier"],
+        "unique": ["id"],
+        "accepted_values": {"sensitivity_tier": [1, 2, 3]}
+      }
+    },
+    {
+      "name": "stg_notes",
+      "layer": "staging",
+      "sql_file": "src/pipeline/staging/stg_notes.sql",
+      "depends_on": ["raw_notes"],
+      "grain": ["id"],
+      "audits": {
+        "not_null": ["id", "title", "content", "source", "sensitivity_tier"],
+        "unique": ["id"],
+        "accepted_values": {"sensitivity_tier": [1, 2, 3]}
+      }
+    },
+    {
+      "name": "stg_contacts",
+      "layer": "staging",
+      "sql_file": "src/pipeline/staging/stg_contacts.sql",
+      "depends_on": ["raw_contacts"],
+      "grain": ["id"],
+      "audits": {
+        "not_null": ["id", "name", "sensitivity_tier"],
+        "unique": ["id"],
+        "accepted_values": {"sensitivity_tier": [1, 2, 3]}
+      }
+    },
+    {
+      "name": "stg_calendar_events",
+      "layer": "staging",
+      "sql_file": "src/pipeline/staging/stg_calendar_events.sql",
+      "depends_on": ["raw_calendar_events"],
+      "grain": ["id"],
+      "audits": {
+        "not_null": ["id", "title", "start_time", "end_time", "sensitivity_tier"],
+        "unique": ["id"],
+        "accepted_values": {"sensitivity_tier": [1, 2, 3]}
+      }
+    },
+    {
+      "name": "stg_health_metrics",
+      "layer": "staging",
+      "sql_file": "src/pipeline/staging/stg_health_metrics.sql",
+      "depends_on": ["raw_health_metrics"],
+      "grain": ["id"],
+      "audits": {
+        "not_null": ["id", "metric_type", "value", "unit", "recorded_at", "sensitivity_tier"],
+        "unique": ["id"],
+        "accepted_values": {"sensitivity_tier": [1, 2, 3]}
+      }
+    },
+    {
+      "name": "stg_emails",
+      "layer": "staging",
+      "sql_file": "src/pipeline/staging/stg_emails.sql",
+      "depends_on": ["raw_emails"],
+      "grain": ["id"],
+      "audits": {
+        "not_null": ["id", "source", "from_address", "date", "sensitivity_tier"],
+        "unique": ["id"],
+        "accepted_values": {"sensitivity_tier": [1, 2, 3]}
+      }
+    },
+    {
+      "name": "stg_reminders",
+      "layer": "staging",
+      "sql_file": "src/pipeline/staging/stg_reminders.sql",
+      "depends_on": ["raw_reminders"],
+      "grain": ["id"],
+      "audits": {
+        "not_null": ["id", "title", "sensitivity_tier"],
+        "unique": ["id"],
+        "accepted_values": {"sensitivity_tier": [1, 2, 3]}
+      }
+    },
+    {
+      "name": "int_personal_enriched",
+      "layer": "intermediate",
+      "sql_file": "src/pipeline/intermediate/int_personal_enriched.sql",
+      "depends_on": ["stg_messages", "stg_contacts", "int_labeled_messages"],
+      "grain": ["id"],
+      "audits": {
+        "not_null": ["id", "source", "sender", "recipient", "content", "timestamp", "sensitivity_tier", "message_category"],
+        "unique": ["id"],
+        "accepted_values": {
+          "sensitivity_tier": [1, 2, 3],
+          "message_category": ["personal", "work", "health"]
+        }
+      }
+    },
+    {
+      "name": "int_events_enriched",
+      "layer": "intermediate",
+      "type": "python",
+      "python_module": "src.pipeline.intermediate.int_events_enriched",
+      "python_function": "execute",
+      "depends_on": ["stg_calendar_events", "stg_contacts"],
+      "grain": ["id"],
+      "audits": {
+        "not_null": ["id", "title", "start_time", "end_time", "sensitivity_tier", "event_category"],
+        "unique": ["id"],
+        "accepted_values": {
+          "sensitivity_tier": [1, 2, 3],
+          "event_category": ["meeting", "social", "health", "travel", "other"]
+        }
+      }
+    },
+    {
+      "name": "int_daily_summary",
+      "layer": "intermediate",
+      "sql_file": "src/pipeline/intermediate/int_daily_summary.sql",
+      "depends_on": ["stg_messages", "stg_calendar_events", "stg_notes", "stg_emails", "stg_reminders", "stg_health_metrics"],
+      "grain": ["summary_date"],
+      "audits": {
+        "not_null": ["summary_date", "message_count", "event_count", "notes_created", "email_count", "reminder_count", "sensitivity_tier"],
+        "unique": ["summary_date"],
+        "accepted_values": {"sensitivity_tier": [1, 2, 3]}
+      }
+    },
+    {
+      "name": "int_labeled_messages",
+      "layer": "intermediate",
+      "type": "python",
+      "python_module": "src.pipeline.intermediate.int_labeled_messages",
+      "python_function": "execute",
+      "depends_on": ["stg_messages"],
+      "grain": ["message_id"],
+      "audits": {
+        "not_null": ["message_id", "primary_emotion", "domain", "sensitivity_tier"],
+        "unique": ["message_id"]
+      }
+    },
+    {
+      "name": "int_contact_topics",
+      "layer": "intermediate",
+      "type": "python",
+      "python_module": "src.pipeline.intermediate.int_contact_topics",
+      "python_function": "execute",
+      "depends_on": ["raw_messages", "raw_emails"],
+      "grain": ["contact_name", "topic"],
+      "audits": {
+        "not_null": ["contact_name", "topic", "importance", "status", "sensitivity_tier"]
+      }
+    },
+    {
+      "name": "int_communications_enriched",
+      "layer": "intermediate",
+      "sql_file": "src/pipeline/intermediate/int_communications_enriched.sql",
+      "depends_on": ["stg_messages", "stg_emails", "stg_contacts"],
+      "grain": ["id"],
+      "audits": {
+        "not_null": ["id", "channel_type", "sender", "occurred_at", "sensitivity_tier", "comm_category"],
+        "unique": ["id"],
+        "accepted_values": {
+          "sensitivity_tier": [1, 2, 3],
+          "comm_category": ["personal", "work", "health", "other"]
+        }
+      }
+    },
+    {
+      "name": "mart_today",
+      "layer": "mart",
+      "sql_file": "src/pipeline/marts/mart_today.sql",
+      "depends_on": ["int_events_enriched", "int_personal_enriched", "stg_notes", "stg_emails", "stg_reminders"],
+      "grain": ["item_type", "id"],
+      "audits": {
+        "not_null": ["item_type", "id", "title", "occurred_at", "sensitivity_tier"],
+        "accepted_values": {
+          "sensitivity_tier": [1, 2, 3],
+          "item_type": ["event", "message", "note", "email", "reminder"]
+        }
+      }
+    },
+    {
+      "name": "mart_personal",
+      "layer": "mart",
+      "sql_file": "src/pipeline/marts/mart_personal.sql",
+      "depends_on": ["int_personal_enriched", "int_events_enriched", "stg_notes"],
+      "grain": ["item_type", "id"],
+      "audits": {
+        "not_null": ["item_type", "id", "title", "occurred_at", "sensitivity_tier"],
+        "accepted_values": {
+          "sensitivity_tier": [1, 2, 3],
+          "item_type": ["message", "event", "note"]
+        }
+      }
+    },
+    {
+      "name": "mart_work",
+      "layer": "mart",
+      "sql_file": "src/pipeline/marts/mart_work.sql",
+      "depends_on": ["int_personal_enriched", "int_events_enriched", "stg_notes"],
+      "grain": ["item_type", "id"],
+      "audits": {
+        "not_null": ["item_type", "id", "title", "occurred_at", "sensitivity_tier"],
+        "accepted_values": {
+          "sensitivity_tier": [1, 2, 3],
+          "item_type": ["message", "event", "note"]
+        }
+      }
+    },
+    {
+      "name": "mart_health",
+      "layer": "mart",
+      "sql_file": "src/pipeline/marts/mart_health.sql",
+      "depends_on": ["stg_health_metrics"],
+      "grain": ["id"],
+      "audits": {
+        "not_null": ["id", "metric_type", "value", "unit", "recorded_at", "sensitivity_tier"],
+        "unique": ["id"],
+        "accepted_values": {"sensitivity_tier": [1, 2, 3]}
+      }
+    },
+    {
+      "name": "mart_communications",
+      "layer": "mart",
+      "sql_file": "src/pipeline/marts/mart_communications.sql",
+      "depends_on": ["int_communications_enriched"],
+      "grain": ["summary_date", "channel_type", "comm_category"],
+      "audits": {
+        "not_null": ["summary_date", "channel_type", "comm_category", "message_count", "sensitivity_tier"],
+        "accepted_values": {
+          "sensitivity_tier": [1, 2, 3],
+          "comm_category": ["personal", "work", "health", "other"]
+        }
+      }
+    },
+    {
+      "name": "mart_contact_summary",
+      "layer": "mart",
+      "sql_file": "src/pipeline/marts/mart_contact_summary.sql",
+      "depends_on": ["raw_messages", "stg_contacts", "int_contact_topics"],
+      "grain": ["contact_name"],
+      "audits": {
+        "not_null": ["contact_name", "total_messages", "sensitivity_tier"],
+        "accepted_values": {"sensitivity_tier": [1, 2, 3]}
+      }
+    }
+  ]
+}

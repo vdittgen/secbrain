@@ -1,0 +1,100 @@
+:root {
+  /* Surface — soft cool whites */
+  --bg:           oklch(0.985 0.003 245);
+  --bg-2:         oklch(0.965 0.004 245);
+  --surface:      #ffffff;
+  --surface-2:    oklch(0.978 0.003 245);
+  --hairline:     oklch(0.92 0.005 245);
+  --hairline-2:   oklch(0.86 0.007 245);
+
+  /* Ink — cool near-black, with mid-tones tuned for hierarchy */
+  --ink:          oklch(0.17 0.010 250);
+  --ink-2:        oklch(0.42 0.010 250);
+  --muted:        oklch(0.56 0.008 250);
+  --faint:        oklch(0.72 0.006 250);
+
+  /* Indigo — the single elegant accent */
+  --indigo:       oklch(0.55 0.20 265);
+  --indigo-2:     oklch(0.46 0.20 265);
+  --indigo-soft:  oklch(0.94 0.05 265);
+  --indigo-tint:  oklch(0.975 0.018 265);
+  --indigo-glow:  oklch(0.55 0.20 265 / 0.10);
+
+  /* Domain tints — very desaturated, for category recognition */
+  --work-tint:     oklch(0.96 0.018 245);
+  --work-ink:      oklch(0.42 0.10 245);
+  --personal-tint: oklch(0.96 0.025 50);
+  --personal-ink:  oklch(0.48 0.12 50);
+  --health-tint:   oklch(0.96 0.025 165);
+  --health-ink:    oklch(0.42 0.10 165);
+
+  /* Status */
+  --success:      oklch(0.62 0.16 155);
+  --success-soft: oklch(0.95 0.04 155);
+  --amber:        oklch(0.74 0.16 70);
+  --amber-soft:   oklch(0.96 0.04 70);
+  --danger:       oklch(0.60 0.22 25);
+  --danger-soft:  oklch(0.96 0.04 25);
+
+  /* Type */
+  --sans: "Geist", -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, "Helvetica Neue", Arial, sans-serif;
+  --mono: "Geist Mono", "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+
+  /* Radius — generous, Apple-like */
+  --r-1: 6px;
+  --r-2: 10px;
+  --r-3: 14px;
+  --r-4: 20px;
+  --r-5: 28px;
+
+  /* Elevation — soft, layered */
+  --shadow-1: 0 1px 2px oklch(0.18 0.01 250 / 0.04), 0 0 0 1px oklch(0.18 0.01 250 / 0.04);
+  --shadow-2: 0 1px 3px oklch(0.18 0.01 250 / 0.04), 0 4px 12px oklch(0.18 0.01 250 / 0.05);
+  --shadow-3: 0 2px 6px oklch(0.18 0.01 250 / 0.05), 0 12px 32px oklch(0.18 0.01 250 / 0.08);
+  --shadow-glow: 0 0 0 4px var(--indigo-glow);
+
+  /* Motion — one curve, two durations */
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  --duration-hover: 140ms;
+  --duration-panel: 240ms;
+}
+
+/* Dark mode — activated by .dark class on <html> (app toggle wins)
+   OR by OS preference when theme is "system". */
+:root.dark {
+  --bg:           oklch(0.16  0.012 255);
+  --bg-2:         oklch(0.20  0.014 255);
+  --surface:      oklch(0.22  0.014 255);
+  --surface-2:    oklch(0.25  0.015 255);
+  --hairline:     oklch(0.30  0.016 255);
+  --hairline-2:   oklch(0.36  0.018 255);
+
+  --ink:          oklch(0.96  0.005 250);
+  --ink-2:        oklch(0.78  0.008 250);
+  --muted:        oklch(0.62  0.010 250);
+  --faint:        oklch(0.46  0.010 250);
+
+  --indigo:       oklch(0.72  0.16  265);
+  --indigo-2:     oklch(0.80  0.15  265);
+  --indigo-soft:  oklch(0.32  0.10  265);
+  --indigo-tint:  oklch(0.26  0.06  265);
+  --indigo-glow:  oklch(0.72  0.16  265 / 0.18);
+
+  --work-tint:     oklch(0.28  0.04 245);
+  --personal-tint: oklch(0.30  0.05 50);
+  --health-tint:   oklch(0.28  0.05 165);
+
+  --success:      oklch(0.74  0.16 155);
+  --success-soft: oklch(0.30  0.08 155);
+  --amber:        oklch(0.82  0.15 70);
+  --amber-soft:   oklch(0.30  0.08 70);
+  --danger:       oklch(0.72  0.18 25);
+  --danger-soft:  oklch(0.30  0.10 25);
+
+  --shadow-1: 0 1px 2px oklch(0 0 0 / 0.4),
+              0 0 0 1px oklch(1 0 0 / 0.04);
+  --shadow-2: 0 1px 3px oklch(0 0 0 / 0.4),
+              0 4px 12px oklch(0 0 0 / 0.4);
+  --shadow-3: 0 2px 6px oklch(0 0 0 / 0.4),
+              0 12px 32px oklch(0 0 0 / 0.5);
+}

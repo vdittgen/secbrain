@@ -1,0 +1,89 @@
+# Actionable-events detector eval suite.
+#
+# Each case carries a small batch of calendar events. The agent
+# should pick events that need user action (RSVPs, birthdays,
+# milestone meetings) and skip recurring routine events.
+#
+# sensitivity_tier: N/A
+
+cases:
+  - name: rsvp_needed
+    inputs:
+      events:
+        - id: e1
+          title: "Wedding reception — RSVP by Friday"
+          start_time: "2026-05-20"
+    expected_output:
+      ids: [e1]
+    evaluators:
+      - {ContainsIds: {field: events, id_key: event_id, exact: true}}
+      - LLMJudgeOnField:
+          field: events.0.action_needed
+          threshold: 7
+          rubric: >
+            Must reference "RSVP" or "respond" explicitly. Generic
+            "prepare for the event" scores 0-3. Fabricated dress
+            code or location scores 0.
+
+  - name: birthday_included
+    inputs:
+      events:
+        - id: e1
+          title: "Alice's birthday"
+          start_time: "2026-05-15"
+    expected_output:
+      ids: [e1]
+    evaluators:
+      - {ContainsIds: {field: events, id_key: event_id, exact: true}}
+      - LLMJudgeOnField:
+          field: events.0.action_needed
+          threshold: 6
+          rubric: >
+            Must mention Alice or birthday wishes. Inventing
+            specific gift ideas not in input is fine; inventing a
+            relationship not given (e.g., "your wife Alice") scores
+            0-2.
+
+  - name: recurring_meeting_skipped
+    inputs:
+      events:
+        - id: e1
+          title: "Weekly standup"
+          start_time: "2026-05-13T09:00:00"
+    expected_output:
+      ids: []
+    evaluators:
+      - {ContainsIds: {field: events, id_key: event_id, exact: true}}
+
+  - name: no_events
+    inputs:
+      events: []
+    expected_output:
+      ids: []
+    evaluators:
+      - {ListLengthInRange: {field: events, min_n: 0, max_n: 0}}
+
+  - name: mixed_batch
+    inputs:
+      events:
+        - {id: e1, title: "Weekly standup", start_time: "2026-05-13T09:00:00"}
+        - {id: e2, title: "Doctor — annual physical", start_time: "2026-05-14T14:00:00"}
+        - {id: e3, title: "Board review — present Q3 plan", start_time: "2026-05-15T10:00:00"}
+    expected_output:
+      ids: [e2, e3]
+    evaluators:
+      - {ContainsIds: {field: events, id_key: event_id}}
+      - {ListLengthInRange: {field: events, min_n: 1, max_n: 3}}
+
+  - name: travel_action
+    inputs:
+      events:
+        - id: e1
+          title: "Flight LIS → GRU"
+          start_time: "2026-05-22T20:00:00"
+    expected_output:
+      ids: [e1]
+    evaluators:
+      - {ContainsIds: {field: events, id_key: event_id, exact: true}}
+
+evaluators: []

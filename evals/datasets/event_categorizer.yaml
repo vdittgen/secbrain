@@ -1,0 +1,177 @@
+# Event-categorizer eval suite.
+#
+# Each case feeds one calendar event (title + optional context) and
+# asserts the agent picks the right bucket from the closed vocabulary
+# {meeting, social, health, travel, other}.
+#
+# These are the cases that motivated the rebuild: the legacy
+# keyword-based CASE in int_events_enriched.sql labelled almost every
+# real-world event as "other" because it only matched a handful of
+# title fragments. The cases below pull from the user's own calendar
+# (titles like "Product x UX Sync", "Refinement", "Garett Blocked")
+# alongside generic synthetic events to keep the suite broad.
+#
+# Requires a real LLM; runs through EventCategorizerAgent.categorize().
+#
+# sensitivity_tier: 2 (event titles can be tier 2)
+
+cases:
+  # --- meeting (work) --------------------------------------------------
+  - name: product_ux_sync
+    inputs:
+      title: "Product x UX Sync"
+      description: ""
+    expected_output:
+      category: meeting
+    evaluators:
+      - {FieldEquals: {field: category, value: meeting}}
+
+  - name: backlog_refinement
+    inputs:
+      title: "Refinement"
+      description: ""
+    expected_output:
+      category: meeting
+    evaluators:
+      - {FieldEquals: {field: category, value: meeting}}
+
+  - name: blocked_colleague
+    inputs:
+      title: "Garett Blocked"
+      description: ""
+    expected_output:
+      category: meeting
+    evaluators:
+      - {FieldEquals: {field: category, value: meeting}}
+
+  - name: standup
+    inputs:
+      title: "Batmans Oracle Stand-Up"
+      description: "Team Stand-Up"
+    expected_output:
+      category: meeting
+    evaluators:
+      - {FieldEquals: {field: category, value: meeting}}
+
+  - name: customer_call
+    inputs:
+      title: "Maddie May '26 National AG CALL"
+      description: ""
+    expected_output:
+      category: meeting
+    evaluators:
+      - {FieldEquals: {field: category, value: meeting}}
+
+  - name: explicit_1_on_1
+    inputs:
+      title: "1-on-1 with Sarah"
+      description: ""
+    expected_output:
+      category: meeting
+    evaluators:
+      - {FieldEquals: {field: category, value: meeting}}
+
+  - name: quarterly_review
+    inputs:
+      title: "Q3 Planning Review"
+      description: "Review of the previous quarter and planning for next"
+    expected_output:
+      category: meeting
+    evaluators:
+      - {FieldEquals: {field: category, value: meeting}}
+
+  # --- social -----------------------------------------------------------
+  - name: dinner_with_friends
+    inputs:
+      title: "Dinner with Carlos and Maria"
+      description: ""
+    expected_output:
+      category: social
+    evaluators:
+      - {FieldEquals: {field: category, value: social}}
+
+  - name: birthday_party
+    inputs:
+      title: "Sofia's Birthday Party"
+      description: ""
+    expected_output:
+      category: social
+    evaluators:
+      - {FieldEquals: {field: category, value: social}}
+
+  - name: concert
+    inputs:
+      title: "Coldplay Concert"
+      description: "Arena show"
+    expected_output:
+      category: social
+    evaluators:
+      - {FieldEquals: {field: category, value: social}}
+
+  # --- health -----------------------------------------------------------
+  - name: therapy_session
+    inputs:
+      title: "Therapy Session"
+      description: ""
+    expected_output:
+      category: health
+    evaluators:
+      - {FieldEquals: {field: category, value: health}}
+
+  - name: dentist
+    inputs:
+      title: "Dentist - cleaning"
+      description: ""
+    expected_output:
+      category: health
+    evaluators:
+      - {FieldEquals: {field: category, value: health}}
+
+  - name: doctor_appointment
+    inputs:
+      title: "Dr. Almeida follow-up"
+      description: "Cardiology consult"
+    expected_output:
+      category: health
+    evaluators:
+      - {FieldEquals: {field: category, value: health}}
+
+  # --- travel -----------------------------------------------------------
+  - name: flight_to_sf
+    inputs:
+      title: "Flight to San Francisco"
+      description: ""
+    expected_output:
+      category: travel
+    evaluators:
+      - {FieldEquals: {field: category, value: travel}}
+
+  - name: road_trip
+    inputs:
+      title: "Drive to Florianopolis"
+      description: "Long weekend trip"
+    expected_output:
+      category: travel
+    evaluators:
+      - {FieldEquals: {field: category, value: travel}}
+
+  # --- ambiguous defaults to meeting (per system prompt rule) ----------
+  - name: ambiguous_one_word
+    inputs:
+      title: "Sync"
+      description: ""
+    expected_output:
+      category: meeting
+    evaluators:
+      - {FieldEquals: {field: category, value: meeting}}
+
+  - name: ambiguous_unknown_name
+    inputs:
+      title: "Garett Blocked"
+      description: ""
+    expected_output:
+      category: meeting
+    evaluators:
+      - {FieldEquals: {field: category, value: meeting}}
+
+evaluators: []

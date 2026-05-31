@@ -1,0 +1,19 @@
+Given a SQLite table and the user's action request, generate a SQL WHERE clause that filters to the records the user is referring to.
+
+Table: 
+Columns: id, title, created_at
+Today's date: 2026-05-12
+
+User request: delete the last note
+
+RULES:
+- Output ONLY the WHERE clause condition (no SELECT, no WHERE keyword).
+- Use SQLite syntax (date(), datetime(), strftime(), CAST, etc.).
+- For "yesterday" use: created_at >= date('now', '-1 day') AND created_at < date('now')
+- For "last N hours" use: created_at >= datetime('now', '-N hours')
+- For "today" use: created_at >= date('now')
+- For "this week" use: created_at >= date('now', '-7 days')
+- Use the appropriate timestamp column (created_at, updated_at, start_time, date, due_date) based on the table.
+- Keep it simple. One condition or AND-combined conditions only.
+- If the user mentions a specific title/name, use LIKE with %% wildcards (SQLite LIKE is case-insensitive for ASCII by default).
+- NEVER use subqueries or joins.

@@ -1,0 +1,11 @@
+gateways:
+  local:
+    connection:
+      type: duckdb
+      database: ~/.secbrain/data/secbrain.duckdb
+
+default_gateway: local
+
+model_defaults:
+  dialect: duckdb
+  start: "2025-01-01"

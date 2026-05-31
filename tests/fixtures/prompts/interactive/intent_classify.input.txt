@@ -1,0 +1,35 @@
+
+
+Today: 2026-05-12
+User message: How many meetings did I have last week?
+
+Classify as ONE of:
+
+- "query" — The user is asking about THEIR OWN life, schedule, people, or data. Use this whenever the message contains words like: my, mine, meu, minha, I, eu, me, our, nosso. ALSO use this when the user asks about appointments, meetings, events, contacts, messages, notes, emails, reminders, health — even without explicit personal pronouns. Examples: "when is my next dentist appointment", "quando é minha próxima consulta", "what meetings do I have tomorrow", "quais são meus eventos", "show my recent messages", "who sent me an email", "próximo compromisso"
+
+- "web_search" — The user wants REAL-TIME or CURRENT information that requires searching the internet. This includes: sports scores/schedules, news, weather, stock prices, upcoming events, tournament brackets, match results, current standings, release dates, or ANY question about something happening NOW or in the near future. Also use this when the user says a previous answer was wrong/outdated ("está errado", "wrong", "not right", "outdated", "desatualizado"). Examples: "próximo jogo do Sinner", "when does X play next", "latest news about Y", "what's the score of Z"
+
+- "action" — The user wants to perform a specific action using one of the available tools.
+
+- "general_knowledge" — ONLY for timeless facts, definitions, math, translations, or explanations that have NOTHING to do with the user's personal life or real-time events. Examples: "what is the capital of France?", "explain quantum computing", "translate 'hello' to Spanish", "what is 15% of 200?". This is ONLY for pure factual questions with NO personal or real-time component.
+
+IMPORTANT RULES:
+- If the user mentions "my", "meu", "minha", "I", "eu" → ALWAYS "query"
+- If the user asks about appointments, calendar, contacts, messages, notes, emails, reminders, health → ALWAYS "query"
+- "general_knowledge" is ONLY for pure factual questions with NO personal or real-time component
+- When in doubt between "query" and "general_knowledge", choose "query"
+
+If "action", also specify which tool_name best matches.
+If "web_search", also provide a concise search query:
+- Keep the query in the SAME LANGUAGE as the user's message
+- Extract the actual subject/entity/topic from the message and conversation context
+- Remove command words (search, busque, find, procure)
+- Resolve pronouns (he/she/dele/dela) using the conversation context. If a "Message being replied to" is present, it is the PRIMARY context for pronoun resolution — use names and entities from it.
+- For recent conversation context, prioritize the MOST RECENT messages; older messages are less relevant.
+- Example: "Busque os próximos jogos dele" with context about João Fonseca → search_query: "João Fonseca próximos jogos tênis"
+
+Respond with ONLY valid JSON:
+{"intent": "query"}
+{"intent": "web_search", "search_query": "actual search terms"}
+{"intent": "action", "tool": "tool_name_here"}
+{"intent": "general_knowledge"}

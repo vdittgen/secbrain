@@ -1,0 +1,57 @@
+[project]
+name = "secbrain"
+version = "0.5.0b1"
+description = "Privacy-first AI operating system - Python data pipeline and ML layer"
+license = {text = "Apache-2.0"}
+requires-python = ">=3.10"
+dependencies = [
+    "kuzu>=0.4.0",
+    "chromadb>=0.5.0",
+    "sqlmesh>=0.100.0",
+    "ollama>=0.3.0",
+    "duckduckgo-search>=7.0.0",
+    "pydantic>=2.7.0",
+    "pydantic-ai-slim[openai]>=0.0.50",
+    "tiktoken>=0.7.0",
+]
+
+[project.optional-dependencies]
+voice = [
+    "mlx-qwen3-asr>=0.1.0",
+]
+voice-fallback = [
+    "faster-whisper>=1.0.0",
+]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=5.0.0",
+    "ruff>=0.5.0",
+    "pydantic-evals>=0.0.50",
+]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 88
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+# The apple bridge embeds AppleScript source as Python triple-quoted strings.
+# AppleScript lines aren't reflowable without `¬` continuations that hurt
+# readability and AppleScript parser tolerance, so E501 is waived here.
+"src/extensions/bridges/apple/server.py" = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]

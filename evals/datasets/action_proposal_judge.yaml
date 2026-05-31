@@ -1,0 +1,320 @@
+# Action-proposal-judge eval suite.
+#
+# Exercises the independent judge sub-agent (src/agents/
+# action_proposal_judge/agent.py). The judge runs on a different LLM
+# family from the primary extractor, sees the user's literal message
+# plus the primary's proposed payload, and emits an
+# ActionProposalVerdict with optional patches.
+#
+# Cases pair a `user_message` with a `proposed_arguments` payload the
+# primary plausibly would have produced. The judge must:
+#   - Reject (ok=false) hallucinated titles + null required times,
+#     and patch them back to the user's literal values.
+#   - Accept (ok=true) faithful proposals without inventing concerns.
+#   - Set cannot_recover=true when the user message is too ambiguous
+#     to construct any safe payload from.
+#
+# sensitivity_tier: 2
+
+cases:
+  # ----- the production failure ------------------------------------------
+  - name: hallucinated_title_tennis_vs_coffee
+    inputs:
+      user_message: >
+        create an event on my calendar for tomorrow 7 am called
+        "Play Tennis with Tiago"
+      tool_name: create_event
+      tool_schema:
+        type: object
+        properties:
+          title: {type: string}
+          start_time: {type: string}
+          end_time: {type: string}
+          location: {type: string}
+        required: [title, start_time]
+      proposed_arguments:
+        title: "Coffee chat with Sarah"
+        start_time: "2026-08-19T07:00:00"
+        end_time: null
+      today_iso: "2026-05-22"
+    expected_output: null
+    evaluators:
+      - {FieldEquals: {field: ok, value: false}}
+      - {FieldContains: {field: patches.title, substring: "Play Tennis"}}
+      - {FieldContains: {field: patches.title, substring: "Tiago"}}
+      # The judge must reject the wrong date too.
+      - {FieldNotEmpty: {field: patches.start_time}}
+
+  # ----- truthful proposal — must pass cleanly ---------------------------
+  - name: faithful_proposal_passes
+    inputs:
+      user_message: >
+        Schedule "Standup" tomorrow at 9am.
+      tool_name: create_event
+      tool_schema:
+        type: object
+        properties:
+          title: {type: string}
+          start_time: {type: string}
+          end_time: {type: string}
+        required: [title, start_time]
+      proposed_arguments:
+        title: "Standup"
+        start_time: "2026-05-23T09:00:00"
+        end_time: "2026-05-23T10:00:00"
+      today_iso: "2026-05-22"
+    expected_output: null
+    evaluators:
+      - {FieldEquals: {field: ok, value: true}}
+      # Don't decorate truthful verdicts with caveats.
+      - {ListLengthInRange: {field: reasons, min_n: 0, max_n: 1}}
+
+  # ----- missing required end_time gets defaulted by the judge -----------
+  - name: missing_end_time_judge_defaults_to_start_plus_one_hour
+    inputs:
+      user_message: >
+        Create an event "Demo run" tomorrow at 3pm.
+      tool_name: create_event
+      tool_schema:
+        type: object
+        properties:
+          title: {type: string}
+          start_time: {type: string}
+          end_time: {type: string}
+        required: [title, start_time]
+      proposed_arguments:
+        title: "Demo run"
+        start_time: "2026-05-23T15:00:00"
+        end_time: null
+      today_iso: "2026-05-22"
+    expected_output: null
+    evaluators:
+      - {FieldEquals: {field: ok, value: false}}
+      - {FieldNotEmpty: {field: patches.end_time}}
+
+  # ----- literal "None" string slipped through; judge cleans it up -------
+  - name: literal_none_string_rejected
+    inputs:
+      user_message: >
+        Add an event titled Lunch with Maria tomorrow at noon.
+      tool_name: create_event
+      tool_schema:
+        type: object
+        properties:
+          title: {type: string}
+          start_time: {type: string}
+          end_time: {type: string}
+          location: {type: string}
+        required: [title, start_time]
+      proposed_arguments:
+        title: "Lunch with Maria"
+        start_time: "2026-05-23T12:00:00"
+        end_time: "None"
+        location: "None"
+      today_iso: "2026-05-22"
+    expected_output: null
+    evaluators:
+      - {FieldEquals: {field: ok, value: false}}
+      # The judge must patch end_time to a real value and clear the
+      # bogus location.
+      - {FieldNotEmpty: {field: patches.end_time}}
+
+  # ----- truly ambiguous request — judge refuses safely ------------------
+  - name: ambiguous_request_cannot_recover
+    inputs:
+      user_message: "do the thing we talked about"
+      tool_name: create_event
+      tool_schema:
+        type: object
+        properties:
+          title: {type: string}
+          start_time: {type: string}
+          end_time: {type: string}
+        required: [title, start_time]
+      proposed_arguments:
+        title: "Untitled"
+        start_time: null
+        end_time: null
+      today_iso: "2026-05-22"
+    expected_output: null
+    evaluators:
+      - {FieldEquals: {field: ok, value: false}}
+      - {FieldEquals: {field: cannot_recover, value: true}}
+
+  # ----- unjustified location hallucinated by primary --------------------
+  - name: unjustified_location_dropped
+    inputs:
+      user_message: >
+        Create "1:1 with Hugo" next Monday 10am.
+      tool_name: create_event
+      tool_schema:
+        type: object
+        properties:
+          title: {type: string}
+          start_time: {type: string}
+          end_time: {type: string}
+          location: {type: string}
+        required: [title, start_time]
+      proposed_arguments:
+        title: "1:1 with Hugo"
+        start_time: "2026-05-25T10:00:00"
+        end_time: "2026-05-25T11:00:00"
+        location: "Mission Bay office"   # never mentioned by the user
+      today_iso: "2026-05-22"
+    expected_output: null
+    evaluators:
+      - {FieldEquals: {field: ok, value: false}}
+      # The judge should drop or null the unjustified location.
+
+  # ----- channel mismatch — reply via email proposed for a WhatsApp -----
+  # message. The exact "watering plants" production failure.
+  - name: channel_mismatch_email_for_whatsapp
+    inputs:
+      user_message: >
+        Most recent inbound message (write the reply in the SAME
+        language as this text):
+        Oi! Vai regar as plantas hoje?
+
+        User: respond to her saying I'm going to water them now.
+      tool_name: reply_email
+      tool_schema:
+        type: object
+        properties:
+          subject: {type: string}
+          body: {type: string}
+        required: [subject, body]
+      proposed_arguments:
+        subject: "watering plants"
+        body: "Hey, I'm going to water the plants right now."
+      today_iso: "2026-05-22"
+    expected_output: null
+    evaluators:
+      # The judge can't patch the wrong tool — it must flag
+      # cannot_recover so the matcher re-routes.
+      - {FieldEquals: {field: ok, value: false}}
+      - {FieldEquals: {field: cannot_recover, value: true}}
+
+  # ----- language mismatch — Portuguese inbound, English body ----------
+  - name: language_mismatch_english_body_for_portuguese_inbound
+    inputs:
+      user_message: >
+        Most recent inbound message (write the reply in the SAME
+        language as this text):
+        Oi! Vai regar as plantas hoje?
+
+        User: responda dizendo que vou regar agora.
+      tool_name: send_whatsapp_message
+      tool_schema:
+        type: object
+        properties:
+          to: {type: string}
+          body: {type: string}
+        required: [to, body]
+      proposed_arguments:
+        to: "Sarah"
+        body: "Hey, I'm going to water the plants right now."
+      today_iso: "2026-05-22"
+    expected_output: null
+    evaluators:
+      - {FieldEquals: {field: ok, value: false}}
+      # The judge should patch the body to Portuguese.
+      - {FieldNotEmpty: {field: patches.body}}
+
+  # ----- plural addressing for a single named recipient ---------------
+  # User is replying to ONE person (Elmara) but the body uses Portuguese
+  # plural "vocês" / "voltam" / "para vocês". Single-recipient → must
+  # be singular ("você", "volta", "para você").
+  - name: plural_addressing_for_single_recipient
+    inputs:
+      user_message: >
+        Most recent inbound message (write the reply in the SAME
+        language as this text):
+        Oi! Vai regar as plantas hoje?
+
+        User: responda que vou regar agora.
+      tool_name: send_whatsapp_message
+      tool_schema:
+        type: object
+        properties:
+          to: {type: string}
+          body: {type: string}
+        required: [to, body]
+      proposed_arguments:
+        to: "Elmara"
+        body: "Oi, vou molhar as plantas para vocês. Quando vocês voltam? Tem alguma planta que precisa de cuidado especial?"
+      today_iso: "2026-05-22"
+    expected_output: null
+    evaluators:
+      - {FieldEquals: {field: ok, value: false}}
+      # Judge must patch the body — singular form.
+      - {FieldNotEmpty: {field: patches.body}}
+
+  # ----- formal register for spouse (relational tone mismatch) ---------
+  # Recipient profile says "wife" but the body reads like a formal
+  # business email. The judge must downshift the register.
+  - name: formal_tone_for_spouse_recipient
+    inputs:
+      user_message: >
+        Recipient profile (match this register; default to singular
+        addressing for one named recipient):
+        - name: Elmara
+        - relationship: wife
+        - recent outbound samples (the user's own style):
+            • amor te amo
+            • já tô voltando
+            • compra leite por favor ❤️
+
+        Most recent inbound message (write the reply in the SAME
+        language as this text):
+        Vai regar as plantas hoje?
+
+        User: respond saying yes I'm watering them now.
+      tool_name: send_whatsapp_message
+      tool_schema:
+        type: object
+        properties:
+          to: {type: string}
+          body: {type: string}
+        required: [to, body]
+      proposed_arguments:
+        to: "Elmara"
+        body: "Prezada Elmara, informo que estou procedendo com a hidratação das plantas neste momento. Atenciosamente."
+      today_iso: "2026-05-22"
+    expected_output: null
+    evaluators:
+      - {FieldEquals: {field: ok, value: false}}
+      # Judge must patch the body to match the casual / intimate
+      # register established by the recent outbound samples.
+      - {FieldNotEmpty: {field: patches.body}}
+
+  # ----- persona leak + placeholder leak (the watering-plants reply) --
+  # The exact production failure: agent wrote a Portuguese reply that
+  # named itself ("SecBrain avisa...") and shipped an unrehydrated
+  # ``<PERSON_2726>`` placeholder in the recipient + body. The judge
+  # must reject both, patch the body to first-person without persona,
+  # and clear the placeholder from ``to``.
+  - name: persona_and_placeholder_leak_whatsapp_reply
+    inputs:
+      user_message: >
+        Most recent inbound message (write the reply in the SAME
+        language as this text):
+        Oi! Vai regar as plantas hoje?
+
+        User: responda dizendo que vou regar agora.
+      tool_name: send_whatsapp_message
+      tool_schema:
+        type: object
+        properties:
+          to: {type: string}
+          body: {type: string}
+        required: [to, body]
+      proposed_arguments:
+        to: "<PERSON_2726>"
+        body: "Olá <PERSON_2726>! SecBrain avisa melhor — são as plantas aí em casa? Ela precisa que eu molhe? SecBrain diz os dias que fica melhor pra vocês que eu me organizo."
+      today_iso: "2026-05-22"
+    expected_output: null
+    evaluators:
+      - {FieldEquals: {field: ok, value: false}}
+      # Judge must patch the body — and the patched body must not
+      # mention SecBrain or contain a raw placeholder.
+      - {FieldNotEmpty: {field: patches.body}}

@@ -1,0 +1,65 @@
+# Dataset-validator eval suite.
+#
+# The validator inspects a user-uploaded YAML eval dataset and
+# returns a DatasetValidationReport. Each case here supplies a
+# candidate YAML string as ``inputs`` and asserts shape on the
+# report. The structural pass is deterministic (no LLM); the prose
+# proposals come from the LLM step but we only assert structural
+# fields here so the suite is stable.
+#
+# sensitivity_tier: N/A — synthetic inputs.
+
+cases:
+  - name: well_formed_minimal
+    inputs: |
+      cases:
+        - name: one
+          inputs: hello
+          expected_output: {tier: 1}
+          evaluators:
+            - {TierEquals: {expected: 1}}
+    evaluators:
+      - {FieldEquals: {field: valid, value: true}}
+      - {ListLengthInRange: {field: errors, min_n: 0, max_n: 0}}
+
+  - name: rejects_empty_cases
+    inputs: |
+      cases: []
+    evaluators:
+      - {FieldEquals: {field: valid, value: false}}
+      - {ListLengthInRange: {field: errors, min_n: 1, max_n: 5}}
+
+  - name: rejects_unknown_evaluator
+    inputs: |
+      cases:
+        - name: one
+          inputs: hello
+          evaluators:
+            - DoesNotExistEvaluator
+    evaluators:
+      - {FieldEquals: {field: valid, value: false}}
+      - {ListLengthInRange: {field: errors, min_n: 1, max_n: 10}}
+
+  - name: rejects_missing_name
+    inputs: |
+      cases:
+        - inputs: hello
+    evaluators:
+      - {FieldEquals: {field: valid, value: false}}
+
+  - name: rejects_duplicate_names
+    inputs: |
+      cases:
+        - name: dup
+          inputs: a
+        - name: dup
+          inputs: b
+    evaluators:
+      - {FieldEquals: {field: valid, value: false}}
+
+  - name: rejects_unparseable_yaml
+    inputs: ":\n  - this is not\n   valid yaml: ["
+    evaluators:
+      - {FieldEquals: {field: valid, value: false}}
+
+evaluators: []

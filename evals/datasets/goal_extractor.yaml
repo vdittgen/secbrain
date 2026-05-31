@@ -1,0 +1,213 @@
+# Goal-extractor eval suite.
+#
+# Mines goals from mixed evidence (messages, notes, facts, chat).
+# Structural checks enforce the schema contract: cap (≤ 8),
+# category vocabulary, horizon vocabulary, importance range,
+# source_kind vocabulary. The LLM judge grades whether the
+# extracted goal titles + *why* are grounded in the evidence.
+#
+# sensitivity_tier: N/A
+
+cases:
+  - name: work_clinic_staffing
+    inputs:
+      messages:
+        - id: m1
+          sender_name: Mara
+          content: >
+            We really need to finish hiring the new psychologist for
+            the clinic by August — we can't keep turning families
+            away.
+        - id: m2
+          sender_name: Sandra
+          content: >
+            I scheduled three more interviews next week. The whole
+            quarter is about getting the clinic fully staffed.
+      notes: []
+      facts: []
+      chat_excerpts: []
+      known_topics:
+        - {name: "hiring psychologist", contact: "Mara"}
+    expected_output: null
+    evaluators:
+      - {ListLengthInRange: {field: goals, min_n: 1, max_n: 4}}
+      - {FieldIn: {field: goals.0.category, choices: ["personal", "life", "work"]}}
+      - {FieldIn: {field: goals.0.horizon, choices: ["short", "medium", "long"]}}
+      - {IntInRange: {field: goals.0.importance, lo: 5, hi: 10}}
+      - {FieldIn: {field: goals.0.source_kind, choices: ["message", "note", "fact", "chat"]}}
+      - LLMJudgeOnField:
+          field: goals
+          threshold: 7
+          rubric: >
+            At least one goal is about staffing / hiring at the
+            clinic, categorised as "work", with a short or medium
+            horizon. The *why* should reference the families /
+            clinic capacity, not be empty or generic. Fabricating
+            unrelated goals (e.g. "open a second clinic") scores
+            0-3. A single task-shaped item like "schedule the
+            interview" instead of a goal also scores 0-3.
+
+  - name: personal_half_marathon
+    inputs:
+      messages: []
+      notes:
+        - id: n1
+          content: >
+            Want to finish a half marathon before turning 43.
+            Already running 3x a week. Need a proper training plan
+            for the next 6 months.
+      facts:
+        - id: f1
+          subject: user
+          predicate: runs
+          content: "User runs 3x per week, building toward distance"
+      chat_excerpts: []
+      known_topics: []
+    expected_output: null
+    evaluators:
+      - {ListLengthInRange: {field: goals, min_n: 1, max_n: 3}}
+      - {FieldIn: {field: goals.0.category, choices: ["personal", "life", "work"]}}
+      - {FieldIn: {field: goals.0.horizon, choices: ["short", "medium", "long"]}}
+      - {IntInRange: {field: goals.0.importance, lo: 4, hi: 10}}
+      - LLMJudgeOnField:
+          field: goals
+          threshold: 7
+          rubric: >
+            At least one goal is about running a half marathon,
+            categorised as "personal", with a medium horizon
+            (3-12 months). The *why* should connect to the running
+            habit or the birthday milestone in the note. Inventing
+            races, distances, or sponsors not in the evidence
+            scores 0-3.
+
+  - name: life_father_treatment
+    inputs:
+      messages:
+        - id: m1
+          sender_name: Mom
+          content: >
+            Dad's oncologist suggested we revisit the treatment
+            plan after the next scan. I'm trying to keep things
+            stable for him at home.
+      notes:
+        - id: n1
+          content: >
+            Helping Dad through his cancer treatment is the priority
+            this year — getting him to appointments, supporting Mom.
+      facts: []
+      chat_excerpts: []
+      known_topics:
+        - {name: "father's cancer treatment", contact: "Mom"}
+    expected_output: null
+    evaluators:
+      - {ListLengthInRange: {field: goals, min_n: 1, max_n: 4}}
+      - {FieldIn: {field: goals.0.category, choices: ["personal", "life", "work"]}}
+      - {IntInRange: {field: goals.0.importance, lo: 7, hi: 10}}
+      - LLMJudgeOnField:
+          field: goals
+          threshold: 7
+          rubric: >
+            At least one goal references Dad's treatment or
+            supporting him through it, categorised as "life". The
+            phrasing should be appropriately gentle ("stabilise dad's
+            treatment plan", "support dad through chemo") — not
+            clinical or hopeful in a fabricated way. Inventing a
+            cure or a specific medical decision scores 0-2.
+
+  - name: mixed_evidence_multiple_goals
+    inputs:
+      messages:
+        - id: m1
+          sender_name: Boss
+          content: >
+            We need to ship v1 of the extension marketplace this
+            quarter — it's the headline feature for the launch.
+        - id: m2
+          sender_name: Mara
+          content: >
+            Are you still planning to do that 10-day silent retreat
+            this winter? You said you wanted it before you turn 43.
+      notes:
+        - id: n1
+          content: >
+            Goal for the year: read 24 books, mostly non-fiction,
+            mostly career-relevant.
+      facts: []
+      chat_excerpts: []
+      known_topics:
+        - {name: "extension marketplace v1", contact: "Boss"}
+    expected_output: null
+    evaluators:
+      - {ListLengthInRange: {field: goals, min_n: 2, max_n: 6}}
+      - LLMJudgeOnField:
+          field: goals
+          threshold: 7
+          rubric: >
+            The output should contain goals reflecting at least two
+            of: shipping the extension marketplace (work, short or
+            medium), doing the silent retreat (personal, medium),
+            and reading 24 books (personal, medium). Each goal's
+            category and horizon should match the evidence. Padding
+            with goals not present in the evidence scores 0-3.
+      - {FieldIn: {field: goals.0.source_kind, choices: ["message", "note", "fact", "chat"]}}
+      - {FieldIn: {field: goals.1.source_kind, choices: ["message", "note", "fact", "chat"]}}
+
+  - name: thin_evidence_returns_empty
+    inputs:
+      messages:
+        - {id: m1, sender_name: Alice, content: "lol"}
+        - {id: m2, sender_name: Bob, content: "👍"}
+        - {id: m3, sender_name: Dan, content: "BBQ Saturday?"}
+      notes: []
+      facts: []
+      chat_excerpts: []
+      known_topics: []
+    expected_output: null
+    evaluators:
+      - {ListLengthInRange: {field: goals, min_n: 0, max_n: 1}}
+
+  - name: task_not_goal_filtered
+    inputs:
+      messages:
+        - id: m1
+          sender_name: Boss
+          content: "Send the Q3 proposal draft by Friday."
+        - id: m2
+          sender_name: Mara
+          content: "Buy milk on the way home."
+      notes: []
+      facts: []
+      chat_excerpts: []
+      known_topics: []
+    expected_output: null
+    # Single deadline + errand → not goals. Agent should emit
+    # nothing, or at most lift them into one broader commitment.
+    # Verbatim "send the proposal" / "buy milk" goals are the
+    # failure we're guarding against; a 0..1 cap catches that.
+    evaluators:
+      - {ListLengthInRange: {field: goals, min_n: 0, max_n: 1}}
+
+  - name: cap_at_eight_with_busy_evidence
+    inputs:
+      messages:
+        - {id: m1, sender_name: Boss, content: "Ship v1 of the extension marketplace this quarter."}
+        - {id: m2, sender_name: Boss, content: "Cut the Acme renewal contract before end of month."}
+        - {id: m3, sender_name: Mara, content: "Finalise the clinic hiring plan this summer."}
+        - {id: m4, sender_name: Mom, content: "Stay close to Dad through the next round of treatment."}
+        - {id: m5, sender_name: Mara, content: "Still planning the silent retreat before your birthday?"}
+        - {id: m6, sender_name: Sandra, content: "We want to expand the clinic to a second location next year."}
+        - {id: m7, sender_name: Coach, content: "Half marathon registration opens next month — keep training."}
+        - {id: m8, sender_name: Friend, content: "Did you sign up for the surf trip yet?"}
+        - {id: m9, sender_name: Friend, content: "Tennis tournament in October — you said you'd enter."}
+        - {id: m10, sender_name: Mara, content: "We promised Aimée we'd take her to Disney before she turns 6."}
+      notes:
+        - id: n1
+          content: "Annual reading goal: 24 books. Annual savings goal: 30% of income."
+      facts: []
+      chat_excerpts: []
+      known_topics: []
+    expected_output: null
+    evaluators:
+      - {ListLengthInRange: {field: goals, min_n: 3, max_n: 8}}
+
+evaluators: []

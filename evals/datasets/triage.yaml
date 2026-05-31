@@ -1,0 +1,117 @@
+# Message-triage eval suite.
+#
+# Each case carries a small batch of WhatsApp-style messages and an
+# expected TriageBatch with keep/drop verdicts. The
+# TriageDecisionAccuracy evaluator compares per-message decisions
+# (keep, is_promo, is_automated, is_ack_only).
+#
+# Inputs follow the TriageMessage shape (dict, not the dataclass —
+# the runner converts).
+#
+# sensitivity_tier: N/A
+
+cases:
+  - name: direct_question_kept
+    inputs:
+      messages:
+        - message_id: m1
+          content: "Are you free Thursday afternoon for a call?"
+          sender_name: "Alice"
+          source: "whatsapp"
+    expected_output:
+      decisions:
+        - message_id: m1
+          keep: true
+
+  - name: promo_dropped
+    inputs:
+      messages:
+        - message_id: m2
+          content: "EXCLUSIVE OFFER — 80% off this weekend only!"
+          sender_name: "MegaDeals"
+          source: "whatsapp"
+    expected_output:
+      decisions:
+        - message_id: m2
+          keep: false
+          is_promo: true
+
+  - name: ack_only_dropped
+    inputs:
+      messages:
+        - message_id: m3
+          content: "ok"
+          sender_name: "Bob"
+          source: "whatsapp"
+    expected_output:
+      decisions:
+        - message_id: m3
+          keep: false
+          is_ack_only: true
+
+  - name: automated_otp_dropped
+    inputs:
+      messages:
+        - message_id: m4
+          content: "Your verification code is 482911. Expires in 5 min."
+          sender_name: "Bank"
+          source: "sms"
+    expected_output:
+      decisions:
+        - message_id: m4
+          keep: false
+          is_automated: true
+
+  - name: scheduling_kept
+    inputs:
+      messages:
+        - message_id: m5
+          content: "Can we move the standup to 10:30?"
+          sender_name: "Carol"
+          source: "whatsapp"
+    expected_output:
+      decisions:
+        - message_id: m5
+          keep: true
+
+  - name: emoji_only_dropped
+    inputs:
+      messages:
+        - message_id: m6
+          content: "👍"
+          sender_name: "Dan"
+          source: "whatsapp"
+    expected_output:
+      decisions:
+        - message_id: m6
+          keep: false
+          is_ack_only: true
+
+  - name: mixed_batch
+    inputs:
+      messages:
+        - message_id: m7
+          content: "Did you talk to the contractor today?"
+          sender_name: "Mom"
+          source: "whatsapp"
+        - message_id: m8
+          content: "thx 🙏"
+          sender_name: "Eve"
+          source: "whatsapp"
+        - message_id: m9
+          content: "🎉 Free $5 credit when you invite a friend!"
+          sender_name: "PromoApp"
+          source: "whatsapp"
+    expected_output:
+      decisions:
+        - message_id: m7
+          keep: true
+        - message_id: m8
+          keep: false
+          is_ack_only: true
+        - message_id: m9
+          keep: false
+          is_promo: true
+
+evaluators:
+  - TriageDecisionAccuracy

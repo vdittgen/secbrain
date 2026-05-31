@@ -1,0 +1,83 @@
+# Sensitivity-classifier eval suite.
+#
+# Each case carries a string input (the text to classify) and an
+# expected_output with the integer tier we want the agent to assign.
+# The TierEquals evaluator (evals/evaluators.py) checks exact match.
+#
+# Tiers:
+#   1 - generic preferences / public topics
+#   2 - people names, schedules, locations, contact details
+#   3 - health, finance, mental health, trauma, secrets
+#
+# When extending: keep the file < ~50 cases per dataset; bigger
+# changes warrant a new suite (e.g. sensitivity_health.yaml).
+#
+# sensitivity_tier: N/A — the inputs themselves describe sensitive
+# situations but we only ship them as eval material.
+
+cases:
+  # ----- Tier 1 cases -----
+  - name: preference_food
+    inputs: "I love sushi and miso soup."
+    expected_output: {tier: 1}
+
+  - name: hobby_running
+    inputs: "Running in the morning feels great."
+    expected_output: {tier: 1}
+
+  - name: abstract_topic
+    inputs: "I've been reading about renewable energy."
+    expected_output: {tier: 1}
+
+  - name: weather_chitchat
+    inputs: "It's a sunny day today."
+    expected_output: {tier: 1}
+
+  # ----- Tier 2 cases -----
+  - name: people_name
+    inputs: "Sam is coming over Tuesday for dinner."
+    expected_output: {tier: 2}
+
+  - name: schedule_meeting
+    inputs: "Board review next Wednesday at 10am."
+    expected_output: {tier: 2}
+
+  - name: contact_phone
+    inputs: "My phone number is 555-0123."
+    expected_output: {tier: 2}
+
+  - name: address
+    inputs: "I live at 42 Maple Street."
+    expected_output: {tier: 2}
+
+  - name: family_routine
+    inputs: "My sister picks up the kids on Thursdays."
+    expected_output: {tier: 2}
+
+  # ----- Tier 3 cases -----
+  - name: health_depression
+    inputs: "I've been struggling with depression lately."
+    expected_output: {tier: 3}
+
+  - name: medication
+    inputs: "My doctor put me on sertraline."
+    expected_output: {tier: 3}
+
+  - name: trauma_disclosure
+    inputs: "After the abuse I had to start therapy."
+    expected_output: {tier: 3}
+
+  - name: finance_account
+    inputs: "My bank account routing number is 12345678."
+    expected_output: {tier: 3}
+
+  - name: credit_card
+    inputs: "My credit card number is 4111 1111 1111 1111."
+    expected_output: {tier: 3}
+
+  - name: tax_situation
+    inputs: "I owe $20,000 in back taxes."
+    expected_output: {tier: 3}
+
+evaluators:
+  - TierEquals

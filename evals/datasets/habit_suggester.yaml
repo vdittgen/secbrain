@@ -1,0 +1,151 @@
+# Habit-suggester eval suite.
+#
+# For each batch of active goals (+ linked topics), the agent must
+# emit atomic habits anchored to a real ``goal_id`` from the input.
+# Structural checks enforce the schema contract (count, cadence,
+# preferred_window vocab, every habit has a valid goal_id). The LLM
+# judge grades whether the habit is small enough and reasonably
+# tied to the goal's *why* or linked topics.
+#
+# sensitivity_tier: N/A
+
+cases:
+  - name: half_marathon_running_habit
+    inputs:
+      goals:
+        - id: g1
+          title: "Run a half marathon this year"
+          category: personal
+          why: "so I can finish a half marathon before turning 43"
+      linked_topics: []
+    expected_output: null
+    evaluators:
+      - {ListLengthInRange: {field: habits, min_n: 1, max_n: 6}}
+      - {FieldEquals: {field: habits.0.goal_id, value: "g1"}}
+      - {FieldIn: {field: habits.0.cadence, choices: ["daily", "weekly", "specific_days"]}}
+      - {FieldIn: {field: habits.0.preferred_window, choices: ["morning", "midday", "evening", "any"]}}
+      - LLMJudgeOnField:
+          field: habits
+          threshold: 7
+          rubric: >
+            At least one habit is a concrete running / training
+            practice (e.g. "Run 5km", "30 min easy run",
+            "Strength session"). The habit should be small enough
+            to do most days/weeks (no "run a half marathon every
+            Sunday"). Habits unrelated to running (e.g.
+            "journaling") score 0-3.
+
+  - name: clinic_staffing_with_topic_context
+    inputs:
+      goals:
+        - id: g1
+          title: "Staff the clinic by end of Q3"
+          category: work
+          why: "so families stop being turned away"
+      linked_topics:
+        - {goal_id: g1, name: "hiring psychologist", context: "currently reviewing résumés and scheduling interviews"}
+    expected_output: null
+    evaluators:
+      - {ListLengthInRange: {field: habits, min_n: 1, max_n: 6}}
+      - {FieldEquals: {field: habits.0.goal_id, value: "g1"}}
+      - LLMJudgeOnField:
+          field: habits
+          threshold: 7
+          rubric: >
+            At least one habit references the hiring / résumé
+            workflow concretely (e.g. "10 min/day reviewing
+            résumés", "1 interview slot per week"). Habits that
+            say only "work on the clinic" or "think about hiring"
+            score 0-3 — they're not atomic enough. ``why`` should
+            echo the families / capacity reason from the goal.
+
+  - name: multiple_goals_diverse_habits
+    inputs:
+      goals:
+        - id: g1
+          title: "Stabilise Dad's treatment plan"
+          category: life
+          why: "so Mom isn't carrying it alone"
+        - id: g2
+          title: "Ship v1 of the extension marketplace"
+          category: work
+          why: "so the launch lands on time"
+        - id: g3
+          title: "Read 24 books this year"
+          category: personal
+          why: "so I keep learning across domains"
+      linked_topics:
+        - {goal_id: g1, name: "father's cancer treatment", context: "weekly oncology appointments, monitoring side effects"}
+        - {goal_id: g2, name: "extension marketplace v1", context: "two engineers blocked on the registry API"}
+    expected_output: null
+    evaluators:
+      - {ListLengthInRange: {field: habits, min_n: 3, max_n: 6}}
+      - LLMJudgeOnField:
+          field: habits
+          threshold: 7
+          rubric: >
+            The habits should cover at least two of the three
+            goals (g1, g2, g3). Each habit must be atomic
+            (≤ 30 min / day on the surface), anchored to its
+            goal, with a *why* echoing that goal. A book habit
+            tied to g3 should look like "read 1 page" or
+            "read 10 min before bed" — not "read 24 books".
+            Habits with no clear goal connection score 0-3.
+
+  - name: empty_goals_returns_empty
+    inputs:
+      goals: []
+      linked_topics: []
+    expected_output: null
+    evaluators:
+      - {ListLengthInRange: {field: habits, min_n: 0, max_n: 0}}
+
+  - name: single_goal_three_habits_max
+    inputs:
+      goals:
+        - id: only_goal
+          title: "Strengthen tennis game"
+          category: personal
+          why: "so I can compete in the October tournament"
+      linked_topics:
+        - {goal_id: only_goal, name: "tennis tournament", context: "weekly lessons, weak backhand to fix"}
+    expected_output: null
+    evaluators:
+      - {ListLengthInRange: {field: habits, min_n: 1, max_n: 4}}
+      - {FieldEquals: {field: habits.0.goal_id, value: "only_goal"}}
+      - LLMJudgeOnField:
+          field: habits
+          threshold: 7
+          rubric: >
+            All habits anchor to "only_goal". At least one habit
+            should be a concrete tennis practice (footwork drill,
+            wall hits, backhand reps). Generic "go to the gym"
+            without tying to tennis scores 0-3. Inventing tournaments
+            or coaches scores 0.
+      - LLMJudgeOnField:
+          field: habits.*.why
+          threshold: 6
+          rubric: >
+            Each ``why`` echoes the goal's why (tournament prep / so
+            I can compete). Empty or generic "so I improve" without
+            tying to the goal scores 0-3.
+
+  - name: goal_id_must_be_real
+    inputs:
+      goals:
+        - id: real_goal_a
+          title: "Finish writing the novel"
+          category: personal
+          why: "so I can submit to publishers next year"
+        - id: real_goal_b
+          title: "Save 30% of income"
+          category: life
+          why: "so we can afford the move"
+      linked_topics: []
+    expected_output: null
+    evaluators:
+      - {ListLengthInRange: {field: habits, min_n: 2, max_n: 6}}
+      - {FieldIn: {field: habits.0.goal_id, choices: ["real_goal_a", "real_goal_b"]}}
+      - {FieldIn: {field: habits.1.goal_id, choices: ["real_goal_a", "real_goal_b"]}}
+
+evaluators: []

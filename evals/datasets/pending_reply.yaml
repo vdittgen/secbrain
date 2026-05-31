@@ -1,0 +1,88 @@
+# Pending-reply detector eval suite.
+#
+# Each case carries a batch of messages and a set of message_ids
+# that SHOULD be flagged as needing a reply. ContainsIds verifies
+# the agent picked at least those ids; per-pick domain/importance
+# rubric grading happens via the judge on the reason field.
+#
+# sensitivity_tier: N/A
+
+cases:
+  - name: direct_question_flagged
+    inputs:
+      messages:
+        - {id: m1, sender_name: Alice, content: "Are you free Tuesday?"}
+      topics: {}
+    expected_output:
+      ids: [m1]
+    evaluators:
+      - {ContainsIds: {field: replies, id_key: message_id, exact: true}}
+
+  - name: ack_only_filtered
+    inputs:
+      messages:
+        - {id: m1, sender_name: Bob, content: "thanks!"}
+      topics: {}
+    expected_output:
+      ids: []
+    evaluators:
+      - {ContainsIds: {field: replies, id_key: message_id, exact: true}}
+
+  - name: mixed_batch_picks_real_asks
+    inputs:
+      messages:
+        - {id: m1, sender_name: Carol, content: "Can you sign the contract today?"}
+        - {id: m2, sender_name: Eve, content: "hahaha"}
+        - {id: m3, sender_name: Sam, content: "Need your approval on the wire."}
+      topics: {}
+    expected_output:
+      ids: [m1, m3]
+    evaluators:
+      - {ContainsIds: {field: replies, id_key: message_id, exact: true}}
+      - LLMJudgeOnField:
+          field: replies.*.reason
+          threshold: 6
+          rubric: >
+            Each kept message has a reason grounded in its content.
+            "Carol asked you to sign the contract" or "Sam needs
+            wire approval" score 7+. Generic "this needs a reply"
+            scores 0-3.
+
+  - name: promo_dropped_even_when_addressed
+    inputs:
+      messages:
+        - {id: m1, sender_name: MegaDeals, content: "Hey! 80% off ends tonight — reply YES to claim."}
+      topics: {}
+    expected_output:
+      ids: []
+    evaluators:
+      - {ContainsIds: {field: replies, id_key: message_id, exact: true}}
+
+  - name: emotional_weight_raises_importance
+    inputs:
+      messages:
+        - {id: m1, sender_name: Mom, content: "Dad's scan results came back. Can we talk?"}
+      topics:
+        mom:
+          contact: Mom
+          topics: ["father's cancer treatment"]
+          max_importance: 9
+    expected_output:
+      ids: [m1]
+    evaluators:
+      - {ContainsIds: {field: replies, id_key: message_id, exact: true}}
+      - {IntInRange: {field: replies.0.importance, lo: 8, hi: 10}}
+      - {FieldEquals: {field: replies.0.domain, value: family}}
+
+  - name: group_chatter_filtered
+    inputs:
+      messages:
+        - {id: m1, sender_name: Group, content: "Did anyone catch the score last night?"}
+        - {id: m2, sender_name: Group, content: "lol"}
+      topics: {}
+    expected_output:
+      ids: []
+    evaluators:
+      - {ContainsIds: {field: replies, id_key: message_id, exact: true}}
+
+evaluators: []

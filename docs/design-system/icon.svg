@@ -1,0 +1,38 @@
+<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="oklch(0.42 0.20 265)"/>
+      <stop offset="100%" stop-color="oklch(0.30 0.16 245)"/>
+    </linearGradient>
+    <linearGradient id="mid" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="oklch(0.62 0.20 250)"/>
+      <stop offset="100%" stop-color="oklch(0.50 0.18 230)"/>
+    </linearGradient>
+    <linearGradient id="inner" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="oklch(0.92 0.10 175)"/>
+      <stop offset="100%" stop-color="oklch(0.74 0.16 220)"/>
+    </linearGradient>
+    <radialGradient id="hl" cx="25%" cy="20%" r="55%">
+      <stop offset="0%"   stop-color="white" stop-opacity="0.32"/>
+      <stop offset="100%" stop-color="white" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="core" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="white" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="white" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Outer field -->
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <rect width="1024" height="1024" fill="url(#hl)"/>
+
+  <!-- Mid layer -->
+  <rect x="200" y="200" width="624" height="624" rx="148" ry="148" fill="url(#mid)"/>
+  <rect x="200" y="200" width="624" height="624" rx="148" fill="none" stroke="white" stroke-width="2" opacity="0.22"/>
+
+  <!-- Inner layer (the core) -->
+  <rect x="340" y="340" width="344" height="344" rx="86" ry="86" fill="url(#inner)"/>
+
+  <!-- Core glow -->
+  <circle cx="512" cy="512" r="160" fill="url(#core)"/>
+</svg>

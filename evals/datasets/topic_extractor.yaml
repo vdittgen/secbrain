@@ -1,0 +1,96 @@
+# Topic-extractor eval suite.
+#
+# Each case lists expected topic keywords that should appear (as
+# case-insensitive substrings) in at least one extracted topic name.
+# FieldContains on topics.<i>.topic handles that; the LLM judge
+# grades the per-topic recency_reason for groundedness.
+#
+# sensitivity_tier: N/A
+
+cases:
+  - name: construction_topic
+    inputs:
+      contact_name: Sam
+      messages_block: |
+        2026-05-10 Sam: kitchen tiles arrive tomorrow
+        2026-05-09 Sam: did you talk to the plumber yet?
+        2026-05-08 Sam: we're 3 weeks behind schedule on the renovation
+    expected_output:
+      keywords: [renovation]
+    evaluators:
+      - {ListLengthInRange: {field: topics, min_n: 1, max_n: 5}}
+      - LLMJudgeOnField:
+          field: topics
+          threshold: 7
+          rubric: >
+            At least one extracted topic.name mentions renovation,
+            construction, or kitchen. Topics that invent a project
+            name not in the messages score 0-3. Score 7+ when at
+            least one topic is grounded in the messages and none
+            are fabricated.
+
+  - name: casual_chat_empty
+    inputs:
+      contact_name: Eve
+      messages_block: |
+        2026-05-10 Eve: lol
+        2026-05-09 Eve: haha
+        2026-05-08 Eve: 👍
+    expected_output:
+      keywords: []
+    evaluators:
+      - {ListLengthInRange: {field: topics, min_n: 0, max_n: 1}}
+
+  - name: cap_at_five_multiple_threads
+    inputs:
+      contact_name: Mom
+      messages_block: |
+        Many ongoing situations: cancer treatment, house sale, the
+        car broke down, planning a trip to visit family, finishing
+        her PhD dissertation, learning piano.
+    expected_output:
+      keywords: [treatment, house, trip]
+    evaluators:
+      - {ListLengthInRange: {field: topics, min_n: 3, max_n: 5}}
+      - LLMJudgeOnField:
+          field: topics
+          threshold: 7
+          rubric: >
+            At least three of the topics correspond to: cancer
+            treatment, house sale, car repair, family trip, PhD
+            dissertation, piano. No more than 5 topics. Inventing
+            topics not in the input scores 0-3.
+
+  - name: single_strong_signal
+    inputs:
+      contact_name: Boss
+      messages_block: |
+        2026-05-12 Boss: Acme renewal is the priority this week.
+        2026-05-11 Boss: we need to finalise the Acme contract.
+        2026-05-10 Boss: Acme legal sent the redline.
+    expected_output:
+      keywords: [acme]
+    evaluators:
+      - {ListLengthInRange: {field: topics, min_n: 1, max_n: 3}}
+      - LLMJudgeOnField:
+          field: topics
+          threshold: 7
+          rubric: >
+            At least one topic mentions Acme and renewal/contract.
+            Splitting into multiple "Acme legal redline" and "Acme
+            renewal" topics also acceptable. Fabricating "Q3 OKRs"
+            scores 0-2.
+
+  - name: high_sensitivity_health
+    inputs:
+      contact_name: Mom
+      messages_block: |
+        2026-05-12 Mom: Dad's scan results came back, doctor wants to talk Friday.
+        2026-05-11 Mom: he's been struggling with the chemo side effects.
+    expected_output:
+      keywords: [dad, chemo]
+    evaluators:
+      - {ListLengthInRange: {field: topics, min_n: 1, max_n: 3}}
+      - {IntInRange: {field: topics.0.importance, lo: 7, hi: 10}}
+
+evaluators: []

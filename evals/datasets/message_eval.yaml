@@ -1,0 +1,122 @@
+# Message-evaluator eval suite.
+#
+# Each case lists which message_ids the agent should surface as
+# notifications. The notification cap (≤ 3) and importance floor
+# (≥ 7) are enforced structurally.
+#
+# sensitivity_tier: N/A
+
+cases:
+  - name: topic_action_kept
+    inputs:
+      messages:
+        - id: m1
+          sender_name: Sam
+          content: "Construction payment is due Friday — what do you want to do?"
+        - id: m2
+          sender_name: Alice
+          content: "lol"
+      topics:
+        sam:
+          contact: Sam
+          topics: ["construction payment deadline"]
+          max_importance: 8
+      today_events: []
+      existing_pending_ids: []
+    expected_output:
+      ids: [m1]
+    evaluators:
+      - {ContainsIds: {field: notifications, id_key: message_id, exact: true}}
+      - {IntInRange: {field: notifications.0.importance, lo: 7, hi: 10}}
+      - LLMJudgeOnField:
+          field: notifications.0.summary
+          threshold: 7
+          rubric: >
+            Summary must reference the construction payment Friday
+            deadline. Generic "this needs your attention" scores 0-3.
+
+  - name: no_topic_match
+    inputs:
+      messages:
+        - id: m1
+          sender_name: Dan
+          content: "BBQ Saturday?"
+      topics: {}
+      today_events: []
+      existing_pending_ids: []
+    expected_output:
+      ids: []
+    evaluators:
+      - {ContainsIds: {field: notifications, id_key: message_id, exact: true}}
+
+  - name: cap_at_three
+    inputs:
+      messages:
+        - {id: m1, sender_name: Sam, content: "Construction A?"}
+        - {id: m2, sender_name: Sam, content: "Construction B?"}
+        - {id: m3, sender_name: Sam, content: "Construction C?"}
+        - {id: m4, sender_name: Sam, content: "Construction D?"}
+        - {id: m5, sender_name: Sam, content: "Construction E?"}
+      topics:
+        sam:
+          contact: Sam
+          topics: ["construction project"]
+          max_importance: 9
+      today_events: []
+      existing_pending_ids: []
+    expected_output: null
+    evaluators:
+      - {ListLengthInRange: {field: notifications, min_n: 0, max_n: 3}}
+
+  - name: today_event_attendee_message
+    inputs:
+      messages:
+        - id: m1
+          sender_name: Boss
+          content: "Pushing the board review by an hour — does 11am work?"
+      topics: {}
+      today_events:
+        - {title: "Board review", attendees: ["Boss"], start_time: "2026-05-13T10:00:00"}
+      existing_pending_ids: []
+    expected_output:
+      ids: [m1]
+    evaluators:
+      - {ContainsIds: {field: notifications, id_key: message_id, exact: true}}
+      - {IntInRange: {field: notifications.0.importance, lo: 8, hi: 10}}
+
+  - name: existing_pending_skipped
+    inputs:
+      messages:
+        - {id: m1, sender_name: Sam, content: "Construction payment?"}
+      topics:
+        sam:
+          contact: Sam
+          topics: ["construction payment"]
+          max_importance: 8
+      today_events: []
+      existing_pending_ids: [m1]
+    expected_output:
+      ids: []
+    evaluators:
+      - {ContainsIds: {field: notifications, id_key: message_id, exact: true}}
+
+  - name: high_emotional_weight
+    inputs:
+      messages:
+        - id: m1
+          sender_name: Mom
+          content: "Dad's scan results came back. Can we talk tonight?"
+      topics:
+        mom:
+          contact: Mom
+          topics: ["father's cancer treatment"]
+          max_importance: 9
+      today_events: []
+      existing_pending_ids: []
+    expected_output:
+      ids: [m1]
+    evaluators:
+      - {ContainsIds: {field: notifications, id_key: message_id, exact: true}}
+      - {IntInRange: {field: notifications.0.importance, lo: 9, hi: 10}}
+
+evaluators: []

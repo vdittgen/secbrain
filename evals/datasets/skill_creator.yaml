@@ -1,0 +1,243 @@
+# Skill-creator eval suite.
+#
+# Each case presents a conversation trace (user query, tool calls,
+# agent output) and checks whether the agent correctly classifies it
+# as reusable or not, and — when reusable — produces a valid SKILL.md
+# with the required sections and grounded content.
+#
+# The SkillExtractionResult has: is_reusable (bool), skill_name (str),
+# skill_md (str), reason (str).
+#
+# sensitivity_tier: N/A
+
+cases:
+  - name: multi_step_weekly_review_trace
+    inputs:
+      user_query: "Give me a summary of my week"
+      tool_calls:
+        - {name: recall_context, args_summary: "messages last 7 days", result_summary: "42 messages from 8 contacts"}
+        - {name: recall_context, args_summary: "calendar events last 7 days", result_summary: "6 events including dentist and team standup"}
+        - {name: recall_context, args_summary: "tasks completed this week", result_summary: "3 tasks completed"}
+      tool_call_count: 3
+      agent_output: |
+        Here's your weekly summary:
+        **Highlights**: Shipped the v2 release on Wednesday.
+        **People**: Most active conversations with Alice (12 msgs) and Bob (8 msgs).
+        **Events**: Dentist Monday, team standup x3, 1:1 with manager Friday.
+        **Tasks**: Completed 3/5 planned tasks.
+      agent_id: brain
+    expected_output: null
+    evaluators:
+      - {FieldEquals: {field: is_reusable, value: true}}
+      - {FieldNotEmpty: {field: skill_name}}
+      - {FieldNotEmpty: {field: skill_md}}
+      - {FieldContains: {field: skill_md, substring: "---"}}
+      - {FieldContains: {field: skill_md, substring: "## When to Use"}}
+      - {FieldContains: {field: skill_md, substring: "## Procedure"}}
+      - LLMJudgeOnField:
+          field: skill_md
+          threshold: 7
+          rubric: >
+            The SKILL.md must have valid YAML frontmatter (name,
+            description, tags), a "When to Use" section mentioning
+            weekly summary/review triggers, and a "Procedure" section
+            with numbered steps reflecting the actual tool call
+            sequence (query messages, query events, query tasks,
+            generate summary). Steps must match the trace — inventing
+            tools not in the trace scores 0-3. Score 7+ when the
+            procedure accurately mirrors the 3-step tool sequence.
+
+  - name: contact_followup_trace
+    inputs:
+      user_query: "Who haven't I talked to in a while?"
+      tool_calls:
+        - {name: recall_context, args_summary: "contacts with last_contact older than 30 days", result_summary: "5 stale contacts: Tuca, Maria, João, Pedro, Laura"}
+        - {name: recall_context, args_summary: "last conversation topics for stale contacts", result_summary: "Tuca: Garopaba trip; Maria: book recommendation; João: work project"}
+        - {name: recall_context, args_summary: "relationship labels for stale contacts", result_summary: "Tuca: close friend; Maria: colleague; João: friend"}
+        - {name: web_search, args_summary: "none", result_summary: "skipped"}
+      tool_calls_count: 4
+      agent_output: |
+        You have 5 contacts you haven't spoken to in over 30 days:
+        1. **Tuca** (close friend, 8 weeks) — last talked about the Garopaba trip
+        2. **Maria** (colleague, 6 weeks) — last shared a book recommendation
+        3. **João** (friend, 5 weeks) — last discussed work project
+        4. Pedro (4 weeks), Laura (4 weeks)
+      agent_id: brain
+    expected_output: null
+    evaluators:
+      - {FieldEquals: {field: is_reusable, value: true}}
+      - {FieldNotEmpty: {field: skill_name}}
+      - {FieldNotEmpty: {field: skill_md}}
+      - {FieldContains: {field: skill_md, substring: "## Procedure"}}
+      - LLMJudgeOnField:
+          field: skill_md
+          threshold: 7
+          rubric: >
+            The SKILL.md must capture the contact follow-up
+            procedure: query stale contacts, retrieve last topics,
+            retrieve relationship labels, format as a prioritized
+            list. The "When to Use" section must mention triggers
+            like asking about neglected contacts or follow-ups.
+            Sensitivity tier should be 2 (contact data). Score 7+
+            when the procedure matches the 3-4 step trace.
+
+  - name: simple_qa_not_reusable
+    inputs:
+      user_query: "What's the weather like today?"
+      tool_calls:
+        - {name: web_search, args_summary: "weather today", result_summary: "72°F partly cloudy"}
+      tool_call_count: 1
+      agent_output: "It's 72°F and partly cloudy today."
+      agent_id: brain
+    expected_output: null
+    evaluators:
+      - {FieldEquals: {field: is_reusable, value: false}}
+      - {FieldNotEmpty: {field: reason}}
+      - LLMJudgeOnField:
+          field: reason
+          threshold: 6
+          rubric: >
+            The reason must explain why this isn't a skill —
+            it's a simple one-shot lookup with only 1 tool call,
+            not a multi-step procedure. Score 6+ when the reasoning
+            mentions simplicity, single step, or lack of procedure.
+
+  - name: one_off_email_lookup_not_reusable
+    inputs:
+      user_query: "Did John send me that contract yesterday?"
+      tool_calls:
+        - {name: recall_context, args_summary: "messages from John last 2 days", result_summary: "1 message from John about contract"}
+        - {name: recall_context, args_summary: "attachments from John", result_summary: "contract.pdf attached"}
+      tool_call_count: 2
+      agent_output: "Yes, John sent you the contract yesterday at 3:15 PM. It's attached as contract.pdf."
+      agent_id: brain
+    expected_output: null
+    evaluators:
+      - {FieldEquals: {field: is_reusable, value: false}}
+      - {FieldNotEmpty: {field: reason}}
+      - LLMJudgeOnField:
+          field: reason
+          threshold: 6
+          rubric: >
+            The reason must explain why this isn't a skill —
+            it's a specific one-off lookup about a particular
+            person and document, not a generalizable procedure.
+            Score 6+ when the reasoning mentions specificity or
+            non-generalizability.
+
+  - name: error_trace_not_reusable
+    inputs:
+      user_query: "Analyze my spending this month"
+      tool_calls:
+        - {name: recall_context, args_summary: "transactions this month", result_summary: "error: table not found"}
+        - {name: recall_context, args_summary: "financial data", result_summary: "error: no financial connector configured"}
+        - {name: recall_context, args_summary: "bank transactions", result_summary: "error: table not found"}
+      tool_call_count: 3
+      agent_output: "I wasn't able to analyze your spending — it looks like no financial data source is connected yet."
+      agent_id: brain
+    expected_output: null
+    evaluators:
+      - {FieldEquals: {field: is_reusable, value: false}}
+      - {FieldNotEmpty: {field: reason}}
+      - LLMJudgeOnField:
+          field: reason
+          threshold: 6
+          rubric: >
+            The reason must explain that the trace ended in
+            errors and didn't complete successfully, so there's
+            no valid procedure to capture. Score 6+ when errors
+            or failure are cited as the reason.
+
+  - name: message_triage_trace
+    inputs:
+      user_query: "What needs my attention today?"
+      tool_calls:
+        - {name: recall_context, args_summary: "unread messages today", result_summary: "14 unread messages"}
+        - {name: recall_context, args_summary: "messages with questions or action items", result_summary: "5 messages need response"}
+        - {name: recall_context, args_summary: "calendar events today", result_summary: "3 meetings starting at 10, 14, 16"}
+        - {name: recall_context, args_summary: "overdue tasks", result_summary: "2 tasks overdue"}
+      tool_call_count: 4
+      agent_output: |
+        **Urgent**: Reply to Alice about the contract deadline (2h left).
+        **Today**: Bob asked about lunch plans, team standup at 10am.
+        **Overdue**: Submit expense report, review PR #234.
+      agent_id: brain
+    expected_output: null
+    evaluators:
+      - {FieldEquals: {field: is_reusable, value: true}}
+      - {FieldNotEmpty: {field: skill_name}}
+      - {FieldNotEmpty: {field: skill_md}}
+      - {FieldContains: {field: skill_md, substring: "## Procedure"}}
+      - {FieldContains: {field: skill_md, substring: "## When to Use"}}
+      - LLMJudgeOnField:
+          field: skill_md
+          threshold: 7
+          rubric: >
+            The SKILL.md must capture a daily triage procedure:
+            check unread messages, identify action items, check
+            calendar, check overdue tasks, prioritize by urgency.
+            The procedure must reflect the 4-step tool sequence.
+            Tags should include "productivity" or "triage".
+            Score 7+ when procedure matches the trace and output
+            format describes a prioritized list.
+
+  - name: skill_md_has_valid_frontmatter
+    inputs:
+      user_query: "Help me prepare for my 1:1 with my manager"
+      tool_calls:
+        - {name: recall_context, args_summary: "tasks completed since last 1:1", result_summary: "7 tasks completed"}
+        - {name: recall_context, args_summary: "blockers and open questions", result_summary: "2 blockers: CI pipeline, design review"}
+        - {name: recall_context, args_summary: "goals and progress", result_summary: "3 active goals, 1 at 80%"}
+      tool_call_count: 3
+      agent_output: |
+        **1:1 Prep for Friday**
+        Wins: Shipped search feature, resolved 4 bugs, hit 80% on Q2 goal.
+        Blockers: CI pipeline flaky, design review stuck for 3 days.
+        Discussion: Promotion timeline, team offsite planning.
+      agent_id: brain
+    expected_output: null
+    evaluators:
+      - {FieldEquals: {field: is_reusable, value: true}}
+      - {FieldNotEmpty: {field: skill_md}}
+      - {FieldContains: {field: skill_md, substring: "name:"}}
+      - {FieldContains: {field: skill_md, substring: "description:"}}
+      - {FieldContains: {field: skill_md, substring: "sensitivity_tier:"}}
+      - {FieldContains: {field: skill_md, substring: "source: auto-learned"}}
+      - LLMJudgeOnField:
+          field: skill_md
+          threshold: 7
+          rubric: >
+            The SKILL.md must have complete YAML frontmatter with
+            name, description, version, tags, sensitivity_tier, and
+            source fields. The body must have "When to Use",
+            "Procedure", and "Output Format" sections at minimum.
+            The procedure must cover gathering completed work,
+            identifying blockers, and checking goal progress.
+            Score 7+ when all structural elements are present and
+            the content is grounded in the trace.
+
+  - name: too_specific_not_reusable
+    inputs:
+      user_query: "Email John about rescheduling Tuesday's meeting to Thursday"
+      tool_calls:
+        - {name: recall_context, args_summary: "John's email address", result_summary: "john@acme.com"}
+        - {name: recall_context, args_summary: "Tuesday meeting details", result_summary: "Project sync at 2pm"}
+        - {name: propose_action, args_summary: "send email to john@acme.com", result_summary: "action proposed: send_email"}
+      tool_call_count: 3
+      agent_output: "I've drafted an email to John at john@acme.com about rescheduling the project sync from Tuesday to Thursday. Ready to send?"
+      agent_id: brain
+    expected_output: null
+    evaluators:
+      - {FieldEquals: {field: is_reusable, value: false}}
+      - {FieldNotEmpty: {field: reason}}
+      - LLMJudgeOnField:
+          field: reason
+          threshold: 6
+          rubric: >
+            The reason must explain that this is too specific to
+            a particular person and meeting to generalize into a
+            reusable skill. Despite having 3 tool calls, the task
+            is a one-off action, not a repeatable procedure. Score
+            6+ when specificity is cited as the rejection reason.
+
+evaluators: []

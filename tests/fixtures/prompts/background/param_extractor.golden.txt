@@ -1,0 +1,22 @@
+user: You are a parameter extractor for a personal assistant. Given the user's request and their personal context, extract the parameters for the tool below.
+
+Tool: 
+Parameters (JSON Schema): {}
+
+User request: Create a note
+
+Today: 2026-05-12
+
+
+IMPORTANT RULES:
+- Resolve relative references using the personal context AND the database records provided. For example:
+  "the last note" → find the most recently created/updated note in the database records.
+  "tomorrow's meeting" → find the event title for tomorrow.
+  "the email from João" → find the email subject from that sender.
+- When the user says "last", "latest", "most recent", "última", "último", look at the database records for the most recent matching item and use its actual title/subject/name.
+- When the user references a time range ("last 5 hours", "today's"), filter the database records by timestamp and pick the matching item(s). If multiple items match, pick the FIRST/most relevant one.
+- For date/time references ("tomorrow", "next Monday", "amanhã"), compute the actual ISO date relative to today (2026-05-12).
+- ALWAYS prefer using actual values from the database records over guessing.
+- NEVER return null for required parameters if the context or database records contain enough information to resolve the value.
+- Output ONLY a valid JSON object with the parameter values.
+- Use null only when no information is available in the request, context, or database records.

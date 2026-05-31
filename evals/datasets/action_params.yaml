@@ -1,0 +1,142 @@
+# Action-parameter-extractor eval suite.
+#
+# Exercises `extract_action_params` (src/agents/brain/actions.py), the
+# LLM call that turns a free-form user request like
+#   "create an event on my calendar for tomorrow 7 am called
+#    'Play Tennis with Tiago'"
+# into the structured ``{title, start_time, end_time, ...}`` payload an
+# MCP tool expects.
+#
+# Two failure modes this suite locks down:
+#
+# 1. Hallucinated overrides — the model substitutes the user's literal
+#    title ("Play Tennis with Tiago") with something from the personal
+#    context ("Coffee chat with Sarah"). Rule #1 in the prompt forbids
+#    this and the FieldContains evaluators check it.
+#
+# 2. Missing required time params — the model emits a JSON ``null`` (or
+#    the literal string ``"None"``) for ``end_time`` and the downstream
+#    Apple bridge then crashes parsing it. The FieldNotEmpty evaluators
+#    require both times to be present.
+#
+# sensitivity_tier: 2
+
+cases:
+  - name: tennis_with_explicit_title_and_time
+    inputs:
+      question: >
+        create an event on my calendar for tomorrow 7 am called
+        "Play Tennis with Tiago"
+      tool_name: create_event
+      input_schema:
+        type: object
+        properties:
+          title: {type: string}
+          start_time: {type: string}
+          end_time: {type: string}
+          location: {type: string}
+        required: [title, start_time]
+      context: |
+        Recent events you might find similar:
+        - Coffee chat with Sarah (yesterday, 9am)
+        - Standup (today, 10am)
+    expected_output: null
+    evaluators:
+      # The user literally named the event — the model MUST NOT
+      # substitute it with "Coffee chat with Sarah".
+      - {FieldContains: {field: extracted.title, substring: "Play Tennis"}}
+      - {FieldContains: {field: extracted.title, substring: "Tiago"}}
+      # Both ends of the time window must be set so the Apple bridge
+      # never sees a ``None`` end_time.
+      - {FieldNotEmpty: {field: extracted.start_time}}
+      - {FieldNotEmpty: {field: extracted.end_time}}
+
+  - name: lunch_with_no_end_time_defaults_to_one_hour_after_start
+    inputs:
+      question: >
+        Schedule "Lunch with Maria" tomorrow at noon.
+      tool_name: create_event
+      input_schema:
+        type: object
+        properties:
+          title: {type: string}
+          start_time: {type: string}
+          end_time: {type: string}
+        required: [title, start_time]
+      context: ""
+    expected_output: null
+    evaluators:
+      - {FieldContains: {field: extracted.title, substring: "Lunch"}}
+      - {FieldContains: {field: extracted.title, substring: "Maria"}}
+      - {FieldNotEmpty: {field: extracted.start_time}}
+      # The prompt instructs the model to default end_time to
+      # start_time + 1h when the user gave only a start.
+      - {FieldNotEmpty: {field: extracted.end_time}}
+
+  - name: explicit_location_preserved_verbatim
+    inputs:
+      question: >
+        Add an event "Team retro" next Monday 3pm at the Mission Bay office.
+      tool_name: create_event
+      input_schema:
+        type: object
+        properties:
+          title: {type: string}
+          start_time: {type: string}
+          end_time: {type: string}
+          location: {type: string}
+        required: [title, start_time]
+      context: |
+        Recent locations:
+        - Cafe Trieste
+        - Home office
+    expected_output: null
+    evaluators:
+      - {FieldContains: {field: extracted.title, substring: "Team retro"}}
+      - {FieldNotEmpty: {field: extracted.start_time}}
+      - {FieldContains: {field: extracted.location, substring: "Mission Bay"}}
+
+  - name: relative_reference_resolves_from_context
+    inputs:
+      question: >
+        Add a reminder to send the last email to the customer-success folder.
+      tool_name: move_email
+      input_schema:
+        type: object
+        properties:
+          email_subject: {type: string}
+          folder: {type: string}
+        required: [email_subject, folder]
+      context: |
+        Recent emails (newest first):
+        - "Q3 numbers" from cfo@acme.com  (2 hours ago)
+        - "Re: onboarding kit" from amy@startup.com  (1 day ago)
+    expected_output: null
+    evaluators:
+      # "the last email" is a *relative* reference so the context wins
+      # here — this is the rule-2 case, not the rule-1 case.
+      - {FieldContains: {field: extracted.email_subject, substring: "Q3"}}
+      - {FieldContains: {field: extracted.folder, substring: "customer"}}
+
+  - name: literal_null_string_is_never_emitted
+    inputs:
+      question: >
+        Create an event "Block off lunch" tomorrow 12-1pm.
+      tool_name: create_event
+      input_schema:
+        type: object
+        properties:
+          title: {type: string}
+          start_time: {type: string}
+          end_time: {type: string}
+          location: {type: string}
+        required: [title, start_time]
+      context: ""
+    expected_output: null
+    evaluators:
+      - {FieldContains: {field: extracted.title, substring: "Block off lunch"}}
+      - {FieldNotEmpty: {field: extracted.start_time}}
+      - {FieldNotEmpty: {field: extracted.end_time}}
+      # Defensive — the model occasionally fills optional fields with
+      # the literal string ``"None"``. Rule #5 forbids that.
+      - {FieldEquals: {field: extracted.location, value: null}}

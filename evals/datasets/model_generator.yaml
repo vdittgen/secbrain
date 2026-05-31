@@ -1,0 +1,93 @@
+# Model-generator eval suite.
+#
+# Checks the generated SQL references the target_table, declares
+# MODEL with the connector-prefixed name, and a sensitivity_summary
+# rolling up the source field tiers.
+#
+# sensitivity_tier: N/A
+
+cases:
+  - name: staging_layer
+    inputs:
+      schema:
+        target_table: ext_strava_runs
+        fields:
+          - {source_name: id, target_column: id, target_type: TEXT, sensitivity_tier: 1}
+          - {source_name: distance, target_column: distance_m, target_type: DOUBLE, sensitivity_tier: 1}
+          - {source_name: hr_avg, target_column: hr_avg, target_type: DOUBLE, sensitivity_tier: 3}
+      layer: staging
+      connector_id: strava
+    expected_output: null
+    evaluators:
+      - {FieldEquals: {field: layer, value: staging}}
+      - {FieldContains: {field: name, substring: ext_stg_}}
+      - {FieldContains: {field: sql, substring: MODEL}}
+      - {FieldContains: {field: sql, substring: ext_strava_runs}}
+      - {FieldContains: {field: sql, substring: distance_m}}
+      - {FieldNotEmpty: {field: sensitivity_summary}}
+
+  - name: intermediate_layer
+    inputs:
+      schema:
+        target_table: ext_strava_runs
+        fields:
+          - {source_name: id, target_column: id, target_type: TEXT, sensitivity_tier: 1}
+          - {source_name: distance, target_column: distance_m, target_type: DOUBLE, sensitivity_tier: 1}
+      layer: intermediate
+      connector_id: strava
+    expected_output: null
+    evaluators:
+      - {FieldEquals: {field: layer, value: intermediate}}
+      - {FieldContains: {field: name, substring: ext_int_}}
+      - {FieldContains: {field: sql, substring: ext_stg_}}
+
+  - name: mart_layer
+    inputs:
+      schema:
+        target_table: ext_strava_runs
+        fields:
+          - {source_name: id, target_column: id, target_type: TEXT, sensitivity_tier: 1}
+          - {source_name: name, target_column: title, target_type: TEXT, sensitivity_tier: 1}
+          - {source_name: type, target_column: workout_type, target_type: TEXT, sensitivity_tier: 1}
+          - {source_name: distance_m, target_column: distance_m, target_type: DOUBLE, sensitivity_tier: 1}
+          - {source_name: start_time, target_column: occurred_at, target_type: TEXT, sensitivity_tier: 1}
+      layer: marts
+      connector_id: strava
+    expected_output: null
+    evaluators:
+      - {FieldEquals: {field: layer, value: marts}}
+      - {FieldContains: {field: name, substring: ext_mart_}}
+      - {FieldContains: {field: sql, substring: ext_int_}}
+
+  - name: tier3_field_preserves_sensitivity
+    inputs:
+      schema:
+        target_table: ext_health_metrics
+        fields:
+          - {source_name: id, target_column: id, target_type: TEXT, sensitivity_tier: 1}
+          - {source_name: hr, target_column: heart_rate, target_type: DOUBLE, sensitivity_tier: 3}
+          - {source_name: mood, target_column: mood, target_type: TEXT, sensitivity_tier: 3}
+      layer: staging
+      connector_id: oura
+    expected_output: null
+    evaluators:
+      - {FieldEquals: {field: layer, value: staging}}
+      - {FieldContains: {field: sql, substring: sensitivity_tier}}
+
+  - name: mixed_sensitivity_aggregates
+    inputs:
+      schema:
+        target_table: ext_messages
+        fields:
+          - {source_name: id, target_column: id, target_type: TEXT, sensitivity_tier: 1}
+          - {source_name: from, target_column: sender, target_type: TEXT, sensitivity_tier: 2}
+          - {source_name: body, target_column: content, target_type: TEXT, sensitivity_tier: 3}
+      layer: staging
+      connector_id: whatsapp
+    expected_output: null
+    evaluators:
+      - {FieldEquals: {field: layer, value: staging}}
+      - {FieldNotEmpty: {field: sensitivity_summary}}
+      - {FieldContains: {field: sql, substring: content}}
+
+evaluators: []

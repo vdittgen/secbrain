@@ -1,0 +1,156 @@
+/* KaTeX styles for rendered math in chat artifacts. */
+@import "katex/dist/katex.min.css";
+@import "./design-tokens.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--ink);
+  background: var(--bg);
+  background-image:
+    radial-gradient(circle at 0% 0%, oklch(0.94 0.04 265 / 0.4), transparent 40%),
+    radial-gradient(circle at 100% 100%, oklch(0.95 0.04 165 / 0.25), transparent 50%);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "ss01", "cv11";
+  text-rendering: optimizeLegibility;
+  letter-spacing: -0.005em;
+}
+
+.frosted {
+  background: oklch(1 0 0 / 0.55);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+/* ─── DARK MODE OVERRIDES ───
+   Keyed on .dark class on <html> (set by useTheme).
+   design-tokens.css flips CSS vars via :root.dark; these rules
+   fix hard-coded oklch values and semantic mismatches. */
+:root.dark body {
+  background-image:
+    radial-gradient(circle at 0% 0%, oklch(0.32 0.10 265 / 0.5), transparent 40%),
+    radial-gradient(circle at 100% 100%, oklch(0.28 0.05 165 / 0.4), transparent 50%);
+}
+
+:root.dark .frosted {
+  background: oklch(0.20 0.014 255 / 0.55);
+}
+
+:root.dark .bg-ink {
+  background-color: var(--indigo);
+}
+
+:root.dark .bg-ink.text-surface {
+  background-color: var(--surface-2);
+  color: var(--ink);
+}
+
+/* Hide scrollbar but keep scrolling */
+main::-webkit-scrollbar {
+  width: 6px;
+}
+
+main::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+main::-webkit-scrollbar-thumb {
+  background-color: var(--hairline-2);
+  border-radius: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* Styling for HTML rendered from Office documents (mammoth's docx
+   output, SheetJS' table dump). */
+.doc-content {
+  font-size: 0.875rem;
+  color: var(--ink);
+  line-height: 1.55;
+}
+.doc-content h1 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0.75rem 0 0.5rem;
+}
+.doc-content h2,
+.doc-content h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0.75rem 0 0.5rem;
+}
+.doc-content h4,
+.doc-content h5,
+.doc-content h6 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin: 0.5rem 0;
+}
+.doc-content p {
+  margin: 0.5rem 0;
+}
+.doc-content ul {
+  list-style: disc;
+  padding-left: 1.25rem;
+  margin: 0.25rem 0;
+}
+.doc-content ol {
+  list-style: decimal;
+  padding-left: 1.25rem;
+  margin: 0.25rem 0;
+}
+.doc-content li {
+  margin: 0.15rem 0;
+}
+.doc-content a {
+  color: var(--indigo);
+}
+.doc-content a:hover {
+  text-decoration: underline;
+}
+.doc-content strong {
+  font-weight: 600;
+}
+.doc-content em {
+  font-style: italic;
+}
+.doc-content table {
+  border-collapse: collapse;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.doc-content th {
+  border-bottom: 1px solid var(--hairline);
+  background-color: var(--bg-2);
+  padding: 0.25rem 0.5rem;
+  text-align: left;
+  font-weight: 500;
+}
+.doc-content td {
+  border-bottom: 1px solid var(--hairline);
+  padding: 0.25rem 0.5rem;
+  vertical-align: top;
+}
+.doc-content blockquote {
+  border-left: 2px solid var(--indigo);
+  padding-left: 0.75rem;
+  margin: 0.5rem 0;
+  font-style: italic;
+  color: var(--muted);
+}
