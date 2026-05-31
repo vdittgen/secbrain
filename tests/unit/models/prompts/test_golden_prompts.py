@@ -99,7 +99,7 @@ REGISTRY: list[PromptCase] = [
         name="brain_ask",
         lane="interactive",
         template_filename="brain_ask_v1.txt",
-        expected_hash="sha256:83bd221f64a5614e5cb1a0a7eed585935432f2ae58003268de2787258c996047",
+        expected_hash="sha256:f1dbe2394487f5e1c1c9cc92448dd08b9e30f77908ce86e89ba3f5cea8795bdb",
         fixture_filename="brain_ask.golden.txt",
         variable_input="How many meetings did I have last week?",
     ),
@@ -160,7 +160,7 @@ REGISTRY: list[PromptCase] = [
         name="dataset_creator",
         lane="background",
         template_filename="dataset_creator_v1.txt",
-        expected_hash="sha256:2525a8c4048a981eee2908dadf70975a6271c564045a8735c52e5339a331216d",
+        expected_hash="sha256:c5c3c4eb1244148470d401a5116a3ebb5516a723d149a5307c810cbea0fbe7a1",
         fixture_filename="dataset_creator.golden.txt",
         variable_input=(
             '{\n'
