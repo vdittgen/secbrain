@@ -36,7 +36,7 @@ class TestCheckHealth:
         """Server up with matching models → AVAILABLE."""
         client = mock_cls.return_value
         client.list.return_value = _make_model_list(
-            ["llama3.3:70b", "nomic-embed-text"],
+            ["llama3.1:70b", "nomic-embed-text"],
         )
         mgr = OllamaManager()
         status = mgr.check_health()
@@ -82,7 +82,7 @@ class TestCheckHealth:
         """Model with different tag but same base → AVAILABLE."""
         client = mock_cls.return_value
         client.list.return_value = _make_model_list(
-            ["llama3.3:latest"],
+            ["llama3.1:latest"],
         )
         mgr = OllamaManager()
         status = mgr.check_health()
