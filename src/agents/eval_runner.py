@@ -73,6 +73,16 @@ AGENT_SUITE_MAP: dict[str, str] = {
     "habit_suggester": "habit_suggester",
     # Skill system
     "skill_creator": "skill_creator",
+    # Action proposal + judging
+    "action_proposal_judge": "action_proposal_judge",
+    "event_categorizer": "event_categorizer",
+    # Reflection + scheduling + task lifecycle
+    "reflector": "reflector",
+    "daily_scheduler": "daily_scheduler",
+    "model_picker": "model_picker",
+    "task_proposer": "task_proposer",
+    "task_curator": "task_curator",
+    "task_completion": "task_completion",
 }
 
 # Agents that should not auto-run on edit (brain + firewalls). They
