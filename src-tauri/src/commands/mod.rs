@@ -804,12 +804,16 @@ pub async fn get_ollama_status(state: State<'_, AppState>) -> Result<OllamaStatu
         Ok(out) => out,
         Err(e) => {
             eprintln!("[get_ollama_status] CLI error: {e}");
-            return Ok(OllamaStatus::offline());
+            return Ok(OllamaStatus::backend_error(format!(
+                "Status check failed to run: {e}"
+            )));
         }
     };
     if output.is_empty() {
         eprintln!("[get_ollama_status] WARNING: empty stdout from ollama-status CLI");
-        return Ok(OllamaStatus::offline());
+        return Ok(OllamaStatus::backend_error(
+            "Status check returned no output.".to_string(),
+        ));
     }
     match serde_json::from_str(&output) {
         Ok(status) => Ok(status),
@@ -819,7 +823,9 @@ pub async fn get_ollama_status(state: State<'_, AppState>) -> Result<OllamaStatu
                 output.len(),
                 &output[..output.len().min(200)]
             );
-            Ok(OllamaStatus::offline())
+            Ok(OllamaStatus::backend_error(format!(
+                "Status check returned malformed output: {e}"
+            )))
         }
     }
 }
