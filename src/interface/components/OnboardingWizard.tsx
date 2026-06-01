@@ -1,7 +1,7 @@
 /**
  * Onboarding wizard — full-screen overlay shown on first launch.
  *
- * 9 slides: Welcome, Profile, Mode, Configure, System, Sources, Notifications, Connecting, Ready.
+ * 7 slides: Welcome, Profile, Mode, System, Sources, Notifications, Ready.
  * Reuses existing IPC commands — no new backend endpoints needed.
  *
  * sensitivity_tier: 1 (infrastructure/setup metadata only)
@@ -17,6 +17,7 @@ import {
   Server,
   ChevronLeft,
   ChevronRight,
+  UserCircle,
   Calendar,
   Users,
   Mail,
@@ -33,7 +34,7 @@ import { WhatsAppPairingPanel } from "./WhatsAppPairingPanel";
 // Types
 // ---------------------------------------------------------------------------
 
-type Slide = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+type Slide = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 type Mode = "local" | "remote";
 
@@ -80,12 +81,10 @@ const SLIDE_LABELS: Record<Slide, string> = {
   1: "Welcome",
   2: "Profile",
   3: "Mode",
-  4: "Configure",
-  5: "System",
-  6: "Sources",
-  7: "Notifications",
-  8: "Connecting",
-  9: "Ready",
+  4: "System",
+  5: "Sources",
+  6: "Notifications",
+  7: "Ready",
 };
 
 // ---------------------------------------------------------------------------
@@ -226,7 +225,7 @@ function TopBar({
   readonly slide: Slide;
   readonly onBack: (() => void) | null;
 }) {
-  const progressPct = Math.round((slide / 9) * 100);
+  const progressPct = Math.round((slide / 7) * 100);
 
   return (
     <div
@@ -372,6 +371,59 @@ function WelcomeSlide({
         >
           Get started
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M5 12h14M13 5l7 7-7 7" /></svg>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Slide 2: Profile
+// ---------------------------------------------------------------------------
+
+function ProfileSlide({
+  firstName,
+  onChange,
+  onContinue,
+}: {
+  readonly firstName: string;
+  readonly onChange: (name: string) => void;
+  readonly onContinue: () => void;
+}) {
+  return (
+    <div className="flex flex-1 flex-col px-10 py-10">
+      <BrandRow />
+
+      <h2 className="text-[28px] font-semibold tracking-tight text-ink">
+        What should I call you?
+      </h2>
+      <p className="mt-2 text-sm text-muted">
+        Just a first name — it stays on your Mac, and you can change it
+        anytime from your profile.
+      </p>
+
+      <div className="mt-8 flex items-center gap-3 rounded-4 border border-hairline bg-surface px-5 py-4 shadow-1">
+        <UserCircle strokeWidth={1.6} className="h-5 w-5 shrink-0 text-muted" />
+        <input
+          type="text"
+          autoFocus
+          value={firstName}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") onContinue();
+          }}
+          placeholder="Your first name"
+          className="w-full bg-transparent text-base text-ink outline-none placeholder:text-faint"
+        />
+      </div>
+
+      <div className="mt-auto pt-10 flex items-center justify-end">
+        <button
+          onClick={onContinue}
+          className="flex items-center gap-2 rounded-pill bg-indigo px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-indigo/90"
+        >
+          Continue
+          <ChevronRight strokeWidth={1.6} className="h-4 w-4" />
         </button>
       </div>
     </div>
@@ -621,7 +673,7 @@ function ModeChooserSlide({
 }
 
 // ---------------------------------------------------------------------------
-// Slide 5: Keep Awake
+// Slide 4: Keep Awake (System)
 // ---------------------------------------------------------------------------
 
 function KeepAwakeSlide({
@@ -723,7 +775,7 @@ function KeepAwakeSlide({
 }
 
 // ---------------------------------------------------------------------------
-// Slide 4: Connectors
+// Slide 5: Connectors (Sources)
 // ---------------------------------------------------------------------------
 
 function ConnectorsSlide({
@@ -826,7 +878,7 @@ function ConnectorsSlide({
 }
 
 // ---------------------------------------------------------------------------
-// Slide 5: Notifications
+// Slide 6: Notifications
 // ---------------------------------------------------------------------------
 
 function NotificationsSlide({
@@ -958,7 +1010,7 @@ function NotificationsSlide({
 }
 
 // ---------------------------------------------------------------------------
-// Slide 9: Closing
+// Slide 7: Closing (Ready)
 // ---------------------------------------------------------------------------
 
 function ClosingSlide({
@@ -1078,7 +1130,7 @@ function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   const catalogLoaded = useRef(false);
 
   // --- Slide 2: Profile ---
-  const [firstName] = useState("");
+  const [firstName, setFirstName] = useState("");
 
   // --- Slide 5: Notifications ---
   const [whatsappNotifications, setWhatsappNotifications] = useState(true);
@@ -1128,6 +1180,20 @@ function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
     };
   }, []);
 
+  // Pre-fill the name if one was already saved (e.g. re-running onboarding)
+  useEffect(() => {
+    let active = true;
+    dedupInvoke<AppSettings>("get_settings")
+      .then((s) => {
+        const existing = s.user_name;
+        if (active && typeof existing === "string") setFirstName(existing);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
+
   // --- Navigation ---
 
   const goTo = useCallback(
@@ -1145,7 +1211,7 @@ function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   }, [slide, goTo]);
 
   const goForward = useCallback(() => {
-    if (slide < 6) {
+    if (slide < 7) {
       goTo((slide + 1) as Slide, "forward");
     }
   }, [slide, goTo]);
@@ -1259,6 +1325,7 @@ function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
       const current = await dedupInvoke<AppSettings>("get_settings");
       const updated = {
         ...current,
+        user_name: firstName.trim() || current.user_name || null,
         llm_provider: providerMap[mode],
         llm_model: llmModel,
         prevent_sleep: preventSleep,
@@ -1287,6 +1354,7 @@ function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
     selectedConnectors,
     mode,
     llmModel,
+    firstName,
     preventSleep,
     launchAtLogin,
     menuBarMode,
@@ -1333,6 +1401,13 @@ function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
               <WelcomeSlide onGetStarted={goForward} />
             )}
             {slide === 2 && (
+              <ProfileSlide
+                firstName={firstName}
+                onChange={setFirstName}
+                onContinue={goForward}
+              />
+            )}
+            {slide === 3 && (
               <ModeChooserSlide
                 mode={mode}
                 onModeChange={setMode}
@@ -1342,7 +1417,7 @@ function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                 onContinue={goForward}
               />
             )}
-            {slide === 3 && (
+            {slide === 4 && (
               <KeepAwakeSlide
                 preventSleep={preventSleep}
                 launchAtLogin={launchAtLogin}
@@ -1351,14 +1426,14 @@ function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                 onContinue={goForward}
               />
             )}
-            {slide === 4 && (
+            {slide === 5 && (
               <ConnectorsSlide
                 selected={selectedConnectors}
                 onToggle={handleConnectorToggle}
                 onContinue={goForward}
               />
             )}
-            {slide === 5 && (
+            {slide === 6 && (
               <NotificationsSlide
                 whatsappNotifications={whatsappNotifications}
                 whatsappPhone={whatsappPhone}
@@ -1373,7 +1448,7 @@ function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                 onContinue={goForward}
               />
             )}
-            {slide === 6 && (
+            {slide === 7 && (
               <ClosingSlide
                 firstName={firstName}
                 connectedCount={selectedConnectors.size}
