@@ -5,7 +5,7 @@
 # requires_redaction / requires_consent booleans). The suite runs
 # entirely offline — the firewall is rule-based.
 #
-# In SecBrain every prompt routes to the local Ollama backend
+# In Arandu every prompt routes to the local Ollama backend
 # regardless of tier, and nothing is redacted because nothing leaves
 # the device. Tier classification is still asserted since it drives
 # the audit log.

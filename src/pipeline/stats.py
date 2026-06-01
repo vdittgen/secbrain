@@ -3,7 +3,7 @@
 Records every SQLMesh pipeline run with timing, row counts, and status.
 Provides duration estimation via linear regression on historical data.
 
-The stats file lives at ``~/.secbrain/data/pipeline_stats.jsonl``.  Each
+The stats file lives at ``~/.arandu/data/pipeline_stats.jsonl``.  Each
 line is one JSON-encoded :class:`PipelineRun`.
 
 sensitivity_tier: 1 (infrastructure metrics only, no user data)
@@ -21,7 +21,7 @@ from statistics import mean
 logger = logging.getLogger(__name__)
 
 DEFAULT_STATS_PATH = (
-    Path.home() / ".secbrain" / "data" / "pipeline_stats.jsonl"
+    Path.home() / ".arandu" / "data" / "pipeline_stats.jsonl"
 )
 
 

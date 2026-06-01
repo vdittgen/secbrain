@@ -26,7 +26,7 @@ def _reset_judge_cache() -> Any:
 
 
 def test_grade_returns_none_when_kill_switch_set(monkeypatch) -> None:
-    monkeypatch.setenv("SECBRAIN_EVAL_JUDGE_DISABLED", "1")
+    monkeypatch.setenv("ARANDU_EVAL_JUDGE_DISABLED", "1")
     assert (
         judge_mod.grade(
             rubric="anything", inputs="x", output_text="y", threshold=7,
@@ -36,7 +36,7 @@ def test_grade_returns_none_when_kill_switch_set(monkeypatch) -> None:
 
 
 def test_grade_returns_none_when_factory_missing(monkeypatch) -> None:
-    monkeypatch.delenv("SECBRAIN_EVAL_JUDGE_DISABLED", raising=False)
+    monkeypatch.delenv("ARANDU_EVAL_JUDGE_DISABLED", raising=False)
 
     def boom() -> Any:
         raise RuntimeError("no remote endpoint configured")
@@ -64,7 +64,7 @@ def test_grade_returns_none_when_factory_missing(monkeypatch) -> None:
 
 def test_grade_passes_threshold_check(monkeypatch) -> None:
     """A score >= threshold flips passed=True even if the model said False."""
-    monkeypatch.delenv("SECBRAIN_EVAL_JUDGE_DISABLED", raising=False)
+    monkeypatch.delenv("ARANDU_EVAL_JUDGE_DISABLED", raising=False)
     fake_agent = MagicMock()
     fake_agent.run_sync.return_value = MagicMock(
         output=judge_mod.JudgeVerdict(
@@ -84,7 +84,7 @@ def test_grade_passes_threshold_check(monkeypatch) -> None:
 
 
 def test_grade_handles_judge_exception(monkeypatch) -> None:
-    monkeypatch.delenv("SECBRAIN_EVAL_JUDGE_DISABLED", raising=False)
+    monkeypatch.delenv("ARANDU_EVAL_JUDGE_DISABLED", raising=False)
     fake_agent = MagicMock()
     fake_agent.run_sync.side_effect = RuntimeError("network down")
     monkeypatch.setattr(

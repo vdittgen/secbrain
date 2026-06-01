@@ -388,14 +388,14 @@ function Inbox() {
 
   useEffect(() => {
     const handler = () => inbox.refetch();
-    window.addEventListener("secbrain:proactive-refreshed", handler);
-    window.addEventListener("secbrain:pipeline-refreshed", handler);
+    window.addEventListener("arandu:proactive-refreshed", handler);
+    window.addEventListener("arandu:pipeline-refreshed", handler);
     return () => {
       window.removeEventListener(
-        "secbrain:proactive-refreshed", handler,
+        "arandu:proactive-refreshed", handler,
       );
       window.removeEventListener(
-        "secbrain:pipeline-refreshed", handler,
+        "arandu:pipeline-refreshed", handler,
       );
     };
   }, [inbox]);

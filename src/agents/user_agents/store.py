@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any
 
 DEFAULT_DB_PATH: Path = (
-    Path.home() / ".secbrain" / "data" / "secbrain.sqlite3"
+    Path.home() / ".arandu" / "data" / "arandu.sqlite3"
 )
 
 

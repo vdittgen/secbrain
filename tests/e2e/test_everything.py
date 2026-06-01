@@ -42,7 +42,7 @@ from src.core.data_layer import DataLayer
 def data_layer(tmp_path_factory: pytest.TempPathFactory):
     """DataLayer fully initialized with temp directory."""
     tmp = tmp_path_factory.mktemp("e2e_everything")
-    dl = DataLayer(base_path=tmp / "secbrain_data")
+    dl = DataLayer(base_path=tmp / "arandu_data")
     dl.initialize()
     yield dl
     dl.close()

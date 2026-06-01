@@ -49,7 +49,7 @@ function AvailableStep({
             Version {state.version} is available
           </p>
           <p className="mt-1 text-xs text-muted">
-            A new version of SecBrain is required to continue.
+            A new version of Arandu is required to continue.
           </p>
         </div>
 

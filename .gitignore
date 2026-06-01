@@ -37,7 +37,7 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
-# Database files (stored in ~/.secondbrain/data/)
+# Database files (stored in ~/.arandu/data/)
 *.duckdb
 *.duckdb.wal
 

@@ -317,7 +317,7 @@ pub struct OllamaStatus {
 }
 
 /// Live progress of an in-flight `ollama pull`, published by the Python
-/// pull loop to `~/.secbrain/data/ollama_pull_progress.json`. Absent file
+/// pull loop to `~/.arandu/data/ollama_pull_progress.json`. Absent file
 /// means no pull is in flight.
 ///
 /// # sensitivity_tier: 1
@@ -572,7 +572,7 @@ pub struct AppSettings {
     #[serde(default)]
     pub first_run_grace_minutes: Option<u32>,
 
-    // --- Keep SecBrain running (sensitivity_tier: 1) ---
+    // --- Keep Arandu running (sensitivity_tier: 1) ---
     #[serde(default)]
     pub prevent_sleep: bool,
     #[serde(default)]
@@ -588,7 +588,7 @@ pub struct AppSettings {
     pub keep_awake_modal_seen: bool,
 
     // --- Privacy mode (sensitivity_tier: 1) ---
-    /// In SecBrain every tier already runs on local Ollama; this
+    /// In Arandu every tier already runs on local Ollama; this
     /// flag exists so the eval gate runs when the user switches
     /// local models. Mutated via the
     /// `set_local_inference_for_sensitive` Tauri command rather than
@@ -625,7 +625,7 @@ fn default_llm_max_parallel() -> u32 {
 impl Default for AppSettings {
     fn default() -> Self {
         Self {
-            // Default to the recommended 70B model. SecBrain only delivers
+            // Default to the recommended 70B model. Arandu only delivers
             // acceptable results at this tier; smaller models are user-selectable
             // (onboarding wizard / Settings) but not guaranteed. Requires a
             // capable machine (Apple Silicon Ultra, 64–128 GB RAM) — on weaker
@@ -634,7 +634,7 @@ impl Default for AppSettings {
             llm_host: "http://localhost:11434".to_string(),
             max_sensitivity_tier: 2,
             theme: "light".to_string(),
-            data_dir: "~/.secbrain/data".to_string(),
+            data_dir: "~/.arandu/data".to_string(),
             auto_refresh_enabled: default_auto_refresh_enabled(),
             auto_refresh_interval_minutes: default_refresh_interval(),
             refresh_on_launch: false,

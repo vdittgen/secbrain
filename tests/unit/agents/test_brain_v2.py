@@ -40,7 +40,7 @@ from src.agents.firewall.injection_firewall import (
 @pytest.fixture(autouse=True)
 def _isolate(tmp_path, monkeypatch):
     monkeypatch.setenv(
-        "SECBRAIN_AUDIT_PATH", str(tmp_path / "audit.jsonl"),
+        "ARANDU_AUDIT_PATH", str(tmp_path / "audit.jsonl"),
     )
     reset_default_chain_for_tests()
     reset_injection_firewall_for_tests()
@@ -53,7 +53,7 @@ def _isolate(tmp_path, monkeypatch):
     reset_default_scheduler_for_tests(SchedulerConfig())
     reset_registry_for_tests()
     # Pin the configured endpoints so model-name assertions don't depend
-    # on whatever the user has in ~/.secbrain/settings.json.
+    # on whatever the user has in ~/.arandu/settings.json.
     from src.agents.core import model_factory as _mf
 
     def _fake_remote() -> _mf.ModelEndpoint:

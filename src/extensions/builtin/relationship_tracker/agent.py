@@ -9,7 +9,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timedelta, timezone
 
-from src.agent_runtime.base import SecondBrainAgent
+from src.agent_runtime.base import BrainAgent
 from src.agent_runtime.context import AgentContext
 from src.agent_runtime.models import AgentResult
 
@@ -17,7 +17,7 @@ from src.agent_runtime.models import AgentResult
 STALE_THRESHOLD_DAYS = 30
 
 
-class RelationshipTrackerAgent(SecondBrainAgent):
+class RelationshipTrackerAgent(BrainAgent):
     """Finds contacts the user hasn't interacted with recently
     and generates gentle follow-up nudges.
 

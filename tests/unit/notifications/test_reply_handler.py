@@ -269,7 +269,7 @@ class TestConversationContext:
         _seed_raw_messages(tmp_db, "5511999999999")
         result = _get_conversation_context(tmp_db, "5511999999999")
         assert "Recent self-chat conversation:" in result
-        assert "[SecBrain]:" in result
+        assert "[Arandu]:" in result
         assert "[User]:" in result
         assert "What meetings do I have tomorrow?" in result
 
@@ -1735,7 +1735,7 @@ class TestContextActionAnnotation:
     def test_regular_brain_messages_not_annotated(
         self, tmp_db: DatabaseEngine,
     ) -> None:
-        """Regular brain messages keep the [SecBrain] tag."""
+        """Regular brain messages keep the [Arandu] tag."""
         phone = "5511999999999"
         phone_jid = f"{phone}@s.whatsapp.net"
         tmp_db.execute(
@@ -1765,5 +1765,5 @@ class TestContextActionAnnotation:
             ],
         )
         context = _get_conversation_context(tmp_db, phone)
-        assert "[SecBrain]:" in context
+        assert "[Arandu]:" in context
         assert "NOT executed" not in context

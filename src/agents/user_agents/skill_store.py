@@ -18,7 +18,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 DEFAULT_DB_PATH: Path = (
-    Path.home() / ".secbrain" / "data" / "secbrain.sqlite3"
+    Path.home() / ".arandu" / "data" / "arandu.sqlite3"
 )
 
 

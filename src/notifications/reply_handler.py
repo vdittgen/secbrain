@@ -41,11 +41,11 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 BRAIN_PREFIX = "\U0001f9e0 "  # 🧠
-_LEGACY_PREFIX = "SecBrain - "  # recognised in old messages
+_LEGACY_PREFIX = "Arandu - "  # recognised in old messages
 
 
 def _is_brain_message(content: str) -> bool:
-    """Return True if *content* was sent by SecBrain (current or legacy prefix)."""
+    """Return True if *content* was sent by Arandu (current or legacy prefix)."""
     return content.startswith(BRAIN_PREFIX) or content.startswith(_LEGACY_PREFIX)
 
 
@@ -274,11 +274,11 @@ def _get_conversation_context(
             short = content[:80]
             if "I can do this for you" in content:
                 lines.append(
-                    "[SecBrain (past action proposal, "
+                    "[Arandu (past action proposal, "
                     f"NOT executed)]: {short}"
                 )
             else:
-                lines.append(f"[SecBrain]: {short}")
+                lines.append(f"[Arandu]: {short}")
         else:
             lines.append(f"[User]: {content}")
 
@@ -1655,7 +1655,7 @@ class ReplyHandler:
             # In multi-device Baileys, the phone's self-chat thread uses @lid
             # JIDs (Linked Device IDs), NOT @s.whatsapp.net.  Sending to a
             # phone-number @s.whatsapp.net JID creates a SEPARATE chat thread
-            # (e.g. "+55 48 99201-1083") instead of landing in the "SecondBrain
+            # (e.g. "+55 48 99201-1083") instead of landing in the "Arandu
             # (You)" self-chat.  Use @lid when available.
             if self._lid:
                 to_jid = f"{self._lid}@lid"

@@ -1,4 +1,4 @@
-"""Custom evaluators for SecondBrain agent eval suites.
+"""Custom evaluators for Arandu agent eval suites.
 
 The pydantic-evals built-ins (``Equals``, ``IsInstance``, ``Contains``)
 cover most cases; this module adds domain-specific ones that compare

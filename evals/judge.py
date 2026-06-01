@@ -7,7 +7,7 @@ reason. Used by :class:`evals.evaluators.LLMJudgeOnReason` and
 "did it crash?" structural checks to actual quality checks.
 
 Routing — the judge uses the model resolved by
-``default_factory().get("remote")``, which in SecBrain is the local
+``default_factory().get("remote")``, which in Arandu is the local
 Ollama model. Eval inputs are synthetic dataset cases, not user
 data, so the egress firewall is not consulted.
 
@@ -155,7 +155,7 @@ def grade(
 
     sensitivity_tier: N/A
     """
-    if os.environ.get("SECBRAIN_EVAL_JUDGE_DISABLED") == "1":
+    if os.environ.get("ARANDU_EVAL_JUDGE_DISABLED") == "1":
         return None
     agent, cfg = _judge()
     if agent is None or not cfg.available:

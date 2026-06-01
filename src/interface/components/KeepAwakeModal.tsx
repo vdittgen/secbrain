@@ -58,7 +58,7 @@ function KeepAwakeModal({ onDismiss }: KeepAwakeModalProps) {
           Keep me awake
         </h2>
         <p className="mt-2.5 text-[15px] leading-relaxed text-ink-2">
-          SecBrain runs entirely on your Mac. It needs the app and your Mac
+          Arandu runs entirely on your Mac. It needs the app and your Mac
           to stay awake to sync your data, answer questions, and run scheduled
           agents.
         </p>
@@ -71,7 +71,7 @@ function KeepAwakeModal({ onDismiss }: KeepAwakeModalProps) {
               onChange={(e) => setPreventSleep(e.target.checked)}
               className="h-[18px] w-[18px] accent-[var(--indigo)]"
             />
-            Prevent my Mac from sleeping while SecBrain is open
+            Prevent my Mac from sleeping while Arandu is open
           </label>
           <label className="flex cursor-pointer items-center gap-3 text-[14px] font-medium text-ink">
             <input
@@ -80,7 +80,7 @@ function KeepAwakeModal({ onDismiss }: KeepAwakeModalProps) {
               onChange={(e) => setLaunchAtLogin(e.target.checked)}
               className="h-[18px] w-[18px] accent-[var(--indigo)]"
             />
-            Launch SecBrain when I log in to my Mac
+            Launch Arandu when I log in to my Mac
           </label>
           <label className="flex cursor-pointer items-center gap-3 text-[14px] font-medium text-ink">
             <input
@@ -95,7 +95,7 @@ function KeepAwakeModal({ onDismiss }: KeepAwakeModalProps) {
 
         <p className="mt-4 text-[13px] text-muted">
           You can change any of this in{" "}
-          <b className="font-semibold text-ink">Settings → General → Keep SecBrain running</b>.
+          <b className="font-semibold text-ink">Settings → General → Keep Arandu running</b>.
         </p>
 
         <div className="mt-6 flex justify-end gap-2">

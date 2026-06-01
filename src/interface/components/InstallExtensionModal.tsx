@@ -343,7 +343,7 @@ function InstallExtensionModal({
                 </div>
                 <div className="mt-2 flex items-center justify-between">
                   <p className="text-[10px] text-muted">
-                    Paste the MCP server command. SecBrain will connect and auto-detect capabilities.
+                    Paste the MCP server command. Arandu will connect and auto-detect capabilities.
                   </p>
                   <a
                     href="https://mcp.so"

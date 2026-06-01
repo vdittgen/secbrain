@@ -38,10 +38,10 @@ _VALID_MANIFEST = {
 }
 
 _SIMPLE_AGENT_CODE = """\
-from src.agent_runtime.base import SecondBrainAgent
+from src.agent_runtime.base import BrainAgent
 from src.agent_runtime.models import AgentResult
 
-class TestAgent(SecondBrainAgent):
+class TestAgent(BrainAgent):
     manifest = None  # loaded by runner
 
     def run(self, context):
@@ -205,10 +205,10 @@ class TestRunAgent:
         agent_dir = tmp_path / "builtin" / "bad-agent"
         _write_manifest(agent_dir, {**_VALID_MANIFEST, "id": "bad-agent"})
         _write_agent(agent_dir, """\
-from src.agent_runtime.base import SecondBrainAgent
+from src.agent_runtime.base import BrainAgent
 from src.agent_runtime.models import AgentResult
 
-class BadAgent(SecondBrainAgent):
+class BadAgent(BrainAgent):
     manifest = None
 
     def run(self, context):

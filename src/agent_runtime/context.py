@@ -75,7 +75,7 @@ class AgentContext:
         self._tables_written: set[str] = set()
         self._log_path = (
             Path.home()
-            / ".secbrain"
+            / ".arandu"
             / "data"
             / "agents"
             / agent_id
@@ -239,7 +239,7 @@ class AgentContext:
     def log(self, message: str, level: str = "info") -> None:
         """Write to the agent's log file.
 
-        Logs stored at ``~/.secbrain/data/agents/{agent_id}/logs/``.
+        Logs stored at ``~/.arandu/data/agents/{agent_id}/logs/``.
 
         sensitivity_tier: 1
         """

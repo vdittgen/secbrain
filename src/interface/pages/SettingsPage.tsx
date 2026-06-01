@@ -185,7 +185,7 @@ function Toggle({
 }
 
 // ---------------------------------------------------------------------------
-// Keep SecBrain running section
+// Keep Arandu running section
 // ---------------------------------------------------------------------------
 
 function KeepAwakeSection({
@@ -224,9 +224,9 @@ function KeepAwakeSection({
   );
 
   return (
-    <Section title="Keep SecBrain running" icon={Power} id="presence">
+    <Section title="Keep Arandu running" icon={Power} id="presence">
       <p className="mb-4 text-xs text-muted">
-        SecBrain works only while this app and your Mac are awake. The Brain
+        Arandu works only while this app and your Mac are awake. The Brain
         syncs data, runs scheduled agents, and answers from local models in
         the background — but only when the OS isn't asleep.
       </p>
@@ -252,7 +252,7 @@ function KeepAwakeSection({
         {toggleRow(
           "Prevent Mac from sleeping",
           <>
-            While SecBrain is open, we'll keep macOS from entering true sleep.
+            While Arandu is open, we'll keep macOS from entering true sleep.
             The display can still dim and lock — only the CPU stays awake.
             Equivalent to{" "}
             <code className="rounded bg-bg-2 px-1.5 py-0.5 font-mono text-[12px]">
@@ -280,7 +280,7 @@ function KeepAwakeSection({
         {/* Run in menu bar when window closes */}
         {toggleRow(
           "Run in menu bar when window closes",
-          "Quitting the window won't quit the app — SecBrain stays in the menu bar so agents keep running. Right-click the icon to fully quit.",
+          "Quitting the window won't quit the app — Arandu stays in the menu bar so agents keep running. Right-click the icon to fully quit.",
           "menu_bar_mode",
         )}
 
@@ -328,11 +328,11 @@ function KeepAwakeSection({
                 <code className="rounded bg-bg-2 px-1.5 py-0.5 font-mono text-[12px]">
                   PreventUserIdleSystemSleep
                 </code>{" "}
-                assertion from SecBrain.
+                assertion from Arandu.
               </li>
             </ol>
             <div className="mt-3 rounded-2 bg-indigo-soft px-3 py-2.5 text-xs text-indigo">
-              SecBrain only prevents <em>idle</em> sleep. Closing the lid on
+              Arandu only prevents <em>idle</em> sleep. Closing the lid on
               a MacBook still triggers hardware sleep — plug in and use an
               external display, or use{" "}
               <code className="rounded bg-bg-2 px-1.5 py-0.5 font-mono text-[12px]">
@@ -715,7 +715,7 @@ function AIModelSection({
             <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber" />
             <p className="text-xs text-amber">
               Below the recommended minimum (Llama 3.1 70B). This model runs
-              on lighter hardware, but SecBrain does not guarantee acceptable
+              on lighter hardware, but Arandu does not guarantee acceptable
               results with it.
             </p>
           </div>
@@ -1258,7 +1258,7 @@ function AboutSection() {
         <div className="flex items-center justify-between rounded-2 bg-surface/60 px-4 py-3">
           <span className="text-xs text-muted">GitHub</span>
           <span className="text-xs font-medium text-indigo">
-            github.com/vdittgen/secbrain
+            github.com/vdittgen/arandu
           </span>
         </div>
         <div className="rounded-2 bg-surface/60 px-4 py-3">
@@ -1421,7 +1421,7 @@ function SettingsPage() {
             Settings
           </h2>
           <p className="mt-1 text-[11px] text-muted">
-            Configure your SecBrain.
+            Configure your Arandu.
           </p>
         </div>
         {TABS.map(({ id, label, icon: Icon }) => (

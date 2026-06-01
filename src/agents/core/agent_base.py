@@ -366,7 +366,7 @@ def _record_pa_spend(
     agent_id: str,
     model_override: str | None = None,
 ) -> None:
-    """No-op in SecBrain — local Ollama inference is free.
+    """No-op in Arandu — local Ollama inference is free.
 
     Per-call spend recording is a reserved extension point; it can be
     restored by overriding this function or wrapping the provider.
@@ -949,7 +949,7 @@ class SBDeepAgent(SBAgent[DepsT, OutT]):
 
     The base class provides:
 
-    - A per-run workspace under ``~/.secbrain/data/deep_agents/{agent_id}/
+    - A per-run workspace under ``~/.arandu/data/deep_agents/{agent_id}/
       {run_id}/workspace/`` accessed via the workspace tools.
     - Plan / update_plan tools backed by an internal ``Plan`` model.
     - ``execute_code`` / ``execute_sql`` tools backed by
@@ -1087,7 +1087,7 @@ def _default_sql_db_path() -> str:
     """
     from pathlib import Path
 
-    return str(Path.home() / ".secbrain" / "data" / "secbrain.sqlite3")
+    return str(Path.home() / ".arandu" / "data" / "arandu.sqlite3")
 
 
 def _attach_deep_tools(

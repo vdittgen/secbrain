@@ -231,7 +231,7 @@ function StreamingBubble({
             <ThinkingBlock
               part={{
                 id: "stream-thinking",
-                mime: "application/vnd.secbrain.thinking+json",
+                mime: "application/vnd.arandu.thinking+json",
                 data: thinking,
                 sensitivity_tier: 3,
               }}
@@ -417,7 +417,7 @@ function EmptyState({
         <Brain className="h-8 w-8 text-white" strokeWidth={1.6} />
       </div>
       <p className="max-w-md text-ink">
-        Hi! I&apos;m your SecBrain. I know about your messages, calendar,
+        Hi! I&apos;m your Arandu. I know about your messages, calendar,
         notes, and more. Everything stays on your machine. Ask me anything.
       </p>
       <div className="mt-6 flex flex-wrap justify-center gap-2">
@@ -908,7 +908,7 @@ function MessageBubble({
                   <ThinkingBlock
                     part={{
                       id: `${msg.timestamp}-thinking`,
-                      mime: "application/vnd.secbrain.thinking+json",
+                      mime: "application/vnd.arandu.thinking+json",
                       data: msg.thinking,
                       sensitivity_tier: 3,
                     }}
@@ -1003,7 +1003,7 @@ interface AgentListResponse {
   readonly agents: ReadonlyArray<AgentListRow>;
 }
 
-const AGENT_STORAGE_KEY = "secbrain.chat.agent";
+const AGENT_STORAGE_KEY = "arandu.chat.agent";
 const DEFAULT_AGENT_ID = "chat";
 
 function Chat() {
@@ -1761,7 +1761,7 @@ function Chat() {
             onKeyDown={handleKeyDown}
             onFocus={() => setInputFocused(true)}
             onBlur={() => setInputFocused(false)}
-            placeholder="Ask your SecBrain anything..."
+            placeholder="Ask your Arandu anything..."
             disabled={loading || audio.status === "recording" || audio.status === "transcribing"}
             className="flex-1 bg-transparent text-sm text-ink placeholder-muted outline-none disabled:opacity-50"
           />

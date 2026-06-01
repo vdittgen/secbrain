@@ -904,5 +904,5 @@ class ModelGenerator:
 
         sensitivity_tier: 1
         """
-        base = Path.home() / ".secbrain" / "extensions" / connector_id / "generated"
+        base = Path.home() / ".arandu" / "extensions" / connector_id / "generated"
         return base

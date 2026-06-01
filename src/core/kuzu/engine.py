@@ -1,7 +1,7 @@
-"""Kuzu embedded graph database engine for SecBrain.
+"""Kuzu embedded graph database engine for Arandu.
 
 Provides a single-connection graph engine with persistent storage at
-~/.secbrain/data/kuzu_db/.
+~/.arandu/data/kuzu_db/.
 
 sensitivity_tier: infrastructure layer — no user data stored here.
 """
@@ -18,7 +18,7 @@ from src.core.profiler import timed
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_DB_PATH = Path.home() / ".secbrain" / "data" / "kuzu_db"
+DEFAULT_DB_PATH = Path.home() / ".arandu" / "data" / "kuzu_db"
 
 
 class GraphEngine:

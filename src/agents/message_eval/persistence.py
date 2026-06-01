@@ -791,7 +791,7 @@ def format_realtime_notification(
         i for i in items if i.notification_type == "topic_enrichment"
     ]
 
-    lines = ["SecBrain - New Messages\n"]
+    lines = ["Arandu - New Messages\n"]
 
     if actions:
         lines.append("Action Required:")

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Fetch a relocatable Python runtime into python_runtime/.
-# This runtime is bundled into SecBrain.app/Contents/Resources/python_runtime/
-# and used at first launch to create ~/.secbrain/venv/ + pip-install deps.
+# This runtime is bundled into Arandu.app/Contents/Resources/python_runtime/
+# and used at first launch to create ~/.arandu/venv/ + pip-install deps.
 #
 # Source: https://github.com/astral-sh/python-build-standalone
 # Maintainer: Astral (uv, ruff). Reputable, widely used for embedded Python.

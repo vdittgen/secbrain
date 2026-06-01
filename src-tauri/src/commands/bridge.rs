@@ -17,7 +17,7 @@ pub fn is_bundled() -> bool {
 }
 
 /// Resources directory of the running `.app` bundle, e.g.
-/// `/Applications/SecBrain.app/Contents/Resources/`. None in dev mode.
+/// `/Applications/Arandu.app/Contents/Resources/`. None in dev mode.
 fn bundle_resources_dir() -> Option<PathBuf> {
     let exe = std::env::current_exe().ok()?;
     let macos = exe.parent()?; // .../Contents/MacOS
@@ -35,12 +35,12 @@ pub fn bundled_python_runtime() -> Option<PathBuf> {
 /// Used as the install source for `pip install <path>` at first launch.
 /// Must match the `resources` key in `tauri.conf.json`.
 pub fn bundled_app_dir() -> Option<PathBuf> {
-    bundle_resources_dir().map(|r| r.join("secbrain_app"))
+    bundle_resources_dir().map(|r| r.join("arandu_app"))
 }
 
-/// Path to the user-persistent venv at `~/.secbrain/venv/`.
+/// Path to the user-persistent venv at `~/.arandu/venv/`.
 pub fn user_venv_dir() -> Option<PathBuf> {
-    dirs::home_dir().map(|h| h.join(".secbrain").join("venv"))
+    dirs::home_dir().map(|h| h.join(".arandu").join("venv"))
 }
 
 /// Path to the python interpreter inside the user-persistent venv.
@@ -57,7 +57,7 @@ pub fn is_venv_ready() -> bool {
         None => return false,
     };
     let marker = match user_venv_dir() {
-        Some(d) => d.join(".secbrain_setup_complete"),
+        Some(d) => d.join(".arandu_setup_complete"),
         None => return false,
     };
     py.exists() && marker.exists()
@@ -65,7 +65,7 @@ pub fn is_venv_ready() -> bool {
 
 /// Resolve the Python executable.
 ///
-/// Bundled mode: returns the user's venv python at `~/.secbrain/venv/bin/python3`.
+/// Bundled mode: returns the user's venv python at `~/.arandu/venv/bin/python3`.
 /// Dev mode: prefers `<project_root>/.venv/bin/python3`, falls back to `python3`.
 ///
 /// # sensitivity_tier: N/A
@@ -388,7 +388,7 @@ pub async fn spawn_pipeline_worker(
 
 /// Resolve the project root directory for the Python bridge.
 ///
-/// Bundled mode: returns the .app's `Contents/Resources/secbrain_app/`
+/// Bundled mode: returns the .app's `Contents/Resources/arandu_app/`
 /// (contains src/ and pyproject.toml shipped inside the bundle).
 /// Dev mode: walks up from the exe to find the repo containing src-tauri/ + src/.
 /// Falls back to the current working directory.

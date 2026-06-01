@@ -33,7 +33,7 @@ from src.extensions.models import (
 
 logger = logging.getLogger(__name__)
 
-_EXTENSIONS_DIR = Path.home() / ".secbrain" / "extensions"
+_EXTENSIONS_DIR = Path.home() / ".arandu" / "extensions"
 
 # Connectors that sync via direct function calls (no MCP subprocess).
 NATIVE_SYNC_CONNECTORS: frozenset[str] = frozenset({
@@ -183,7 +183,7 @@ class SyncEngine:
         """Resolve ``(command, args, data_tools)`` for a connector.
 
         Tries the bundled catalog first, then falls back to custom
-        install metadata at ``~/.secbrain/extensions/{id}/metadata.json``.
+        install metadata at ``~/.arandu/extensions/{id}/metadata.json``.
 
         Raises ``LookupError`` if neither source has config.
 

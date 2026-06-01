@@ -73,7 +73,7 @@ def _fake_run(agent_id: str, status: str) -> EvalRun:
 @pytest.fixture(autouse=True)
 def _isolate(tmp_path: Path, monkeypatch):
     monkeypatch.setenv(
-        "SECBRAIN_AUDIT_PATH", str(tmp_path / "audit.jsonl"),
+        "ARANDU_AUDIT_PATH", str(tmp_path / "audit.jsonl"),
     )
     reset_default_chain_for_tests()
     reset_injection_firewall_for_tests()

@@ -23,7 +23,7 @@ from contextvars import ContextVar
 from src.agents.firewall.egress_firewall import Lane
 
 _CURRENT_LANE: ContextVar[Lane | None] = ContextVar(
-    "secbrain.current_lane", default=None,
+    "arandu.current_lane", default=None,
 )
 
 

@@ -59,7 +59,7 @@ _QUERY_PARAM_NAMES: frozenset[str] = frozenset({
 
 DISCOVERY_CACHE_VERSION = 1
 DEFAULT_DISCOVERY_CACHE_DIR = (
-    Path.home() / ".secbrain" / "extensions" / "discovery_cache"
+    Path.home() / ".arandu" / "extensions" / "discovery_cache"
 )
 
 
@@ -853,12 +853,12 @@ class ExtensionInstaller:
     ) -> None:
         """Persist preview + discovered mappings for detail view.
 
-        Saved to ``~/.secbrain/extensions/{connector_id}/metadata.json``.
+        Saved to ``~/.arandu/extensions/{connector_id}/metadata.json``.
 
         sensitivity_tier: 1
         """
         base = (
-            Path.home() / ".secbrain" / "extensions" / connector_id
+            Path.home() / ".arandu" / "extensions" / connector_id
         )
         try:
             base.mkdir(parents=True, exist_ok=True)

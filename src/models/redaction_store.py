@@ -1,6 +1,6 @@
 """Per-call store of original/redacted message pairs for audit-log drilldown.
 
-The SHA-256 chained audit log at ``~/.secbrain/data/audit.jsonl`` records
+The SHA-256 chained audit log at ``~/.arandu/data/audit.jsonl`` records
 *that* a redaction happened but never the prompt text — its whole point
 is to be tamper-evident metadata. To let the user click an audit row and
 see what was actually flagged, we persist the pre/post-redaction payload
@@ -45,7 +45,7 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 
-DEFAULT_PATH = Path.home() / ".secbrain" / "data" / "redaction_log.sqlite"
+DEFAULT_PATH = Path.home() / ".arandu" / "data" / "redaction_log.sqlite"
 DEFAULT_RETENTION_HOURS = 24
 
 _SCHEMA = """
@@ -220,7 +220,7 @@ _default_lock = threading.Lock()
 
 
 def default_redaction_store() -> RedactionStore:
-    """Process-wide default store at ``~/.secbrain/data/redaction_log.sqlite``.
+    """Process-wide default store at ``~/.arandu/data/redaction_log.sqlite``.
 
     sensitivity_tier: 3
     """
@@ -228,7 +228,7 @@ def default_redaction_store() -> RedactionStore:
     if _default_store is None:
         with _default_lock:
             if _default_store is None:
-                override = os.environ.get("SECBRAIN_REDACTION_STORE_PATH")
+                override = os.environ.get("ARANDU_REDACTION_STORE_PATH")
                 path = Path(override) if override else DEFAULT_PATH
                 _default_store = RedactionStore(path=path)
     return _default_store

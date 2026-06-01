@@ -1,6 +1,6 @@
 """Egress firewall — decides which model an LLM or embedding call may reach.
 
-In SecBrain every call resolves to the local Ollama backend. The
+In Arandu every call resolves to the local Ollama backend. The
 firewall still classifies the prompt's sensitivity tier (Tier 1 / 2 /
 3) and emits an audit-chain entry per request — those signals matter
 even when the destination is local — but it never routes off-device.
@@ -36,14 +36,14 @@ from src.agents.core.output_types import EgressDecision
 
 logger = logging.getLogger(__name__)
 
-# Routing policies stored in settings.json. SecBrain routes every
+# Routing policies stored in settings.json. Arandu routes every
 # call locally regardless of which of these is selected; the
 # ``remote-default`` value is a reserved extension point.
 RoutingPolicy = Literal["remote-default", "local-only"]
 ProviderName = Literal["local_ollama", "remote"]
 ComplexityTier = Literal["fast", "balanced", "deep"]
 
-SETTINGS_PATH = Path.home() / ".secbrain" / "settings.json"
+SETTINGS_PATH = Path.home() / ".arandu" / "settings.json"
 
 LOCAL_FALLBACK_MODEL = "gemma4:e2b"
 
@@ -193,7 +193,7 @@ def keyword_tier_floor(text: str) -> int:
 class EgressPolicy:
     """Resolved policy from settings.
 
-    In SecBrain the ``routing`` field does not affect where calls
+    In Arandu the ``routing`` field does not affect where calls
     go — every route resolves to local Ollama. The field is retained
     as a reserved extension point. Derived from the single
     user-facing setting ``local_inference_for_sensitive``.
@@ -275,7 +275,7 @@ def _local_only_classifier() -> object | None:
     sensitivity_tier: 1
     """
     import os
-    if os.environ.get("SECBRAIN_FIREWALL_DISABLE_LLM_TIER") == "1":
+    if os.environ.get("ARANDU_FIREWALL_DISABLE_LLM_TIER") == "1":
         return None
     try:
         from src.models.llm_provider import (
@@ -482,7 +482,7 @@ class EgressFirewall:
     def route(self, req: AgentRequest) -> ProviderEndpoint:
         """Resolve a lane/tier/complexity request to a provider endpoint.
 
-        SecBrain routes every request to local Ollama regardless of
+        Arandu routes every request to local Ollama regardless of
         lane, tier, or complexity.
 
         sensitivity_tier: 1
@@ -491,7 +491,7 @@ class EgressFirewall:
             provider="local_ollama",
             model=LOCAL_FALLBACK_MODEL,
             lane=req.lane,
-            reason="SecBrain: local-only",
+            reason="Arandu: local-only",
         )
 
     def _route_for(
@@ -513,7 +513,7 @@ class EgressFirewall:
         # OSS: every tier stays local regardless of policy.
         return (
             "local",
-            f"tier {max_tier} stays local (SecBrain)",
+            f"tier {max_tier} stays local (Arandu)",
             False,
             False,
         )

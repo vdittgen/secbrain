@@ -150,10 +150,10 @@ function prettyMimeLabel(mime: string): string {
   if (mime === "text/html") return "HTML preview";
   if (mime === "text/vnd.mermaid") return "Diagram";
   if (mime === "application/vnd.vega-lite+json") return "Chart";
-  if (mime === "application/vnd.secbrain.table+json") return "Table";
-  if (mime === "application/vnd.secbrain.plan+json") return "Plan";
-  if (mime === "application/vnd.secbrain.thinking+json") return "Thinking";
-  if (mime === "application/vnd.secbrain.citation+json") return "Sources";
+  if (mime === "application/vnd.arandu.table+json") return "Table";
+  if (mime === "application/vnd.arandu.plan+json") return "Plan";
+  if (mime === "application/vnd.arandu.thinking+json") return "Thinking";
+  if (mime === "application/vnd.arandu.citation+json") return "Sources";
   if (mime === "application/pdf") return "PDF preview";
   if (mime.includes("wordprocessingml")) return "Word document";
   if (mime.includes("spreadsheetml")) return "Spreadsheet";

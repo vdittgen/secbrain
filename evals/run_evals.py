@@ -181,7 +181,7 @@ def run_dataset_detailed(
 
     Shared core used by built-in suites (via the dataset filename →
     factory map in :data:`TASK_REGISTRY`) and by user-agent runs
-    (dataset path under ``~/.secbrain/user_eval_datasets/`` + task
+    (dataset path under ``~/.arandu/user_eval_datasets/`` + task
     constructed by :func:`evals.tasks.user_agent_task`). Returns
     ``(total, passed, failed, failed_cases, duration_s)``.
 
@@ -333,7 +333,7 @@ def main(argv: list[str] | None = None) -> int:
     sensitivity_tier: N/A
     """
     parser = argparse.ArgumentParser(
-        description="Run SecondBrain agent eval suites.",
+        description="Run Arandu agent eval suites.",
     )
     parser.add_argument(
         "--suite",

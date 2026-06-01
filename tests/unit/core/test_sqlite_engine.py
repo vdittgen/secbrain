@@ -1,7 +1,7 @@
 """Unit tests for the SQLite engine, schemas, cache, and migrations.
 
 All tests use temporary file databases — never the real
-~/.secbrain/data/secbrain.sqlite3 — so they are safe to run in any environment.
+~/.arandu/data/arandu.sqlite3 — so they are safe to run in any environment.
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ from src.core.sqlite.schemas import ALL_TABLE_NAMES, create_all_tables
 @pytest.fixture()
 def tmp_db(tmp_path: Path) -> DatabaseEngine:
     """Open a fresh DatabaseEngine backed by a temp file; close after test."""
-    db_path = tmp_path / "test_secbrain.sqlite3"
+    db_path = tmp_path / "test_arandu.sqlite3"
     engine = DatabaseEngine(db_path=db_path)
     yield engine
     engine.close()
@@ -49,7 +49,7 @@ def seeded_db(tmp_db: DatabaseEngine) -> DatabaseEngine:
 class TestDatabaseEngineInit:
     def test_creates_database_file(self, tmp_path: Path) -> None:
         """DatabaseEngine must create the .sqlite3 file on disk."""
-        db_path = tmp_path / "subdir" / "secbrain.sqlite3"
+        db_path = tmp_path / "subdir" / "arandu.sqlite3"
         assert not db_path.exists()
 
         engine = DatabaseEngine(db_path=db_path)
@@ -59,7 +59,7 @@ class TestDatabaseEngineInit:
 
     def test_creates_parent_directories(self, tmp_path: Path) -> None:
         """Parent directories that don't exist should be created automatically."""
-        db_path = tmp_path / "a" / "b" / "c" / "secbrain.sqlite3"
+        db_path = tmp_path / "a" / "b" / "c" / "arandu.sqlite3"
         engine = DatabaseEngine(db_path=db_path)
         engine.close()
 

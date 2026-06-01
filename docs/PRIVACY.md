@@ -1,12 +1,12 @@
 # Privacy & Data Egress
 
-SecBrain is a privacy-first AI operating system that runs as a
+Arandu is a privacy-first AI operating system that runs as a
 native desktop app. The promise is built on a few load-bearing
 facts: the analytical store is embedded, the vector index is local,
 the audit chain is on disk, and **every LLM call stays on the
 user's machine**.
 
-SecBrain runs Ollama locally and never reaches a cloud provider.
+Arandu runs Ollama locally and never reaches a cloud provider.
 
 If you are evaluating the project's privacy posture and this
 document disagrees with code, **the code wins** — open an issue and
@@ -17,15 +17,15 @@ we'll reconcile.
 We model three classes of risk:
 
 1. **Local exfiltration** — software on the user's machine reading
-   `~/.secbrain/data/`. Out of scope for this document; addressed by
+   `~/.arandu/data/`. Out of scope for this document; addressed by
    the host OS sandbox and the project's `SensitivityGuard`.
 2. **Network egress** — prompts and retrieved context leaving the
-   machine on their way to an LLM. **In SecBrain this never
+   machine on their way to an LLM. **In Arandu this never
    happens**: the provider factory in `src/models/llm_provider.py`
    is hard-locked to Ollama, and the egress firewall in
    `src/agents/firewall/egress_firewall.py` resolves every route to
    `local_ollama`.
-3. **Provider-side compromise** — irrelevant to SecBrain since
+3. **Provider-side compromise** — irrelevant to Arandu since
    no third-party provider is contacted.
 
 ## Single chokepoint
@@ -77,7 +77,7 @@ The chosen tier for a single prompt is the *maximum* of:
 - The LLM-driven sensitivity classifier (when the user has not
   disabled it for performance reasons).
 
-In SecBrain tier classification is informational — it doesn't
+In Arandu tier classification is informational — it doesn't
 change where a prompt goes (every tier is local). It still drives
 the audit log.
 
@@ -88,7 +88,7 @@ floor + agent manifest tier — never relaxing the decision.
 ## Audit chain
 
 Every firewall decision is appended to
-`~/.secbrain/data/audit.jsonl`. The file is SHA-256 chained;
+`~/.arandu/data/audit.jsonl`. The file is SHA-256 chained;
 tampering breaks the chain and is detected by `AuditChain.verify()`.
 
 Audit event types relevant to egress:
@@ -106,12 +106,12 @@ leaves the device, so there is nothing to consent to.
 extension point for redact-then-send flows: it maps high-signal
 entities (people, places, emails, phone numbers, account/money
 amounts, dates) to stable placeholders before any outbound call.
-Because SecBrain never egresses, the registry is not exercised.
+Because Arandu never egresses, the registry is not exercised.
 
 When the registry is in use it holds raw user values paired with
 their placeholders — Tier 3 data. It is:
 
-- Stored under `~/.secbrain/data/` next to the rest of the local DB.
+- Stored under `~/.arandu/data/` next to the rest of the local DB.
 - Created with `0600` file mode.
 - Annotated `sensitivity_tier: 3` at the module level so
   `SensitivityGuard` can refuse non-authorised access.

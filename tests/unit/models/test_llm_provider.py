@@ -210,7 +210,7 @@ class TestFactory:
             assert provider.provider_name == "ollama"
 
     def test_non_ollama_setting_still_yields_ollama(self) -> None:
-        # SecBrain is Ollama-only: any llm_provider value resolves
+        # Arandu is Ollama-only: any llm_provider value resolves
         # to the local Ollama provider.
         settings = {"llm_provider": "anthropic"}
         with (

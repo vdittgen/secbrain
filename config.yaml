@@ -2,7 +2,7 @@ gateways:
   local:
     connection:
       type: duckdb
-      database: ~/.secbrain/data/secbrain.duckdb
+      database: ~/.arandu/data/arandu.duckdb
 
 default_gateway: local
 

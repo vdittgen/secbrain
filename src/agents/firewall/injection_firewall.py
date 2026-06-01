@@ -364,13 +364,13 @@ class InjectionFirewall:
         scanner returns a ``safe`` verdict with low confidence rather
         than fail-closed. The audit chain still records the decision,
         so any after-the-fact review can flag prompts that bypassed
-        the LLM check. Set ``SECBRAIN_FIREWALL_FAIL_CLOSED=1`` in the
+        the LLM check. Set ``ARANDU_FIREWALL_FAIL_CLOSED=1`` in the
         environment to flip this to "block on classifier outage".
 
         sensitivity_tier: 1
         """
         import os
-        if os.environ.get("SECBRAIN_FIREWALL_DISABLE_SEMANTIC_SCAN") == "1":
+        if os.environ.get("ARANDU_FIREWALL_DISABLE_SEMANTIC_SCAN") == "1":
             return InjectionVerdict(
                 allowed=True,
                 category="safe",
@@ -390,14 +390,14 @@ class InjectionFirewall:
         if verdict is not None:
             return verdict
 
-        if os.environ.get("SECBRAIN_FIREWALL_FAIL_CLOSED") == "1":
+        if os.environ.get("ARANDU_FIREWALL_FAIL_CLOSED") == "1":
             return InjectionVerdict(
                 allowed=False,
                 category="injection",
                 confidence=0.5,
                 reason=(
                     "heuristic pass clean; semantic check failed and "
-                    "SECBRAIN_FIREWALL_FAIL_CLOSED is set"
+                    "ARANDU_FIREWALL_FAIL_CLOSED is set"
                 ),
             )
         return InjectionVerdict(

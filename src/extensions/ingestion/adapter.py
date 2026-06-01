@@ -64,7 +64,7 @@ _INGEST_TIMESTAMP_FIELDS = (
 def _load_ingest_cutoff() -> datetime | None:
     """Return the configured ingest cutoff or ``None`` when unset.
 
-    Reads ``ingest_cutoff_iso`` from ``~/.secbrain/settings.json``.
+    Reads ``ingest_cutoff_iso`` from ``~/.arandu/settings.json``.
 
     sensitivity_tier: 1
     """

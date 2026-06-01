@@ -1,4 +1,4 @@
-# Contributing to SecBrain
+# Contributing to Arandu
 
 Thanks for your interest in contributing! This guide covers everything you need to get started.
 
@@ -10,7 +10,7 @@ contact listed there.
 
 ## License
 
-By contributing to SecBrain, you agree that your contributions will be
+By contributing to Arandu, you agree that your contributions will be
 licensed under the Apache License, Version 2.0 (see [LICENSE](LICENSE)).
 Per Section 5 of the Apache-2.0 license, any Contribution intentionally
 submitted for inclusion in the Work shall be under the terms and conditions
@@ -33,8 +33,8 @@ submit the contribution under our license.
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/vdittgen/secbrain.git
-cd secbrain
+git clone https://github.com/vdittgen/arandu.git
+cd arandu
 
 # 2. Python environment
 python -m venv .venv
@@ -211,7 +211,7 @@ ruff check src/ && cargo clippy --manifest-path src-tauri/Cargo.toml && npx tsc 
 ## Project Structure
 
 ```
-secbrain/
+arandu/
 ├── src/
 │   ├── core/               # Database engines and data layer
 │   │   ├── sqlite/         #   SQLite engine, schemas, migrations

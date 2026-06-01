@@ -1,4 +1,4 @@
-"""Memory and resource monitoring for SecBrain.
+"""Memory and resource monitoring for Arandu.
 
 Provides RSS memory usage and database file sizes for system health
 monitoring. Warns when total resource usage exceeds safe thresholds.
@@ -17,12 +17,12 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_DATA_DIR = Path.home() / ".secbrain" / "data"
+DEFAULT_DATA_DIR = Path.home() / ".arandu" / "data"
 WARNING_THRESHOLD_MB = 2048.0
 
 # Database subdirectories relative to the data dir
 _DB_PATHS: dict[str, str | list[str]] = {
-    "duckdb": "secbrain.duckdb",
+    "duckdb": "arandu.duckdb",
     "kuzu": "kuzu_db",
     "chromadb": "chromadb",
 }
@@ -62,7 +62,7 @@ def get_memory_usage(data_dir: Path | None = None) -> MemoryReport:
 
     Args:
         data_dir: Override the data directory path.
-                  Defaults to ~/.secbrain/data/.
+                  Defaults to ~/.arandu/data/.
 
     Returns:
         MemoryReport with RSS, DB sizes, and optional warning.

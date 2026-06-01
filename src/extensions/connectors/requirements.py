@@ -97,7 +97,7 @@ class _OAuthCallbackHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", "text/plain; charset=utf-8")
         self.end_headers()
-        msg = b"SecondBrain authentication complete. You can close this window."
+        msg = b"Arandu authentication complete. You can close this window."
         self.wfile.write(msg)
 
     def log_message(self, fmt: str, *args: Any) -> None:  # noqa: A003
@@ -237,7 +237,7 @@ class RequirementChecker:
                     "-s",
                     service_name,
                     "-a",
-                    "secbrain",
+                    "arandu",
                     "-w",
                     token_value,
                 ],
@@ -433,17 +433,17 @@ class RequirementChecker:
         """Run a local OAuth browser callback flow and store the token.
 
         Provider configuration is expected in environment variables:
-        - `SECBRAIN_OAUTH_<PROVIDER>_AUTH_URL` (required)
-        - `SECBRAIN_OAUTH_<PROVIDER>_AUTH_PARAMS` (optional JSON map)
-        - `SECBRAIN_OAUTH_<PROVIDER>_TEST_TOKEN` (optional shortcut for tests)
+        - `ARANDU_OAUTH_<PROVIDER>_AUTH_URL` (required)
+        - `ARANDU_OAUTH_<PROVIDER>_AUTH_PARAMS` (optional JSON map)
+        - `ARANDU_OAUTH_<PROVIDER>_TEST_TOKEN` (optional shortcut for tests)
 
         sensitivity_tier: 2
         """
         logger.info("Starting OAuth flow for provider: %s", provider)
         provider_key = self._provider_env_key(provider)
-        auth_url_key = f"SECBRAIN_OAUTH_{provider_key}_AUTH_URL"
-        auth_params_key = f"SECBRAIN_OAUTH_{provider_key}_AUTH_PARAMS"
-        test_token_key = f"SECBRAIN_OAUTH_{provider_key}_TEST_TOKEN"
+        auth_url_key = f"ARANDU_OAUTH_{provider_key}_AUTH_URL"
+        auth_params_key = f"ARANDU_OAUTH_{provider_key}_AUTH_PARAMS"
+        test_token_key = f"ARANDU_OAUTH_{provider_key}_TEST_TOKEN"
 
         test_token = os.environ.get(test_token_key, "").strip()
         if test_token:
@@ -502,7 +502,7 @@ class RequirementChecker:
                 error="Could not open browser for OAuth",
             )
 
-        timeout_s = int(os.environ.get("SECBRAIN_OAUTH_CALLBACK_TIMEOUT", "180"))
+        timeout_s = int(os.environ.get("ARANDU_OAUTH_CALLBACK_TIMEOUT", "180"))
         completed = callback_state.event.wait(timeout=timeout_s)
         stop_server.set()
         with contextlib.suppress(Exception):
@@ -557,7 +557,7 @@ class RequirementChecker:
     @staticmethod
     def _oauth_service_name(provider: str) -> str:
         """Return Keychain service name for the OAuth provider."""
-        return f"secbrain-oauth-{provider}"
+        return f"arandu-oauth-{provider}"
 
     @staticmethod
     def _provider_env_key(provider: str) -> str:

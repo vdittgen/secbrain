@@ -145,11 +145,11 @@ function TodayBoard() {
   // reflects pending replies, which are written by ProactiveIntelligence.
   useEffect(() => {
     const handler = () => board.refetch();
-    window.addEventListener("secbrain:proactive-refreshed", handler);
-    window.addEventListener("secbrain:pipeline-refreshed", handler);
+    window.addEventListener("arandu:proactive-refreshed", handler);
+    window.addEventListener("arandu:pipeline-refreshed", handler);
     return () => {
-      window.removeEventListener("secbrain:proactive-refreshed", handler);
-      window.removeEventListener("secbrain:pipeline-refreshed", handler);
+      window.removeEventListener("arandu:proactive-refreshed", handler);
+      window.removeEventListener("arandu:pipeline-refreshed", handler);
     };
   }, [board]);
 

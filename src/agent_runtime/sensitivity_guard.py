@@ -141,7 +141,7 @@ class SensitivityGuard:
         }
         self._audit_path = audit_path or (
             Path.home()
-            / ".secbrain"
+            / ".arandu"
             / "data"
             / "agents"
             / agent_id
@@ -284,7 +284,7 @@ class SensitivityGuard:
     ) -> None:
         """Append access decision to the agent's audit log.
 
-        Written to ``~/.secbrain/data/agents/{agent_id}/audit.jsonl``.
+        Written to ``~/.arandu/data/agents/{agent_id}/audit.jsonl``.
 
         sensitivity_tier: 1
         """

@@ -29,7 +29,7 @@ def initialized_layer(
 ) -> DataLayer:
     """Module-scoped DataLayer with schemas + migrations applied."""
     base = tmp_path_factory.mktemp("catalog_integration")
-    dl = DataLayer(base_path=base / "secbrain_data")
+    dl = DataLayer(base_path=base / "arandu_data")
     dl.initialize()
     run_migrations(dl.duckdb)
     yield dl

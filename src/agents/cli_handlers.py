@@ -83,7 +83,7 @@ def _ensure_bootstrap() -> None:
 
 def _agents_db_path() -> Path:
     """Return the SQLite path the agent_configs table lives in."""
-    return Path.home() / ".secbrain" / "data" / "secbrain.sqlite3"
+    return Path.home() / ".arandu" / "data" / "arandu.sqlite3"
 
 
 def _config_store() -> Any:
@@ -702,7 +702,7 @@ def cmd_agents_eval_dataset(agent_id: str) -> int:
 
     Built-in datasets live under ``evals/datasets/<suite>.yaml`` and
     are read-only on the UI. User-agent datasets live under
-    ``~/.secbrain/user_eval_datasets/<agent_id>.yaml`` and are
+    ``~/.arandu/user_eval_datasets/<agent_id>.yaml`` and are
     editable (subject to validation + firewall on upload).
 
     sensitivity_tier: 1
@@ -758,7 +758,7 @@ def cmd_agents_validate_dataset(agent_id: str, content: str) -> int:
     2. Run the deterministic structural check.
     3. Run the LLM proposal step (best-effort).
     4. Scan the content with the injection firewall.
-    5. Write the file under ``~/.secbrain/user_eval_datasets/`` only
+    5. Write the file under ``~/.arandu/user_eval_datasets/`` only
        when structural validation passed AND the firewall did not
        block.
 
@@ -1730,7 +1730,7 @@ def _stamp_last_run(agent_id: str) -> None:
     from datetime import datetime, timezone
 
     state_path = (
-        Path.home() / ".secbrain" / "data" / "agent_schedule_state.json"
+        Path.home() / ".arandu" / "data" / "agent_schedule_state.json"
     )
     state: dict[str, str] = {}
     if state_path.exists():
@@ -2030,7 +2030,7 @@ def cmd_skills_delete_v2(skill_id: str) -> int:
 # ---------------------------------------------------------------------------
 
 
-_SETTINGS_PATH = Path.home() / ".secbrain" / "settings.json"
+_SETTINGS_PATH = Path.home() / ".arandu" / "settings.json"
 
 
 def _read_settings_dict() -> dict[str, Any]:

@@ -3,7 +3,7 @@
 Routes:
 
 - **local** — Ollama on the user's machine, fronted by its
-  OpenAI-compatible endpoint. The only route used in SecBrain.
+  OpenAI-compatible endpoint. The only route used in Arandu.
 - **remote** — A reserved extension-point route. Falls through to
   local here.
 
@@ -26,7 +26,7 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-SETTINGS_PATH = Path.home() / ".secbrain" / "settings.json"
+SETTINGS_PATH = Path.home() / ".arandu" / "settings.json"
 
 # Defaults are placeholders; the real provider URL + model name come from
 # user settings written by the AI Model section of the settings page.
@@ -63,7 +63,7 @@ def _load_settings() -> dict[str, Any]:
 def remote_endpoint() -> ModelEndpoint:
     """Endpoint for the configured remote provider.
 
-    In SecBrain the remote route is never taken (the egress firewall
+    In Arandu the remote route is never taken (the egress firewall
     keeps every call local); it remains as a reserved extension point.
 
     sensitivity_tier: 1
@@ -82,7 +82,7 @@ def remote_endpoint() -> ModelEndpoint:
         api_key=settings.get(
             "llm_remote_api_key",
             settings.get("llm_api_key")
-            or os.environ.get("SECBRAIN_REMOTE_API_KEY"),
+            or os.environ.get("ARANDU_REMOTE_API_KEY"),
         ),
     )
 
@@ -98,7 +98,7 @@ def local_endpoint() -> ModelEndpoint:
         base_url=settings.get(
             "llm_local_base_url", DEFAULT_LOCAL_BASE_URL,
         ),
-        # SecBrain has a single user-facing model setting (`llm_model`, set by
+        # Arandu has a single user-facing model setting (`llm_model`, set by
         # the onboarding wizard / Settings). Agents always take the local
         # route, so honour `llm_model` here; `llm_local_model` stays an
         # optional explicit override for advanced setups.

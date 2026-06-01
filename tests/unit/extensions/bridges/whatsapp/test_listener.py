@@ -598,7 +598,7 @@ def test_drain_acks_deletes_matching_outbox_file(
     msg_id = "WAID-ACK-1"
     (outbox_dir / f"{msg_id}.json").write_text("{}", encoding="utf-8")
 
-    # Route DB writes to an isolated file so the test never touches ~/.secbrain.
+    # Route DB writes to an isolated file so the test never touches ~/.arandu.
     monkeypatch.setattr(wl, "DEFAULT_DB_PATH", tmp_path / "test.sqlite3")
 
     client = _StubClient(

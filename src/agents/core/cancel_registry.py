@@ -10,7 +10,7 @@ here.
 Because the ``ask-stream`` subprocess and the ``stop-research``
 subprocess are different Python processes, the registry can't live in
 plain in-process state. Instead, the source of truth is an empty
-flag file at ``~/.secbrain/data/cancel/<run_id>.flag``: writing it
+flag file at ``~/.arandu/data/cancel/<run_id>.flag``: writing it
 signals cancel, ``should_stop`` checks for its existence at each
 reflection checkpoint, and ``release`` removes it when the run
 completes.
@@ -38,14 +38,14 @@ _LOCK = threading.Lock()
 def _cancel_dir() -> Path:
     """Return the directory that holds per-run cancel flags.
 
-    Lives under ``~/.secbrain/data/cancel/`` so it shares the data
+    Lives under ``~/.arandu/data/cancel/`` so it shares the data
     root with audit logs and embeddings. The directory is created on
     demand — callers don't need to ensure it exists.
 
     sensitivity_tier: 1
     """
-    root = os.environ.get("SECBRAIN_DATA_DIR")
-    base = Path(root) if root else Path.home() / ".secbrain" / "data"
+    root = os.environ.get("ARANDU_DATA_DIR")
+    base = Path(root) if root else Path.home() / ".arandu" / "data"
     cancel_dir = base / "cancel"
     cancel_dir.mkdir(parents=True, exist_ok=True)
     return cancel_dir

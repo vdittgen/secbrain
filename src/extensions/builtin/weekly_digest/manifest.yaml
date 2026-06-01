@@ -2,7 +2,7 @@ id: weekly-digest
 name: Weekly Digest
 version: "1.0.0"
 description: Generates a weekly summary of messages, events, and notes
-author: SecondBrain OS
+author: Arandu
 builtin: true
 category: productivity
 max_sensitivity_tier: 2

@@ -23,13 +23,13 @@ def _isolated_cancel_dir(
 ) -> None:
     """Point the registry at a temp directory and clear it after.
 
-    Without this, tests would write into ``~/.secbrain/data/cancel/``
+    Without this, tests would write into ``~/.arandu/data/cancel/``
     on the developer's machine and possibly collide with a real
     streaming run.
 
     sensitivity_tier: 1
     """
-    monkeypatch.setenv("SECBRAIN_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("ARANDU_DATA_DIR", str(tmp_path))
     cancel_registry._reset_for_tests()
     yield
     cancel_registry._reset_for_tests()
@@ -65,7 +65,7 @@ def test_should_stop_picks_up_cross_process_flag(tmp_path: Path) -> None:
     sensitivity_tier: 1
     """
     # No in-process token registered.
-    flag = Path(os.environ["SECBRAIN_DATA_DIR"]) / "cancel" / "run-c.flag"
+    flag = Path(os.environ["ARANDU_DATA_DIR"]) / "cancel" / "run-c.flag"
     flag.parent.mkdir(parents=True, exist_ok=True)
     flag.touch()
     assert cancel_registry.should_stop("run-c")

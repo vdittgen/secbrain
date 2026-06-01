@@ -315,7 +315,7 @@ def run_sql(
 
 
 WORKSPACE_ROOT = (
-    Path.home() / ".secbrain" / "data" / "deep_agents"
+    Path.home() / ".arandu" / "data" / "deep_agents"
 )
 
 

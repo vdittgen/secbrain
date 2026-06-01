@@ -1,4 +1,4 @@
-"""Egress firewall routing tests for SecBrain.
+"""Egress firewall routing tests for Arandu.
 
 OSS routes every call to local Ollama regardless of policy / tier /
 lane / complexity. These tests assert that invariant plus the
@@ -24,7 +24,7 @@ from src.agents.firewall.egress_firewall import (
 @pytest.fixture(autouse=True)
 def _isolate_audit(tmp_path, monkeypatch):
     monkeypatch.setenv(
-        "SECBRAIN_AUDIT_PATH", str(tmp_path / "audit.jsonl"),
+        "ARANDU_AUDIT_PATH", str(tmp_path / "audit.jsonl"),
     )
     reset_default_chain_for_tests()
 
@@ -101,7 +101,7 @@ def test_local_only_skips_llm_classifier_for_safelist(monkeypatch) -> None:
     it to classify the classifier's own prompt, the call would loop.
     """
     monkeypatch.delenv(
-        "SECBRAIN_FIREWALL_DISABLE_LLM_TIER", raising=False,
+        "ARANDU_FIREWALL_DISABLE_LLM_TIER", raising=False,
     )
     calls: list[str] = []
 

@@ -859,7 +859,7 @@ class MessagePart(AgentOutput):
     ``data`` is a ``str`` for textual MIMEs (``text/markdown``,
     ``text/x-python``, ``text/html``, ``text/vnd.mermaid``) and a
     nested object for JSON specs (``application/vnd.vega-lite+json``,
-    ``application/vnd.secbrain.table+json``).
+    ``application/vnd.arandu.table+json``).
 
     sensitivity_tier: varies (carries user-derived content)
     """

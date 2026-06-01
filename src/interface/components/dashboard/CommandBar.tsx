@@ -49,7 +49,7 @@ function CommandBar({ chips, loading }: CommandBarProps) {
           type="text"
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          placeholder="Ask SecBrain… or delegate (try 'watch my inbox for…')"
+          placeholder="Ask Arandu… or delegate (try 'watch my inbox for…')"
           aria-label="Ask or delegate"
           className="flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-muted"
         />

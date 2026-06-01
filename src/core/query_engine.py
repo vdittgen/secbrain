@@ -1,4 +1,4 @@
-"""Hybrid GraphRAG query engine for SecBrain.
+"""Hybrid GraphRAG query engine for Arandu.
 
 Combines vector search (ChromaDB), graph traversal (Kuzu), and structured
 SQL queries (DuckDB) into a unified QueryContext.  An LLM-driven router

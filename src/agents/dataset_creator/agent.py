@@ -301,7 +301,7 @@ def read_existing_user_dataset(agent_id: str) -> str | None:
     if not agent_id:
         return None
     path = (
-        Path.home() / ".secbrain" / "user_eval_datasets" / f"{agent_id}.yaml"
+        Path.home() / ".arandu" / "user_eval_datasets" / f"{agent_id}.yaml"
     )
     try:
         return path.read_text(encoding="utf-8") if path.is_file() else None

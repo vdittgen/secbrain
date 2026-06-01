@@ -5,7 +5,7 @@
 # are shipped open-source"), labelled cases — which reference real
 # record IDs, contact names, etc. — live OUTSIDE the repo at:
 #
-#     ~/.secbrain/evals/retrieval_golden.yaml
+#     ~/.arandu/evals/retrieval_golden.yaml
 #
 # The runner (evals/retrieval/runner.py) checks the local override
 # first; this committed scaffold is the fallback / documentation.
@@ -14,7 +14,7 @@
 #
 #     python -m evals.retrieval.seeder --from-raw \
 #         --samples-per-table 10 --questions-per-record 3 \
-#         --out ~/.secbrain/evals/retrieval_golden.yaml
+#         --out ~/.arandu/evals/retrieval_golden.yaml
 #
 # Then:
 #
@@ -25,7 +25,7 @@
 name: retrieval_golden
 description: >
   Scaffold for retrieval-quality evals. Real labelled cases live in
-  ~/.secbrain/evals/retrieval_golden.yaml (gitignored by being
+  ~/.arandu/evals/retrieval_golden.yaml (gitignored by being
   outside the repo). The runner prefers the local file when present.
 
 default_k: 10

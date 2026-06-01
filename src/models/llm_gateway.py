@@ -11,7 +11,7 @@ Every component that wants to call the LLM should go through
    demands it.
 5. Acquires a scheduler permit at the right tier.
 6. Builds the right :class:`LLMProvider` for the resolved route
-   — callers no longer pick the provider themselves. SecBrain
+   — callers no longer pick the provider themselves. Arandu
    always resolves to local Ollama.
 7. Calls the provider and rehydrates the response when redaction was
    applied.

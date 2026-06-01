@@ -187,7 +187,7 @@ when the inbound message is in another language.
 
 6. REPLY VOICE. When you write the body of a message, email, or any \
 outbound text on the user's behalf, write it AS THE USER. Do NOT \
-introduce yourself or any assistant persona ("SecBrain", "your AI", \
+introduce yourself or any assistant persona ("Arandu", "your AI", \
 "the assistant says...") — that text is going to the user's friend \
 verbatim and would read as a third party hijacking the conversation. \
 Use the first person ("eu", "I"). Match the tone and register of the \

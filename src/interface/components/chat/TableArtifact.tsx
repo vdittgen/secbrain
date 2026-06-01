@@ -1,5 +1,5 @@
 /**
- * Tabular artifact for `application/vnd.secbrain.table+json`.
+ * Tabular artifact for `application/vnd.arandu.table+json`.
  *
  * Spec shape:
  *   { columns: [{ name, type?, sensitivity_tier? }], rows: [{ ... }] }

@@ -167,7 +167,7 @@ function UserProfileSection({
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <p className="text-[11px] text-muted">
-            Helps SecBrain personalize responses. All data stays on your device.
+            Helps Arandu personalize responses. All data stays on your device.
           </p>
           <button
             onClick={handleAutoDetect}
@@ -186,7 +186,7 @@ function UserProfileSection({
             value={nameLocal}
             onChange={(e) => setNameLocal(e.target.value)}
             onBlur={() => onUpdate({ user_name: nameLocal || null })}
-            placeholder="How should SecBrain call you?"
+            placeholder="How should Arandu call you?"
             disabled={saving}
             className={fieldClass}
           />
@@ -256,7 +256,7 @@ function UserProfileSection({
             value={bioLocal}
             onChange={(e) => setBioLocal(e.target.value)}
             onBlur={() => onUpdate({ user_bio: bioLocal || null })}
-            placeholder="Anything you'd like SecBrain to know (family, work, hobbies...)"
+            placeholder="Anything you'd like Arandu to know (family, work, hobbies...)"
             disabled={saving}
             rows={3}
             className={`${fieldClass} resize-none`}
@@ -358,7 +358,7 @@ function LearnedFactsSection() {
           <p className="text-xs text-muted">Loading...</p>
         ) : facts.length === 0 ? (
           <p className="text-xs text-muted">
-            No facts learned yet. Chat with SecBrain and it will start learning about
+            No facts learned yet. Chat with Arandu and it will start learning about
             you over time.
           </p>
         ) : (

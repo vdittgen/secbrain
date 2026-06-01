@@ -26,7 +26,7 @@ Decision rules (apply in order):
 
 6. REPLY LANGUAGE (only when the context has a "Most recent inbound message" block). Any body/content/text parameter MUST be in the SAME natural language as the inbound. Detect from the inbound text — don't assume English. Patch the body to match.
 
-7. REPLY VOICE (only for body/content/text fields). The body is going to the user's friend verbatim. It MUST read as the user writing in the first person. Reject and patch any body that names the assistant ("SecBrain", "your AI assistant", "I am an AI"), refers to itself in third person, or signs as someone other than the user. Strip such phrases; rewrite to first person.
+7. REPLY VOICE (only for body/content/text fields). The body is going to the user's friend verbatim. It MUST read as the user writing in the first person. Reject and patch any body that names the assistant ("Arandu", "your AI assistant", "I am an AI"), refers to itself in third person, or signs as someone other than the user. Strip such phrases; rewrite to first person.
 
 8. NO PLACEHOLDER LEAK. Reject any parameter containing a redaction token like <PERSON_2726>, <EMAIL_3>, <PHONE_1> (angle-bracketed, all-caps, underscore + digits). Patch to (a) the rehydrated real value if obvious, (b) a placeholder-free phrasing, or (c) null if optional.
 

@@ -2,7 +2,7 @@
  * First-launch setup screen.
  *
  * Renders when the app runs from a packaged `.app` bundle and
- * `~/.secbrain/venv/` is missing or incomplete. The Rust side
+ * `~/.arandu/venv/` is missing or incomplete. The Rust side
  * (`run_first_launch_setup`) drives the actual venv creation and
  * `pip install`; this component listens to `setup-progress` events
  * and shows status.
@@ -77,9 +77,9 @@ export default function SetupScreen({ onComplete }: SetupScreenProps) {
     <div className="flex h-screen flex-col items-center justify-center bg-bg px-10">
       <div className="flex w-full max-w-[520px] flex-col">
         <div className="mb-6 flex items-center gap-3">
-          <img src="/icon.svg" alt="SecBrain" className="h-10 w-10 rounded-[11px]" />
+          <img src="/icon.svg" alt="Arandu" className="h-10 w-10 rounded-[11px]" />
           <span className="text-[20px] font-semibold tracking-tight text-ink">
-            SecBrain
+            Arandu
           </span>
         </div>
 
@@ -87,8 +87,8 @@ export default function SetupScreen({ onComplete }: SetupScreenProps) {
           Setting things up…
         </h1>
         <p className="mt-2 text-sm text-muted">
-          One-time setup, takes about a minute. SecBrain is creating a private
-          Python environment under <code className="font-mono text-[12px]">~/.secbrain/venv/</code>{" "}
+          One-time setup, takes about a minute. Arandu is creating a private
+          Python environment under <code className="font-mono text-[12px]">~/.arandu/venv/</code>{" "}
           so your data and dependencies stay isolated from the rest of your system.
         </p>
 

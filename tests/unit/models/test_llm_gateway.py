@@ -44,10 +44,10 @@ from src.models.redaction_store import reset_default_store_for_tests
 @pytest.fixture(autouse=True)
 def _isolate(tmp_path: Path, monkeypatch):
     monkeypatch.setenv(
-        "SECBRAIN_AUDIT_PATH", str(tmp_path / "audit.jsonl"),
+        "ARANDU_AUDIT_PATH", str(tmp_path / "audit.jsonl"),
     )
     monkeypatch.setenv(
-        "SECBRAIN_REDACTION_STORE_PATH",
+        "ARANDU_REDACTION_STORE_PATH",
         str(tmp_path / "redaction_log.sqlite"),
     )
     reset_default_chain_for_tests()

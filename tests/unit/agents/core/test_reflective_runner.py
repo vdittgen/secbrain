@@ -168,7 +168,7 @@ def test_runner_returns_result_without_review_under_budget(
 
     sensitivity_tier: 1
     """
-    monkeypatch.setenv("SECBRAIN_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("ARANDU_DATA_DIR", str(tmp_path))
     fake_run = _FakeAgentRun(
         nodes=[_make_mr_node(), _FakeCallToolsNode()],
     )
@@ -193,7 +193,7 @@ def test_runner_injects_stop_when_review_returns_false(
 
     sensitivity_tier: 1
     """
-    monkeypatch.setenv("SECBRAIN_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("ARANDU_DATA_DIR", str(tmp_path))
     target_node = _make_mr_node()
     fake_run = _FakeAgentRun(
         nodes=[
@@ -238,7 +238,7 @@ def test_runner_promotes_class_on_continue_verdict(
 
     sensitivity_tier: 1
     """
-    monkeypatch.setenv("SECBRAIN_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("ARANDU_DATA_DIR", str(tmp_path))
     fake_run = _FakeAgentRun(
         nodes=[
             _FakeCallToolsNode(),    # advances clock past 10s
@@ -286,7 +286,7 @@ def test_runner_honors_user_cancel(
 
     sensitivity_tier: 1
     """
-    monkeypatch.setenv("SECBRAIN_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("ARANDU_DATA_DIR", str(tmp_path))
     from src.agents.core import cancel_registry
 
     cancel_registry._reset_for_tests()

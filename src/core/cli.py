@@ -1,4 +1,4 @@
-"""CLI entry point for the SecBrain data layer.
+"""CLI entry point for the Arandu data layer.
 
 Provides commands that operate on all three embedded databases:
 
@@ -33,7 +33,7 @@ Provides commands that operate on all three embedded databases:
     python -m src.core.cli dismiss-insight  — dismiss an insight
     python -m src.core.cli follow-up-insight — follow up on an insight
 
-The CLI uses the default data path (~/.secbrain/data/) unless --data-dir is
+The CLI uses the default data path (~/.arandu/data/) unless --data-dir is
 passed explicitly.
 """
 
@@ -161,7 +161,7 @@ def cmd_init(layer: DataLayer) -> int:
     """
     try:
         layer.initialize()
-        print("✓  SecBrain databases initialized successfully.")
+        print("✓  Arandu databases initialized successfully.")
         return 0
     except Exception as exc:
         print(f"✗  Initialization failed: {exc}", file=sys.stderr)
@@ -180,7 +180,7 @@ def cmd_status(layer: DataLayer) -> int:
     """
     ok, report = layer.health_check()
     status_line = "HEALTHY" if ok else "DEGRADED"
-    print(f"\nSecBrain data layer — {status_line}")
+    print(f"\nArandu data layer — {status_line}")
     print(f"  DuckDB  : {'OK' if report.duckdb_ok else 'FAIL'}")
     print(f"  Kuzu    : {'OK' if report.kuzu_ok else 'FAIL'}")
     print(f"  ChromaDB: {'OK' if report.chromadb_ok else 'FAIL'}")
@@ -219,7 +219,7 @@ def cmd_reset(layer: DataLayer) -> int:
         Exit code (0 = success, 1 = failure).
     """
     try:
-        print("⚠  Resetting all SecBrain data — this cannot be undone.")
+        print("⚠  Resetting all Arandu data — this cannot be undone.")
         layer.reset()
         print("✓  Reset complete. All databases reinitialized.")
         return 0
@@ -1100,7 +1100,7 @@ def cmd_profile(layer: DataLayer) -> int:
     perf = PerformanceLog.get()
     perf.clear()
 
-    print("SecBrain Performance Profiler")
+    print("Arandu Performance Profiler")
     print("=" * 50)
     print()
 
@@ -2497,7 +2497,7 @@ def _read_whatsapp_phone() -> str | None:
     sensitivity_tier: 1
     """
     try:
-        settings_file = Path.home() / ".secbrain" / "settings.json"
+        settings_file = Path.home() / ".arandu" / "settings.json"
         if settings_file.exists():
             data = json.loads(
                 settings_file.read_text(encoding="utf-8"),
@@ -3277,7 +3277,7 @@ def cmd_run_scheduled_agents(layer: DataLayer) -> int:
     from src.agent_runtime.runner import AgentRunner
     from src.extensions.cron import cron_is_due
 
-    state_path = Path.home() / ".secbrain" / "data" / "agent_schedule_state.json"
+    state_path = Path.home() / ".arandu" / "data" / "agent_schedule_state.json"
     now = datetime.now(timezone.utc)
 
     # Load persisted state.
@@ -3606,7 +3606,7 @@ def cmd_uninstall_extension(
         registry.remove(connector_id)
 
         # Clean up staged/generated model files
-        ext_dir = Path.home() / ".secbrain" / "extensions" / connector_id
+        ext_dir = Path.home() / ".arandu" / "extensions" / connector_id
         if ext_dir.exists():
             import shutil
             shutil.rmtree(ext_dir)
@@ -3649,7 +3649,7 @@ def cmd_connector_history(
     try:
         history_file = (
             Path.home()
-            / ".secbrain"
+            / ".arandu"
             / "data"
             / "sync_history"
             / f"{connector_id}.json"
@@ -3838,7 +3838,7 @@ def _load_interest_overrides() -> dict[str, int] | None:
     """
     try:
         settings_file = (
-            Path.home() / ".secbrain" / "settings.json"
+            Path.home() / ".arandu" / "settings.json"
         )
         if settings_file.exists():
             data = json.loads(settings_file.read_text())
@@ -4769,7 +4769,7 @@ def cmd_schedule_regenerate(
 
 
 _DASHBOARD_BRIEF_CACHE_PATH = (
-    Path.home() / ".secbrain" / "data" / "dashboard_brief.json"
+    Path.home() / ".arandu" / "data" / "dashboard_brief.json"
 )
 
 
@@ -6792,7 +6792,7 @@ def cmd_infer_profile(layer: DataLayer) -> int:
             return 0
 
         # Load current settings, merge only None/empty fields
-        settings_path = Path.home() / ".secbrain" / "settings.json"
+        settings_path = Path.home() / ".arandu" / "settings.json"
         current: dict[str, Any] = {}
         if settings_path.exists():
             try:
@@ -7006,8 +7006,8 @@ def cmd_transcribe_audio(
             _json_output({
                 "error": "No ASR backend installed",
                 "hint": (
-                    "pip install 'secbrain[voice]' (Qwen3-ASR, recommended) "
-                    "or pip install 'secbrain[voice-fallback]' (faster-whisper)"
+                    "pip install 'arandu[voice]' (Qwen3-ASR, recommended) "
+                    "or pip install 'arandu[voice-fallback]' (faster-whisper)"
                 ),
             }),
             file=sys.stderr,
@@ -7016,7 +7016,7 @@ def cmd_transcribe_audio(
 
     # Determine model size from settings if not specified
     if model_size is None:
-        settings_path = Path.home() / ".secbrain" / "settings.json"
+        settings_path = Path.home() / ".arandu" / "settings.json"
         if settings_path.exists():
             try:
                 with open(settings_path) as f:
@@ -7603,7 +7603,7 @@ def cmd_extension_logs(
     try:
         log_file = (
             Path.home()
-            / ".secbrain"
+            / ".arandu"
             / "data"
             / "logs"
             / f"{extension_id}.log"
@@ -7636,14 +7636,14 @@ def build_parser() -> argparse.ArgumentParser:
     """Build and return the CLI argument parser."""
     parser = argparse.ArgumentParser(
         prog="python -m src.core.cli",
-        description="SecBrain data layer management CLI",
+        description="Arandu data layer management CLI",
     )
     parser.add_argument(
         "--data-dir",
         type=Path,
         default=None,
         metavar="PATH",
-        help=("Override the data directory (default: ~/.secbrain/data/)"),
+        help=("Override the data directory (default: ~/.arandu/data/)"),
     )
     subparsers = parser.add_subparsers(dest="command", metavar="COMMAND")
     subparsers.required = True

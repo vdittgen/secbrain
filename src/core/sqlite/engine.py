@@ -1,7 +1,7 @@
-"""SQLite database engine for SecBrain.
+"""SQLite database engine for Arandu.
 
 Provides a single-connection embedded database engine with persistent storage
-at ~/.secbrain/data/secbrain.sqlite3.  Uses WAL (Write-Ahead Logging) mode
+at ~/.arandu/data/arandu.sqlite3.  Uses WAL (Write-Ahead Logging) mode
 for concurrent access: readers NEVER block writers, writers NEVER block
 readers.  ``busy_timeout`` makes writers queue gracefully instead of failing.
 
@@ -26,7 +26,7 @@ from src.core.profiler import timed
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_DB_PATH = Path.home() / ".secbrain" / "data" / "secbrain.sqlite3"
+DEFAULT_DB_PATH = Path.home() / ".arandu" / "data" / "arandu.sqlite3"
 
 # SQLite PRAGMA settings for optimal performance with WAL mode.
 _PRAGMAS = [

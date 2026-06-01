@@ -20,7 +20,7 @@ from src.agents.core.scheduler import Tier
 logger = logging.getLogger(__name__)
 
 DEFAULT_SYSTEM_PROMPT = """\
-You are a SQLMesh model generator for SecondBrain OS, a privacy-first \
+You are a SQLMesh model generator for Arandu, a privacy-first \
 personal AI. Generate DuckDB-dialect SQL models. Return a \
 GeneratedSQLModel with ``name``, ``layer``, ``sql``, and \
 ``sensitivity_summary``.

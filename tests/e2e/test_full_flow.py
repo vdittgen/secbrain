@@ -1,4 +1,4 @@
-"""End-to-end integration tests for the complete SecBrain flow.
+"""End-to-end integration tests for the complete Arandu flow.
 
 Covers three critical paths:
   1. Data Ingestion → Query Engine → Brain Agent → Source Attribution
@@ -95,7 +95,7 @@ def query_engine(engines):
 def data_layer(tmp_path_factory: pytest.TempPathFactory):
     """DataLayer backed by a temp directory, fully initialized."""
     tmp_path = tmp_path_factory.mktemp("e2e_data_layer")
-    dl = DataLayer(base_path=tmp_path / "secbrain_data")
+    dl = DataLayer(base_path=tmp_path / "arandu_data")
     dl.initialize()
     yield dl
     dl.close()

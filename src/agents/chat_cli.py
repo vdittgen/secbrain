@@ -35,7 +35,7 @@ def main() -> int:
         format="%(levelname)s: %(message)s",
     )
 
-    print("SecBrain Chat — initializing databases...")
+    print("Arandu Chat — initializing databases...")
     layer = DataLayer()
     layer.initialize()
 
@@ -75,7 +75,7 @@ def main() -> int:
 
             resp = agent.ask(question)
 
-            print(f"\nSecBrain: {resp.answer}")
+            print(f"\nArandu: {resp.answer}")
             if resp.sources:
                 tiers = {s.get("sensitivity_tier") for s in resp.sources}
                 print(

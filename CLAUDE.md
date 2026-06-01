@@ -1,4 +1,4 @@
-# SecBrain
+# Arandu
 
 Privacy-first AI operating system that runs as a native desktop app.
 Open source (Apache-2.0), local inference only (Ollama).
@@ -28,7 +28,7 @@ Open source (Apache-2.0), local inference only (Ollama).
 | `src/pipeline/` | Manifest, runner, executor, brain, auditor, worker |
 | `src/models/` | LLM provider abstraction, voice, sensitivity classifier |
 | `src/interface/` | React frontend (pages, components, hooks) |
-| `src-tauri/src/firewall/` | Audit chain (Rust reader of `~/.secbrain/data/audit.jsonl`) |
+| `src-tauri/src/firewall/` | Audit chain (Rust reader of `~/.arandu/data/audit.jsonl`) |
 
 Detailed file table → `docs/FILE_MAP.md`.
 
@@ -57,21 +57,21 @@ Detailed file table → `docs/FILE_MAP.md`.
 
 ## Model selection
 All agents run against the single local Ollama model configured in
-`~/.secbrain/settings.json` (`llm_model`). `src/agents/core/model_tiers.py`
+`~/.arandu/settings.json` (`llm_model`). `src/agents/core/model_tiers.py`
 exposes `tier_model_for()`, which returns `None` for every agent in
-SecBrain — i.e. no per-agent model overrides; everything inherits the
+Arandu — i.e. no per-agent model overrides; everything inherits the
 one local model. (The map is an extension point, left empty here.)
 
 ## Conventions
 - Branch: `feature/[day]-[component]` or `refactor/<area>`.
 - Commits: conventional (`feat:`, `fix:`, `docs:`, `test:`, `refactor:`).
-- Database files live in `~/.secbrain/data/` (NOT the project root, NOT `~/.secondbrain/data/`).
+- Database files live in `~/.arandu/data/` (NOT the project root, NOT `~/.arandu/data/`).
 - New IPC commands: see recipe below.
 
 ## Top pitfalls
-1. **Data path is `~/.secbrain/data/`** — not `~/.secondbrain/data/`.
+1. **Data path is `~/.arandu/data/`** — not `~/.arandu/data/`.
 2. **`threading.Lock` is not reentrant** — use `_unlocked` helper methods for nested calls.
-3. **Embeddings follow the chat provider** — Ollama chat → Ollama embeddings. The active model/dimension is recorded in `~/.secbrain/data/chromadb/.embedding_meta.json`; switching models requires running `python -m src.core.chromadb.migrate` to rebuild the index.
+3. **Embeddings follow the chat provider** — Ollama chat → Ollama embeddings. The active model/dimension is recorded in `~/.arandu/data/chromadb/.embedding_meta.json`; switching models requires running `python -m src.core.chromadb.migrate` to rebuild the index.
 4. **`dedupInvoke()` is NOT a cache** — only deduplicates concurrent in-flight requests.
 5. **`isStale` defaults to `true`** when `pipelineStatus` is null.
 6. **Only one Baileys connection per phone** — all sends route through the listener's outbox IPC.
@@ -100,7 +100,7 @@ one local model. (The map is an extension point, left empty here.)
 
 ### Add a built-in agent
 1. `src/extensions/builtin/{agent_id}/manifest.yaml`
-2. `src/extensions/builtin/{agent_id}/agent.py` — subclass `SecondBrainAgent` from `src.agent_runtime.base`
+2. `src/extensions/builtin/{agent_id}/agent.py` — subclass `BrainAgent` from `src.agent_runtime.base`
 3. `__init__.py`
 4. Tests in `tests/unit/extensions/builtin/`
 5. Write tables MUST follow `ext_{agent_id}_*` pattern. Use `AgentContext`; no direct DB. `SensitivityGuard` enforces tier access.
@@ -129,7 +129,7 @@ cargo clippy && cargo test --all   # Rust
 ## Python environment
 - Python 3.11.4 (`.python-version`), venv: `.venv/`
 - Core deps in `pyproject.toml`: `kuzu`, `chromadb`, `ollama`, `sqlmesh`
-- Optional: `secbrain[voice]`/`[voice-fallback]`
+- Optional: `arandu[voice]`/`[voice-fallback]`
 - Dev: `pytest`, `ruff` (line-length=88, rules E F I N W UP)
 
 ## Pointers

@@ -1,8 +1,8 @@
 {
   "$schema": "https://raw.githubusercontent.com/nicedoc/tauri/refs/tags/tauri-v2.0.0/crates/tauri-cli/schema.json",
-  "productName": "SecBrain",
+  "productName": "Arandu",
   "version": "0.5.0-beta.1",
-  "identifier": "com.secbrain.app",
+  "identifier": "com.arandu.app",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "SecBrain",
+        "title": "Arandu",
         "width": 1200,
         "height": 800,
         "resizable": true,
@@ -34,10 +34,10 @@
       "icons/icon.ico"
     ],
     "resources": {
-      "../src": "secbrain_app/src",
-      "../pyproject.toml": "secbrain_app/pyproject.toml",
-      "../pipeline_manifest.json": "secbrain_app/pipeline_manifest.json",
-      "../config.yaml": "secbrain_app/config.yaml",
+      "../src": "arandu_app/src",
+      "../pyproject.toml": "arandu_app/pyproject.toml",
+      "../pipeline_manifest.json": "arandu_app/pipeline_manifest.json",
+      "../config.yaml": "arandu_app/config.yaml",
       "../python_runtime/python": "python_runtime"
     }
   }

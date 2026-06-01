@@ -756,7 +756,7 @@ class McpClient:
                 "protocolVersion": _PROTOCOL_VERSION,
                 "capabilities": {},
                 "clientInfo": {
-                    "name": "secbrain",
+                    "name": "arandu",
                     "version": "1.0.0",
                 },
             },

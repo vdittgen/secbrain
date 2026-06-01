@@ -50,7 +50,7 @@ _OUTPUT_TEXT_LIMIT = 4096
 # Match the file used by ``cmd_run_scheduled_agents`` so "last run"
 # stays consistent between scheduled-tick and run-now paths.
 _SCHEDULE_STATE_PATH = (
-    Path.home() / ".secbrain" / "data" / "agent_schedule_state.json"
+    Path.home() / ".arandu" / "data" / "agent_schedule_state.json"
 )
 
 _NEXT_RUN_LOOKAHEAD_MINUTES = 60 * 24 * 7  # 1 week

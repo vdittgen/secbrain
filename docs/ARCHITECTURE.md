@@ -1,10 +1,10 @@
-# SecondBrain OS — Architecture
+# Arandu — Architecture
 
-This document describes the system architecture, data flow, extension system, security model, intelligent pipeline, and database roles in SecondBrain OS.
+This document describes the system architecture, data flow, extension system, security model, intelligent pipeline, and database roles in Arandu.
 
 ## System Overview
 
-SecondBrain OS is a five-layer system: data sources connected via MCP protocol, three embedded databases for storage, a Python core for data processing and AI, a Rust-based security firewall, and a native macOS interface.
+Arandu is a five-layer system: data sources connected via MCP protocol, three embedded databases for storage, a Python core for data processing and AI, a Rust-based security firewall, and a native macOS interface.
 
 ```mermaid
 graph TB
@@ -17,7 +17,7 @@ graph TB
         INJ["Injection Firewall<br/>(Python, prompt-injection guard)"]
         EGRESS["Egress Firewall<br/>(Python, tier classifier + route picker)"]
         REGISTRY["Placeholder Registry<br/>(Python, Tier 2/3 PII swap)"]
-        AUDIT["Audit Chain<br/>(SHA-256, ~/.secbrain/data/audit.jsonl)"]
+        AUDIT["Audit Chain<br/>(SHA-256, ~/.arandu/data/audit.jsonl)"]
     end
 
     subgraph "Layer 3: AI Engine"
@@ -116,7 +116,7 @@ Three embedded databases serve distinct query patterns. SQLite handles structure
 
 ### Layer 3 — AI Engine (LLM Provider)
 
-All AI components use the `LLMProvider` abstraction (`src/models/llm_provider.py`). SecBrain ships **Ollama** (local) as the only provider — there are no cloud/remote provider classes in the codebase. The user selects which local model to use in Settings. Ollama is auto-started on app launch. Embeddings use Ollama's `nomic-embed-text`.
+All AI components use the `LLMProvider` abstraction (`src/models/llm_provider.py`). Arandu ships **Ollama** (local) as the only provider — there are no cloud/remote provider classes in the codebase. The user selects which local model to use in Settings. Ollama is auto-started on app launch. Embeddings use Ollama's `nomic-embed-text`.
 
 **Brain Agent** operates in two modes. In Query Mode, it uses the hybrid GraphRAG Query Engine to assemble personal context from all three databases, then calls the configured LLM provider to generate an answer with source attribution. In Action Mode, it classifies user intent, selects the appropriate MCP action tool, extracts parameters from natural language, and presents a confirmation card before executing.
 
@@ -136,7 +136,7 @@ Privacy enforcement is split across Python (the live runtime) and Rust (the audi
 
 **Placeholder Registry** (`src/models/redaction_registry.py`) is the privacy chokepoint. Under remote-default, every Tier 2/3 PII value (names, emails, phones, dates, money) is swapped for a stable placeholder (`<PERSON_3>`, `<EMAIL_2>`) before the prompt leaves the device. Responses are rehydrated locally. Raw values never reach the remote provider.
 
-**Audit Chain** is a SHA-256 hash-chained JSONL file at `~/.secbrain/data/audit.jsonl`. Python writes every firewall decision (`egress_decision`, `egress_redaction`, `local_inference_toggle`); Rust (`src-tauri/src/firewall/audit.rs`) reads and verifies it for the Audit Log page. Append-only, no delete API; `verify_chain()` confirms tamper-evidence on demand.
+**Audit Chain** is a SHA-256 hash-chained JSONL file at `~/.arandu/data/audit.jsonl`. Python writes every firewall decision (`egress_decision`, `egress_redaction`, `local_inference_toggle`); Rust (`src-tauri/src/firewall/audit.rs`) reads and verifies it for the Audit Log page. Append-only, no delete API; `verify_chain()` confirms tamper-evidence on demand.
 
 ### Layer 5 — Brain Interface (Tauri + React)
 
@@ -350,7 +350,7 @@ Third-party agents operate under strict isolation:
 - **Data access:** Only through Firewall API (`AgentContext.query()`), never direct DB access
 - **Write scope:** Only to `ext_{agent_id}_*` namespaced tables
 - **Network:** Disabled by default. Must be declared and approved.
-- **LLM access:** Uses the app's configured local LLM provider (Ollama in SecBrain). No arbitrary external API calls.
+- **LLM access:** Uses the app's configured local LLM provider (Ollama in Arandu). No arbitrary external API calls.
 - **Resources:** Max memory and CPU time enforced per agent from manifest
 - **Model creation:** Can propose new pipeline models, but human must approve before deployment
 - **Cross-agent data:** Not accessible unless explicit dependency declared
@@ -378,7 +378,7 @@ Properties: append-only file access, no delete API, tamper-evident hash chain, v
 
 | Type | Purpose | Data Direction | Example |
 |------|---------|----------------|---------|
-| MCP Connector | Bring external data into SecondBrain | Inward (sync data) | Apple Calendar, Gmail, Spotify |
+| MCP Connector | Bring external data into Arandu | Inward (sync data) | Apple Calendar, Gmail, Spotify |
 | Agent | Process data and generate insights | Both (read marts, write to own tables) | Weekly Digest, Relationship Tracker |
 | Skill | Shared stateless capability | None (called by agents) | Summarize Text, Classify Emotion |
 
@@ -422,7 +422,7 @@ When user interest in a new data domain crosses a threshold and enough raw data 
 
 **Purpose:** Primary structured data store. All raw ingested data, all pipeline transformation outputs, query tracking, pipeline stats, and insight storage. Uses WAL mode with 30s busy timeout and LRU query cache.
 
-**Location:** `~/.secbrain/data/secbrain.sqlite3`
+**Location:** `~/.arandu/data/arandu.sqlite3`
 
 **Core tables:**
 - `raw_*` — One per data source (raw_calendar_events, raw_contacts, raw_messages, raw_emails, raw_notes, raw_health_metrics, raw_files, raw_reminders, raw_workouts, raw_listening_history, raw_voice_memos)
@@ -438,7 +438,7 @@ When user interest in a new data domain crosses a threshold and enough raw data 
 
 **Purpose:** Entity relationship store. Captures how people, events, places, and concepts connect. Enables graph traversals that find context vector search would miss.
 
-**Location:** `~/.secbrain/data/kuzu_db/`
+**Location:** `~/.arandu/data/kuzu_db/`
 
 **Node types:** Person, Event, Place, Emotion, Idea, Topic (extensible when new connectors bring entity data)
 
@@ -450,7 +450,7 @@ When user interest in a new data domain crosses a threshold and enough raw data 
 
 **Purpose:** Semantic similarity search. Stores embeddings of mart records for natural language retrieval.
 
-**Location:** `~/.secbrain/data/chromadb/`
+**Location:** `~/.arandu/data/chromadb/`
 
 **Collections:** personal, work, health, social, ideas — organized by life domain
 

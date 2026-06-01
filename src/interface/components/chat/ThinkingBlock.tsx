@@ -1,7 +1,7 @@
 /**
  * Collapsible "thinking" trace.
  *
- * Used both for `application/vnd.secbrain.thinking+json` parts (when
+ * Used both for `application/vnd.arandu.thinking+json` parts (when
  * persisted) and for live `thinking` chunks streamed from the brain
  * agent. Always collapsed by default — reasoning traces are noisy.
  *

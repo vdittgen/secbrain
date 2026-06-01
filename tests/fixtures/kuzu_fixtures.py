@@ -1,4 +1,4 @@
-"""Graph fixtures for SecBrain Kuzu database.
+"""Graph fixtures for Arandu Kuzu database.
 
 Mirrors the contacts, calendar events, and concepts from the DuckDB fixtures
 into a rich knowledge graph.  Sensitivity tiers are deliberately mixed so the
@@ -96,7 +96,7 @@ EMOTIONS = [
 IDEAS = [
     (
         "id-001",
-        "SecBrain",
+        "Arandu",
         "Privacy-first AI operating system for personal data.",
         "software",
         1,

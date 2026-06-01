@@ -39,10 +39,10 @@ logger = logging.getLogger(__name__)
 # Keyed by agent_id so concurrent proposals for different agents don't
 # clobber each other. A ``None`` value explicitly means "no proposal".
 _PROPOSED_OVERRIDE: ContextVar[dict[str, str | None]] = ContextVar(
-    "secbrain.proposed_model_override", default={},
+    "arandu.proposed_model_override", default={},
 )
 
-DEFAULT_DB_PATH = Path.home() / ".secbrain" / "data" / "secbrain.sqlite3"
+DEFAULT_DB_PATH = Path.home() / ".arandu" / "data" / "arandu.sqlite3"
 
 
 @dataclass(frozen=True)

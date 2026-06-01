@@ -22,7 +22,7 @@ from src.extensions.models import (
 
 @pytest.fixture(autouse=True)
 def _disable_ingest_cutoff(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Prevent the real ``~/.secbrain/settings.json`` cutoff from filtering
+    """Prevent the real ``~/.arandu/settings.json`` cutoff from filtering
     test rows whose timestamps predate the user's actual cutoff.
     """
     monkeypatch.setattr(

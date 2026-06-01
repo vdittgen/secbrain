@@ -97,7 +97,7 @@ pub fn apply_launch_at_login(enabled: bool) {
     };
 
     let agents_dir = home.join("Library/LaunchAgents");
-    let plist_path = agents_dir.join("com.secbrain.app.plist");
+    let plist_path = agents_dir.join("com.arandu.app.plist");
 
     if enabled {
         let _ = std::fs::create_dir_all(&agents_dir);
@@ -107,7 +107,7 @@ pub fn apply_launch_at_login(enabled: bool) {
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.secbrain.app</string>
+    <string>com.arandu.app</string>
     <key>ProgramArguments</key>
     <array>
         <string>{}</string>
@@ -150,10 +150,10 @@ pub fn build_tray(app: &tauri::AppHandle) -> Result<(), String> {
         return Ok(());
     }
 
-    let show_item = MenuItemBuilder::with_id("show", "Show SecBrain")
+    let show_item = MenuItemBuilder::with_id("show", "Show Arandu")
         .build(app)
         .map_err(|e| format!("Failed to build menu item: {e}"))?;
-    let quit_item = MenuItemBuilder::with_id("quit", "Quit SecBrain")
+    let quit_item = MenuItemBuilder::with_id("quit", "Quit Arandu")
         .build(app)
         .map_err(|e| format!("Failed to build menu item: {e}"))?;
 

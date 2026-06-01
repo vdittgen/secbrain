@@ -18,7 +18,7 @@ The hot path is:
 
 The registry file holds raw user values paired with their placeholders
 — that is Tier 3 data. The file is created with 0600 mode and lives in
-the same ``~/.secbrain/data/`` directory as the rest of the local DB.
+the same ``~/.arandu/data/`` directory as the rest of the local DB.
 
 sensitivity_tier: 3
 """
@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 
 
 DEFAULT_PATH = (
-    Path.home() / ".secbrain" / "data" / "redaction_registry.sqlite"
+    Path.home() / ".arandu" / "data" / "redaction_registry.sqlite"
 )
 
 

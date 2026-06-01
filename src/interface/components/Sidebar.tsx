@@ -148,12 +148,12 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
       <div className="flex items-center gap-3 px-4 pb-5 pt-6">
         <img
           src="/icon.svg"
-          alt="SecBrain"
+          alt="Arandu"
           className="h-8 w-8 shrink-0 rounded-[9px]"
         />
         {!collapsed && (
           <span className="text-[17px] font-semibold tracking-tight text-ink">
-            SecBrain
+            Arandu
           </span>
         )}
       </div>

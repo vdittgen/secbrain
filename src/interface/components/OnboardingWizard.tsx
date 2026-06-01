@@ -205,11 +205,11 @@ function BrandRow() {
     <div className="flex items-center gap-3 mb-16">
       <img
         src="/icon.svg"
-        alt="SecBrain"
+        alt="Arandu"
         className="h-8 w-8 rounded-[9px]"
       />
       <span className="text-[17px] font-semibold tracking-tight text-ink">
-        SecBrain
+        Arandu
       </span>
     </div>
   );
@@ -347,7 +347,7 @@ function WelcomeSlide({
         </h1>
 
         <p className="max-w-[52ch] text-[19px] leading-[1.5] text-ink-2">
-          SecBrain is a personal AI that quietly organizes your entire life
+          Arandu is a personal AI that quietly organizes your entire life
           — calendars, messages, notes, health — all on your Mac. We'll
           set it up together in about a minute.
         </p>
@@ -517,7 +517,7 @@ function ModeChooserSlide({
       <BrandRow />
 
       <h2 className="text-[28px] font-semibold tracking-tight text-ink">
-        How should SecBrain think?
+        How should Arandu think?
       </h2>
       <p className="mt-2 text-sm text-muted">
         Choose how your AI processes data. You can change this anytime.
@@ -572,7 +572,7 @@ function ModeChooserSlide({
                 Results not guaranteed below Llama 3.1 70B.
               </p>
               <p className="mt-1 text-[13px] text-ink-2">
-                This model runs on lighter machines, but SecBrain can't
+                This model runs on lighter machines, but Arandu can't
                 guarantee acceptable results with it.
               </p>
             </>
@@ -645,7 +645,7 @@ function KeepAwakeSlide({
         Keep me awake.
       </h2>
       <p className="mt-2 text-sm text-muted">
-        These settings help SecBrain stay ready to work for you.
+        These settings help Arandu stay ready to work for you.
       </p>
 
       {/* Toggle card */}
@@ -659,7 +659,7 @@ function KeepAwakeSlide({
                 Prevent Mac from sleeping
               </p>
               <p className="text-[11px] text-muted">
-                Keeps your Mac awake while SecBrain is open
+                Keeps your Mac awake while Arandu is open
               </p>
             </div>
           </div>
@@ -676,7 +676,7 @@ function KeepAwakeSlide({
                 Launch at login
               </p>
               <p className="text-[11px] text-muted">
-                Start SecBrain automatically when you log in
+                Start Arandu automatically when you log in
               </p>
             </div>
           </div>
@@ -705,7 +705,7 @@ function KeepAwakeSlide({
       <div className="mt-4 rounded-3 bg-indigo-tint px-4 py-3">
         <p className="text-[12px] text-indigo-2">
           These toggles only affect sleep while the app is open. Your Mac
-          will sleep normally when SecBrain is fully quit.
+          will sleep normally when Arandu is fully quit.
         </p>
       </div>
 
@@ -745,7 +745,7 @@ function ConnectorsSlide({
         Connect your life.
       </h2>
       <p className="mt-2 text-sm text-muted">
-        Choose the data sources SecBrain should index. You can add more later.
+        Choose the data sources Arandu should index. You can add more later.
       </p>
 
       {/* Connector grid */}
@@ -865,7 +865,7 @@ function NotificationsSlide({
         How should I reach you?
       </h2>
       <p className="mt-2 text-sm text-muted">
-        Choose how SecBrain sends you updates and alerts.
+        Choose how Arandu sends you updates and alerts.
       </p>
 
       {/* Toggle card */}
@@ -1043,7 +1043,7 @@ function ClosingSlide({
             onClick={onOpen}
             className="flex items-center gap-2 rounded-pill bg-indigo px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-indigo/90"
           >
-            Open SecBrain
+            Open Arandu
             <ChevronRight strokeWidth={1.6} className="h-4 w-4" />
           </button>
         )}
@@ -1062,7 +1062,7 @@ function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
 
   // --- Slide 2: Mode ---
   const [mode, setMode] = useState<Mode>("local");
-  // Recommended default model. Users can downgrade here, but SecBrain only
+  // Recommended default model. Users can downgrade here, but Arandu only
   // guarantees acceptable results at llama3.1:70b — see the warning on the slide.
   const [llmModel, setLlmModel] = useState("llama3.1:70b");
 

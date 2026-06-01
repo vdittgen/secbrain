@@ -1,12 +1,12 @@
 /**
- * Mission Control — the SecBrain home page.
+ * Mission Control — the Arandu home page.
  *
  * Composition-only file. Dashboard owns the data hooks; child widgets
  * are presentation-only and receive `data` + `onRefetch` as props.
  *
  * Layout (top → bottom):
  *   - Header (eyebrow kicker + gradient greeting)
- *   - CommandBar (Ask SecBrain, with Chat's full tool reach)
+ *   - CommandBar (Ask Arandu, with Chat's full tool reach)
  *   - Bento grid (DailyBrief, AgentStream summary, stat cards)
  *   - TodayBoard (Now / Up Next / Today's loops — one canvas)
  *   - LifeBoard (Work / Personal / Health — goals, today's moves, events)
@@ -184,11 +184,11 @@ function Dashboard() {
 
   useEffect(() => {
     const handler = () => refetchLight();
-    window.addEventListener("secbrain:pipeline-refreshed", handler);
-    window.addEventListener("secbrain:proactive-refreshed", handler);
+    window.addEventListener("arandu:pipeline-refreshed", handler);
+    window.addEventListener("arandu:proactive-refreshed", handler);
     return () => {
-      window.removeEventListener("secbrain:pipeline-refreshed", handler);
-      window.removeEventListener("secbrain:proactive-refreshed", handler);
+      window.removeEventListener("arandu:pipeline-refreshed", handler);
+      window.removeEventListener("arandu:proactive-refreshed", handler);
     };
   }, [refetchLight]);
 

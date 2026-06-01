@@ -1,7 +1,7 @@
 """Weekly digest as an SBAgent.
 
 Migration target: ``src/extensions/builtin/weekly_digest/agent.py``.
-The legacy built-in (which subclasses ``SecondBrainAgent`` and writes
+The legacy built-in (which subclasses ``BrainAgent`` and writes
 to ``ext_weekly_digest_summaries``) keeps its DB scans + persistence;
 this module supplies the LLM authoring primitive.
 

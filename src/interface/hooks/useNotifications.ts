@@ -28,7 +28,7 @@ export interface NotificationRecord {
   readonly created_at: string;
 }
 
-const LAST_SEEN_KEY = "secbrain:notifications:lastSeenId";
+const LAST_SEEN_KEY = "arandu:notifications:lastSeenId";
 const POLL_INTERVAL_MS = 30_000;
 const FETCH_LIMIT = 20;
 

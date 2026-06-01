@@ -77,7 +77,7 @@ function PipelinePill() {
 
 function TopBar() {
   const { pathname } = useLocation();
-  const title = pageTitles[pathname] ?? "SecBrain";
+  const title = pageTitles[pathname] ?? "Arandu";
 
   const notifications = useNotifications();
   const [open, setOpen] = useState(false);
@@ -98,7 +98,7 @@ function TopBar() {
   return (
     <header className="frosted flex h-14 shrink-0 items-center gap-3 border-b border-hairline px-6">
       <nav className="flex items-center gap-2 text-[13.5px] font-medium">
-        <span className="text-ink-2">SecBrain</span>
+        <span className="text-ink-2">Arandu</span>
         <span className="text-faint">/</span>
         <span className="text-ink">{title}</span>
       </nav>

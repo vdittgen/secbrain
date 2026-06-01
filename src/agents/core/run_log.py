@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 MAX_PER_AGENT = 1000
 
 DEFAULT_DB_PATH = (
-    Path.home() / ".secbrain" / "data" / "secbrain.sqlite3"
+    Path.home() / ".arandu" / "data" / "arandu.sqlite3"
 )
 
 _SCHEMA = """
@@ -273,7 +273,7 @@ _default_lock = threading.Lock()
 def default_run_log() -> AgentRunLog:
     """Return the process-wide default run log.
 
-    Honours ``SECBRAIN_AGENT_RUN_LOG_PATH`` so tests can point at a
+    Honours ``ARANDU_AGENT_RUN_LOG_PATH`` so tests can point at a
     throw-away DB without touching the user's data dir.
 
     sensitivity_tier: varies
@@ -282,7 +282,7 @@ def default_run_log() -> AgentRunLog:
     if _default_log is None:
         with _default_lock:
             if _default_log is None:
-                override = os.environ.get("SECBRAIN_AGENT_RUN_LOG_PATH")
+                override = os.environ.get("ARANDU_AGENT_RUN_LOG_PATH")
                 path = Path(override) if override else DEFAULT_DB_PATH
                 _default_log = AgentRunLog(path=path)
     return _default_log
@@ -291,7 +291,7 @@ def default_run_log() -> AgentRunLog:
 def reset_default_run_log_for_tests() -> None:
     """Drop the cached default log.
 
-    Tests that swap ``SECBRAIN_AGENT_RUN_LOG_PATH`` mid-run should call
+    Tests that swap ``ARANDU_AGENT_RUN_LOG_PATH`` mid-run should call
     this to avoid leaking a connection pointed at the old path.
 
     sensitivity_tier: N/A

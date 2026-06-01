@@ -84,7 +84,7 @@ def _seed_notes(duck: DatabaseEngine) -> None:
     duck.execute(f"""
         INSERT INTO raw_notes (id, title, content, source, tags, sensitivity_tier)
         VALUES
-            ('n-1', 'SecBrain Architecture', 'Privacy-first AI OS for personal data.',
+            ('n-1', 'Arandu Architecture', 'Privacy-first AI OS for personal data.',
              'obsidian', '{json.dumps(["ai", "privacy"])}', 1),
             ('n-2', 'Meeting Notes', 'Discussed Q2 roadmap with the team.',
              'apple_notes', '{json.dumps(["work"])}', 2),
@@ -204,7 +204,7 @@ class TestIndexIdeas:
             "RETURN i.title AS title, i.domain AS domain, "
             "i.sensitivity_tier AS tier"
         )
-        assert rows[0]["title"] == "SecBrain Architecture"
+        assert rows[0]["title"] == "Arandu Architecture"
         assert rows[0]["domain"] == "notes"
         assert rows[0]["tier"] == 1
 
@@ -306,7 +306,7 @@ class TestTaggedWith:
     def test_idea_tagged_with_correct_topic(
         self, duck: DatabaseEngine, kuzu: GraphEngine, indexer: GraphIndexer,
     ) -> None:
-        """SecBrain note should be tagged with 'ai' and 'privacy'."""
+        """Arandu note should be tagged with 'ai' and 'privacy'."""
         _seed_notes(duck)
         indexer.full_reindex()
 

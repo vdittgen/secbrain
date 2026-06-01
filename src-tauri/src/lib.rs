@@ -16,16 +16,16 @@ use whatsapp_supervisor::Supervisor;
 
 #[tauri::command]
 fn greet(name: &str) -> String {
-    format!("Hello, {}! Welcome to SecBrain.", name)
+    format!("Hello, {}! Welcome to Arandu.", name)
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    // SecBrain owns the Ollama server lifecycle via `OllamaSupervisor`. Mark the
+    // Arandu owns the Ollama server lifecycle via `OllamaSupervisor`. Mark the
     // process environment so child Python (which inherits it) does not spawn a
     // second, un-owned `ollama serve` from `ollama_manager.ensure_running()`.
     // Set before any threads/children are spawned so the write is sound.
-    std::env::set_var("SECBRAIN_OLLAMA_MANAGED", "1");
+    std::env::set_var("ARANDU_OLLAMA_MANAGED", "1");
 
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
@@ -261,7 +261,7 @@ pub fn run() {
             // SQLite and ChromaDB self-bootstrap on first write, but Kuzu's
             // DDL (Person/Event/Place node tables, etc.) only runs from
             // `cli init` or `cli reset`. On a fresh install — or after the
-            // user wipes ~/.secbrain/ — the AmbientBar's read-only stats
+            // user wipes ~/.arandu/ — the AmbientBar's read-only stats
             // poll would otherwise flash "DB issue" until something opens
             // Kuzu read-write. The CLI is idempotent (CREATE NODE TABLE
             // IF NOT EXISTS), so running it on every launch is cheap.
@@ -333,9 +333,9 @@ pub fn run() {
             let supervisor = Supervisor::spawn(project_root);
             app.manage(supervisor);
 
-            // Ollama server supervisor — ties Ollama's lifecycle to SecBrain.
+            // Ollama server supervisor — ties Ollama's lifecycle to Arandu.
             // Takes over any pre-existing/orphaned `ollama serve`, spawns a
-            // SecBrain-owned one, and respawns it on crash. The
+            // Arandu-owned one, and respawns it on crash. The
             // RunEvent::ExitRequested handler below reaps it on app shutdown.
             let ollama = OllamaSupervisor::spawn();
             app.manage(ollama);
@@ -530,7 +530,7 @@ pub fn run() {
                         sup.shutdown(Duration::from_secs(6)).await;
                     });
                 }
-                // Reap the Ollama server so it doesn't outlive SecBrain.
+                // Reap the Ollama server so it doesn't outlive Arandu.
                 if let Some(ollama) = app_handle.try_state::<Arc<OllamaSupervisor>>() {
                     let sup = ollama.inner().clone();
                     tauri::async_runtime::block_on(async move {

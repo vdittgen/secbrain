@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_MANIFEST_PATH = PROJECT_ROOT / "pipeline_manifest.json"
 _EXTENSION_MODELS_PATH = (
-    Path.home() / ".secbrain" / "data" / "extension_models.json"
+    Path.home() / ".arandu" / "data" / "extension_models.json"
 )
 
 
@@ -121,7 +121,7 @@ def load_manifest(
     """Load the pipeline manifest from JSON.
 
     Also merges any registered extension models from
-    ``~/.secbrain/data/extension_models.json``.
+    ``~/.arandu/data/extension_models.json``.
 
     Args:
         path: Path to the manifest JSON file.

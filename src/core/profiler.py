@@ -1,7 +1,7 @@
-"""Performance instrumentation for SecBrain.
+"""Performance instrumentation for Arandu.
 
 Provides a ``@timed`` decorator and a ``PerformanceLog`` class that records
-operation timings to ``~/.secbrain/data/perf_log.jsonl``.
+operation timings to ``~/.arandu/data/perf_log.jsonl``.
 
 Each log entry contains::
 
@@ -27,7 +27,7 @@ from typing import Any, TypeVar
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_LOG_PATH = Path.home() / ".secbrain" / "data" / "perf_log.jsonl"
+DEFAULT_LOG_PATH = Path.home() / ".arandu" / "data" / "perf_log.jsonl"
 
 F = TypeVar("F", bound=Callable[..., Any])
 
@@ -157,7 +157,7 @@ class PerformanceLog:
         lines: list[str] = [
             "",
             "=" * 72,
-            "  SecBrain Performance Report",
+            "  Arandu Performance Report",
             "=" * 72,
             f"  Total entries: {len(entries)}",
             f"  Unique operations: {len(stats)}",

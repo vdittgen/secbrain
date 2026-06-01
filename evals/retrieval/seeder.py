@@ -509,7 +509,7 @@ def main(argv: list[str] | None = None) -> int:
         help=(
             "Write the draft YAML here. The labelled set should live "
             "OUTSIDE the repo (recommended: "
-            "~/.secbrain/evals/retrieval_golden.yaml) so real record "
+            "~/.arandu/evals/retrieval_golden.yaml) so real record "
             "IDs and names never enter the open-source codebase. "
             "Defaults to stdout when omitted."
         ),

@@ -1,5 +1,5 @@
 /**
- * Citation list for `application/vnd.secbrain.citation+json` parts.
+ * Citation list for `application/vnd.arandu.citation+json` parts.
  *
  * Accepts either an array of sources directly in `data` or
  * `{ sources: [...] }`. Each source can carry a `sensitivity_tier`,

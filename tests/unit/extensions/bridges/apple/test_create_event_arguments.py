@@ -272,7 +272,7 @@ class TestEnsureAppRunning:
     def test_ensure_app_running_pre_launches_with_open(self) -> None:
         """``open -g -a`` is what binds the call to LaunchServices; the
         helper must invoke it (``-g`` keeps the app in the background so
-        it doesn't steal focus from the SecondBrain window)."""
+        it doesn't steal focus from the Arandu window)."""
         seen: list[list[str]] = []
 
         def fake_subprocess_run(cmd: list[str], **_kwargs: Any) -> Any:

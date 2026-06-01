@@ -1,6 +1,6 @@
 """Per-agent block table — gates LLM access when a local eval failed.
 
-In SecBrain every prompt runs locally, but the eval gate is still
+In Arandu every prompt runs locally, but the eval gate is still
 useful: when a user changes their Ollama model (or its config) and an
 agent's eval suite no longer passes, that agent's gateway calls fail
 closed instead of producing degraded output.
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 DEFAULT_DB_PATH = (
-    Path.home() / ".secbrain" / "data" / "secbrain.sqlite3"
+    Path.home() / ".arandu" / "data" / "arandu.sqlite3"
 )
 
 _SCHEMA = """

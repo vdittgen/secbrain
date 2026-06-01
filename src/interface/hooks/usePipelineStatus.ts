@@ -116,9 +116,9 @@ export function usePipelineStatus(): PipelineStatusHook {
 
   useEffect(() => {
     const handler = () => fetchStatus();
-    window.addEventListener("secbrain:pipeline-refreshed", handler);
+    window.addEventListener("arandu:pipeline-refreshed", handler);
     return () =>
-      window.removeEventListener("secbrain:pipeline-refreshed", handler);
+      window.removeEventListener("arandu:pipeline-refreshed", handler);
   }, [fetchStatus]);
 
   // -- Trigger a pipeline run -----------------------------------------------

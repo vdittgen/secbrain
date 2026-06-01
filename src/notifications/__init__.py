@@ -1,4 +1,4 @@
-"""WhatsApp notification system for SecondBrain OS.
+"""WhatsApp notification system for Arandu.
 
 Provides Brain-powered notification decisions for pipeline results and
 agent-executed actions, with per-category preferences and WhatsApp delivery.

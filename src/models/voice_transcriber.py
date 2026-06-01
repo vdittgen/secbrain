@@ -167,7 +167,7 @@ class VoiceTranscriber:
         raise RuntimeError(
             "No ASR backend available. "
             "Install mlx-qwen3-asr (recommended) or faster-whisper: "
-            "pip install 'secbrain[voice]'"
+            "pip install 'arandu[voice]'"
         )
 
     def _transcribe_qwen(

@@ -127,7 +127,7 @@ class EvalRun:
 
 
 DEFAULT_DB_PATH = (
-    Path.home() / ".secbrain" / "data" / "secbrain.sqlite3"
+    Path.home() / ".arandu" / "data" / "arandu.sqlite3"
 )
 
 _SCHEMA = """
@@ -301,7 +301,7 @@ def _user_dataset_path(agent_id: str) -> Path:
     """
     return (
         Path.home()
-        / ".secbrain"
+        / ".arandu"
         / "user_eval_datasets"
         / f"{agent_id}.yaml"
     )

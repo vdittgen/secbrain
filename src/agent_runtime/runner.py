@@ -19,7 +19,7 @@ from typing import Any
 
 import yaml
 
-from src.agent_runtime.base import SecondBrainAgent
+from src.agent_runtime.base import BrainAgent
 from src.agent_runtime.context import AgentContext
 from src.agent_runtime.models import (
     AgentManifest,
@@ -34,8 +34,8 @@ from src.agent_runtime.skills import SkillRegistry
 logger = logging.getLogger(__name__)
 
 BUILTIN_AGENTS_DIR = Path(__file__).parent / "builtin"
-USER_AGENTS_DIR = Path.home() / ".secbrain" / "extensions"
-AGENT_DATA_DIR = Path.home() / ".secbrain" / "data" / "agents"
+USER_AGENTS_DIR = Path.home() / ".arandu" / "extensions"
+AGENT_DATA_DIR = Path.home() / ".arandu" / "data" / "agents"
 
 
 class AgentLoadError(Exception):
@@ -344,8 +344,8 @@ class AgentRunner:
             builtin=raw.get("builtin", False),
         )
 
-    def _load_agent_class(self, agent_dir: Path) -> type[SecondBrainAgent]:
-        """Dynamically import agent.py and find the SecondBrainAgent subclass.
+    def _load_agent_class(self, agent_dir: Path) -> type[BrainAgent]:
+        """Dynamically import agent.py and find the BrainAgent subclass.
 
         sensitivity_tier: 1
         """
@@ -367,10 +367,10 @@ class AgentRunner:
 
         for _name, obj in inspect.getmembers(module, inspect.isclass):
             if (
-                issubclass(obj, SecondBrainAgent)
-                and obj is not SecondBrainAgent
+                issubclass(obj, BrainAgent)
+                and obj is not BrainAgent
             ):
                 return obj
 
-        msg = f"No SecondBrainAgent subclass found in {agent_file}"
+        msg = f"No BrainAgent subclass found in {agent_file}"
         raise AgentLoadError(msg)
