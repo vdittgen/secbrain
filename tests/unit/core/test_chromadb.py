@@ -1,7 +1,7 @@
 """Unit tests for the ChromaDB vector engine and fixtures.
 
 All tests use a temporary directory — never the real
-~/.secbrain/data/chromadb/ — so they are isolated and safe to run in any
+~/.arandu/data/chromadb/ — so they are isolated and safe to run in any
 environment.  The all-MiniLM-L6-v2 model must be cached locally (it is
 downloaded once on first use).
 """

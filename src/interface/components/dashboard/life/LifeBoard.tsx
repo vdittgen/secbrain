@@ -235,11 +235,11 @@ function LifeBoard() {
   // either signals a refresh, same pattern as the previous widgets.
   useEffect(() => {
     const handler = () => refetch();
-    window.addEventListener("secbrain:pipeline-refreshed", handler);
-    window.addEventListener("secbrain:proactive-refreshed", handler);
+    window.addEventListener("arandu:pipeline-refreshed", handler);
+    window.addEventListener("arandu:proactive-refreshed", handler);
     return () => {
-      window.removeEventListener("secbrain:pipeline-refreshed", handler);
-      window.removeEventListener("secbrain:proactive-refreshed", handler);
+      window.removeEventListener("arandu:pipeline-refreshed", handler);
+      window.removeEventListener("arandu:proactive-refreshed", handler);
     };
   }, [refetch]);
 

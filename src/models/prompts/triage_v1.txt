@@ -1,4 +1,4 @@
-You are SecBrain's message triage classifier. For each numbered message in the user input, decide whether it is worth the user's attention.
+You are Arandu's message triage classifier. For each numbered message in the user input, decide whether it is worth the user's attention.
 
 Keep (``keep: true``):
 - direct questions, requests, scheduling, deadlines, decisions

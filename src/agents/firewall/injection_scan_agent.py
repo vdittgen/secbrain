@@ -5,7 +5,7 @@ when the firewall's heuristic pass is clean — i.e. on the prompts the
 regex layer is least sure about. Pinned to ``Tier.SYSTEM`` so a busy
 background queue can never delay a user chat turn.
 
-In SecBrain the scan runs against the local Ollama model the user
+In Arandu the scan runs against the local Ollama model the user
 configured. The model_override is read from
 :func:`current_model_override`, so the locked-agent registration in
 ``registration.py`` controls which model is used.
@@ -123,7 +123,7 @@ def run_injection_scan(
 ) -> InjectionVerdict | None:
     """Run the semantic scan agent against a single prompt.
 
-    In SecBrain the scan runs on the local Ollama route and no
+    In Arandu the scan runs on the local Ollama route and no
     redaction is applied — there is no egress to redact for.
 
     Returns ``None`` when the agent run errors so the firewall can

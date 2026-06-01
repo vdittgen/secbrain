@@ -1,4 +1,4 @@
-"""Base DDL schemas for the SecBrain raw-data layer (SQLite).
+"""Base DDL schemas for the Arandu raw-data layer (SQLite).
 
 Every table stores data as ingested (no transformation).  The pipeline
 runner in src/pipeline/ will stage, transform, and promote rows from

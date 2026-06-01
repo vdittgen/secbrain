@@ -1,6 +1,6 @@
 # Security Policy
 
-SecBrain is a privacy-first application that runs entirely on the user's
+Arandu is a privacy-first application that runs entirely on the user's
 machine. We take security and privacy seriously and appreciate responsible
 disclosure of vulnerabilities.
 

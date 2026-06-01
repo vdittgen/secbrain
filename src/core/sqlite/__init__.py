@@ -1,1 +1,1 @@
-"""SQLite database engine for SecBrain (WAL mode)."""
+"""SQLite database engine for Arandu (WAL mode)."""

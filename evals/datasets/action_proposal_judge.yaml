@@ -289,7 +289,7 @@ cases:
 
   # ----- persona leak + placeholder leak (the watering-plants reply) --
   # The exact production failure: agent wrote a Portuguese reply that
-  # named itself ("SecBrain avisa...") and shipped an unrehydrated
+  # named itself ("Arandu avisa...") and shipped an unrehydrated
   # ``<PERSON_2726>`` placeholder in the recipient + body. The judge
   # must reject both, patch the body to first-person without persona,
   # and clear the placeholder from ``to``.
@@ -310,11 +310,11 @@ cases:
         required: [to, body]
       proposed_arguments:
         to: "<PERSON_2726>"
-        body: "Olá <PERSON_2726>! SecBrain avisa melhor — são as plantas aí em casa? Ela precisa que eu molhe? SecBrain diz os dias que fica melhor pra vocês que eu me organizo."
+        body: "Olá <PERSON_2726>! Arandu avisa melhor — são as plantas aí em casa? Ela precisa que eu molhe? Arandu diz os dias que fica melhor pra vocês que eu me organizo."
       today_iso: "2026-05-22"
     expected_output: null
     evaluators:
       - {FieldEquals: {field: ok, value: false}}
       # Judge must patch the body — and the patched body must not
-      # mention SecBrain or contain a raw placeholder.
+      # mention Arandu or contain a raw placeholder.
       - {FieldNotEmpty: {field: patches.body}}

@@ -1,5 +1,5 @@
 /**
- * Custom Baileys WhatsApp client for SecondBrain OS.
+ * Custom Baileys WhatsApp client for Arandu.
  *
  * Communicates with the Python listener via JSONL over stdio:
  *   stdout → events/responses (Python reads)
@@ -37,7 +37,7 @@ const AUTH_DIR = (() => {
 const STORE_PATH = path.join(AUTH_DIR, "store.json");
 const AUDIO_CACHE_DIR = path.join(
   process.env.HOME || "~",
-  ".secbrain",
+  ".arandu",
   "data",
   "audio_cache",
 );
@@ -327,7 +327,7 @@ async function connectSocket() {
     version,
     logger,
     printQRInTerminal: false,
-    browser: ["SecBrain", "Desktop", "1.0"],
+    browser: ["Arandu", "Desktop", "1.0"],
     syncFullHistory: true,
     markOnlineOnConnect: false,
     emitOwnEvents: true,
@@ -731,7 +731,7 @@ process.on("unhandledRejection", (err) => {
 // ---------------------------------------------------------------------------
 
 async function main() {
-  process.stderr.write(`SecBrain WhatsApp client starting (auth: ${AUTH_DIR})\n`);
+  process.stderr.write(`Arandu WhatsApp client starting (auth: ${AUTH_DIR})\n`);
 
   loadStore();
   setupStdinHandler();

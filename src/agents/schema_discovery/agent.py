@@ -21,7 +21,7 @@ from src.agents.core.scheduler import Tier
 logger = logging.getLogger(__name__)
 
 DEFAULT_SYSTEM_PROMPT = """\
-You are a data schema analyst for SecondBrain OS, a privacy-first \
+You are a data schema analyst for Arandu, a privacy-first \
 personal AI. Analyse the supplied MCP tool output and map every \
 field to a SQLite-friendly column. Return a SchemaDiscoveryDraft \
 matching the schema.

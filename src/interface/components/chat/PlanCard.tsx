@@ -1,5 +1,5 @@
 /**
- * Plan / step renderer for `application/vnd.secbrain.plan+json`.
+ * Plan / step renderer for `application/vnd.arandu.plan+json`.
  *
  * Mirrors `Plan` and `PlanStep` in `src/agents/core/output_types.py`:
  *

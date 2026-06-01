@@ -18,7 +18,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-SERVER_NAME = "secbrain-apple-bridge"
+SERVER_NAME = "arandu-apple-bridge"
 SERVER_VERSION = "1.0.0"
 PROTOCOL_VERSION = "2024-11-05"
 OSASCRIPT_TIMEOUT_SECONDS = 15
@@ -2083,7 +2083,7 @@ def list_notes(arguments: dict[str, Any]) -> list[dict[str, Any]]:
     except PermissionError as exc:
         raise RuntimeError(
             "Access to Notes database was denied. Grant Full Disk Access "
-            "to SecBrain and python3, then retry.",
+            "to Arandu and python3, then retry.",
         ) from exc
     except (sqlite3.Error, OSError, RuntimeError) as exc:
         detail = str(exc).lower()
@@ -2094,7 +2094,7 @@ def list_notes(arguments: dict[str, Any]) -> list[dict[str, Any]]:
         ):
             raise RuntimeError(
                 "Access to Notes database was denied. Grant Full Disk "
-                "Access to SecBrain and python3, then retry.",
+                "Access to Arandu and python3, then retry.",
             ) from exc
         raise RuntimeError(
             f"Failed to read Notes database directly: {exc}",

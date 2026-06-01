@@ -1,4 +1,4 @@
-"""Pydantic AI eval suites for SecondBrain agents.
+"""Pydantic AI eval suites for Arandu agents.
 
 Datasets are YAML files in ``evals/datasets/``; evaluators live in
 ``evals/evaluators.py``; the runner is ``evals/run_evals.py``.

@@ -27,12 +27,12 @@ impl AuditLogger {
         Ok(Self { path })
     }
 
-    /// Create a logger using the default path: `~/.secbrain/data/audit.jsonl`.
+    /// Create a logger using the default path: `~/.arandu/data/audit.jsonl`.
     pub fn default_path() -> Result<Self, std::io::Error> {
         let home = dirs::home_dir().ok_or_else(|| {
             std::io::Error::new(std::io::ErrorKind::NotFound, "home directory not found")
         })?;
-        let path = home.join(".secbrain").join("data").join("audit.jsonl");
+        let path = home.join(".arandu").join("data").join("audit.jsonl");
         Self::new(path)
     }
 
@@ -190,7 +190,7 @@ mod tests {
     use std::env;
 
     fn temp_audit_path() -> PathBuf {
-        let dir = env::temp_dir().join(format!("secbrain_test_{}", uuid::Uuid::new_v4()));
+        let dir = env::temp_dir().join(format!("arandu_test_{}", uuid::Uuid::new_v4()));
         dir.join("audit.jsonl")
     }
 

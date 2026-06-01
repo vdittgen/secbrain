@@ -1,6 +1,6 @@
 """User context assembly for BrainAgent system prompts.
 
-Reads user profile fields from ``~/.secbrain/settings.json`` and computes
+Reads user profile fields from ``~/.arandu/settings.json`` and computes
 dynamic context (current date/time, age).  The assembled text is injected
 into the BrainAgent system prompt so the LLM knows who the user is and
 when they are asking.

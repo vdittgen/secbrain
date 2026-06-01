@@ -33,9 +33,9 @@ function Layout() {
 
   useEffect(() => {
     let unlisten: UnlistenFn | null = null;
-    void listen("secbrain:proactive-refreshed", () => {
+    void listen("arandu:proactive-refreshed", () => {
       window.dispatchEvent(
-        new CustomEvent("secbrain:proactive-refreshed"),
+        new CustomEvent("arandu:proactive-refreshed"),
       );
     }).then((fn) => {
       unlisten = fn;

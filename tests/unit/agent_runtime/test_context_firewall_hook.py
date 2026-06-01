@@ -43,7 +43,7 @@ _GATEWAY_PROVIDER: MagicMock | None = None
 @pytest.fixture(autouse=True)
 def _isolate(tmp_path, monkeypatch):
     monkeypatch.setenv(
-        "SECBRAIN_AUDIT_PATH", str(tmp_path / "audit.jsonl"),
+        "ARANDU_AUDIT_PATH", str(tmp_path / "audit.jsonl"),
     )
     reset_default_chain_for_tests()
     reset_injection_firewall_for_tests()

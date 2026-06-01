@@ -30,7 +30,7 @@ evals:
 # Same suites, judge disabled. Useful for offline runs and for the
 # pre-commit loop where you only want the structural assertions.
 evals-offline:
-	SECBRAIN_EVAL_JUDGE_DISABLED=1 python -m evals.run_evals --suite all
+	ARANDU_EVAL_JUDGE_DISABLED=1 python -m evals.run_evals --suite all
 
 evals-fast:
 	python -m evals.run_evals --suite firewall_prompts

@@ -63,7 +63,7 @@ OPENAI_WALL_TIMEOUT_S = 120
 # Anthropic response length cap
 DEFAULT_MAX_TOKENS = 4096
 
-SETTINGS_PATH = Path.home() / ".secbrain" / "settings.json"
+SETTINGS_PATH = Path.home() / ".arandu" / "settings.json"
 
 _THINKING_RE = _re.compile(r"<think>.*?</think>", _re.DOTALL)
 _FENCE_RE = _re.compile(r"```(?:json)?\s*\n?(.*?)\n?```", _re.DOTALL)
@@ -680,7 +680,7 @@ class OllamaProvider(LLMProvider):
 
 
 def load_llm_settings() -> dict[str, Any]:
-    """Load LLM-related settings from ``~/.secbrain/settings.json``.
+    """Load LLM-related settings from ``~/.arandu/settings.json``.
 
     Returns an empty dict if the file doesn't exist.
 
@@ -702,7 +702,7 @@ def create_provider_from_settings(
 ) -> LLMProvider:
     """Create the local Ollama provider from user settings.
 
-    SecBrain runs all inference locally on Ollama. Three caller
+    Arandu runs all inference locally on Ollama. Three caller
     tiers:
 
     - **interactive** (default) — chat / streaming calls.

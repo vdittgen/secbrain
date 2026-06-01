@@ -1,5 +1,5 @@
 /**
- * Reusable loading state components for SecBrain.
+ * Reusable loading state components for Arandu.
  *
  * Provides skeleton loaders for common UI patterns and a LoadingWrapper
  * that manages the loading → loaded → error state transition.

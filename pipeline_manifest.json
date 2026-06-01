@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "description": "SecBrain pipeline manifest — defines all SQL/Python transforms in dependency order.",
+  "description": "Arandu pipeline manifest — defines all SQL/Python transforms in dependency order.",
   "models": [
     {
       "name": "stg_messages",

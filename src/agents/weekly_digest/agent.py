@@ -2,7 +2,7 @@
 
 Takes an already-assembled summary of the week's messages, events,
 and notes; returns a :class:`DigestSummary` with named sections.
-The legacy ``WeeklyDigestAgent`` (subclassing ``SecondBrainAgent``)
+The legacy ``WeeklyDigestAgent`` (subclassing ``BrainAgent``)
 keeps the DB scans + persistence; this agent is the LLM step it
 delegates to.
 

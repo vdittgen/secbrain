@@ -1,4 +1,4 @@
-"""Realistic sample data for the SecBrain raw-data tables.
+"""Realistic sample data for the Arandu raw-data tables.
 
 Intended for development and testing only — never run against a production
 database.  Sensitivity tiers are deliberately mixed to exercise the
@@ -507,7 +507,7 @@ NOTES: list[tuple] = [
     ),
     (
         "note-011",
-        "API Design — SecBrain",
+        "API Design — Arandu",
         (
             "Use REST for CRUD. Use GraphQL for flexible querying."
             " Keep Tauri commands thin — push logic into Python."
@@ -515,7 +515,7 @@ NOTES: list[tuple] = [
         "obsidian",
         "2025-05-05T14:00:00Z",
         "2025-06-01T14:00:00Z",
-        json.dumps(["work", "secbrain", "architecture"]),
+        json.dumps(["work", "arandu", "architecture"]),
         1,
     ),
     (

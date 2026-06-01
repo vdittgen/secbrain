@@ -71,7 +71,7 @@ hits the same local Ollama model the agents use via
 short reason. The case passes when `score >= threshold` (default 7).
 
 Cost per full run is ~$0.01 at current flash-tier prices. Set
-`SECBRAIN_EVAL_JUDGE_DISABLED=1` (or use `make evals-offline`) to
+`ARANDU_EVAL_JUDGE_DISABLED=1` (or use `make evals-offline`) to
 skip judge calls — the case records as `skipped: judge unavailable`
 and only structural assertions gate the suite.
 
@@ -88,9 +88,9 @@ guardrails:
 
 These call real agents through `default_factory().get(route)`. They
 will fail with a runtime error when the remote endpoint isn't
-configured. Configure `~/.secbrain/settings.json`
+configured. Configure `~/.arandu/settings.json`
 (`llm_remote_base_url`, `llm_remote_api_key`) or set
-`SECBRAIN_REMOTE_API_KEY` before running.
+`ARANDU_REMOTE_API_KEY` before running.
 
 | Suite                  | Cases | Agent                       |
 |------------------------|------:|-----------------------------|

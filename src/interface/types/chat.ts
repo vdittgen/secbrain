@@ -22,9 +22,9 @@ export interface MessagePart {
    * - `text/vnd.mermaid`
    * - `text/html`
    * - `application/vnd.vega-lite+json`
-   * - `application/vnd.secbrain.table+json`
-   * - `application/vnd.secbrain.citation+json`
-   * - `application/vnd.secbrain.plan+json`
+   * - `application/vnd.arandu.table+json`
+   * - `application/vnd.arandu.citation+json`
+   * - `application/vnd.arandu.plan+json`
    * - `image/*`, `audio/*`, `video/*`
    * - `application/pdf`
    */
@@ -51,9 +51,9 @@ export const MIME = {
   HTML: "text/html",
   MERMAID: "text/vnd.mermaid",
   VEGA_LITE: "application/vnd.vega-lite+json",
-  TABLE: "application/vnd.secbrain.table+json",
-  CITATION: "application/vnd.secbrain.citation+json",
-  PLAN: "application/vnd.secbrain.plan+json",
+  TABLE: "application/vnd.arandu.table+json",
+  CITATION: "application/vnd.arandu.citation+json",
+  PLAN: "application/vnd.arandu.plan+json",
   PDF: "application/pdf",
   DOCX:
     "application/vnd.openxmlformats-officedocument" +

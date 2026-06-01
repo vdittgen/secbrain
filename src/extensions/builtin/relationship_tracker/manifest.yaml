@@ -2,7 +2,7 @@ id: relationship-tracker
 name: Relationship Tracker
 version: "1.0.0"
 description: Identifies contacts you haven't interacted with recently
-author: SecondBrain OS
+author: Arandu
 builtin: true
 category: social
 max_sensitivity_tier: 2

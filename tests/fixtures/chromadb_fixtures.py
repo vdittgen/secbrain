@@ -1,4 +1,4 @@
-"""ChromaDB vector store fixtures for SecBrain.
+"""ChromaDB vector store fixtures for Arandu.
 
 Indexes a representative subset of the DuckDB raw-data fixtures into the
 five domain collections so semantic search is immediately available in dev.
@@ -116,7 +116,7 @@ _WORK_DOCS: list[tuple[str, str, dict]] = [
     (
         "note-011",
         (
-            "API Design — SecBrain."
+            "API Design — Arandu."
             " Use REST for CRUD. Use GraphQL for flexible querying."
             " Keep Tauri commands thin — push logic into Python."
         ),

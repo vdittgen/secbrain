@@ -42,7 +42,7 @@ Good goals (examples):
 - "Staff the clinic by end of Q3" (work, short)
 - "Run a half marathon this year" (personal, medium)
 - "Stabilise dad's treatment plan" (life, medium)
-- "Ship v1 of the SecondBrain extension marketplace" (work, medium)
+- "Ship v1 of the Arandu extension marketplace" (work, medium)
 
 For each goal return a GoalDraft with:
 - ``title`` short imperative phrasing (≤ 80 chars)

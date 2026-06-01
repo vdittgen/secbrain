@@ -88,7 +88,7 @@ REGISTRY: list[PromptCase] = [
         name="triage",
         lane="classifier",
         template_filename="triage_v1.txt",
-        expected_hash="sha256:6e7fe873563860235336358822e5aeb75d6e4af3e4ebc8d00b3e551e3c35e4c2",
+        expected_hash="sha256:102bd56489fba52c4640292d8fdb110b6b073e47f6469e410353613825bbb4c8",
         fixture_filename="triage.golden.txt",
         variable_input=(
             "[1] id=msg_1 from=Alice source=whatsapp\n"
@@ -99,7 +99,7 @@ REGISTRY: list[PromptCase] = [
         name="brain_ask",
         lane="interactive",
         template_filename="brain_ask_v1.txt",
-        expected_hash="sha256:f1dbe2394487f5e1c1c9cc92448dd08b9e30f77908ce86e89ba3f5cea8795bdb",
+        expected_hash="sha256:643b04298089c8acc036a8bd4797dce89d5f845f0405cbe878f559afc8c15441",
         fixture_filename="brain_ask.golden.txt",
         variable_input="How many meetings did I have last week?",
     ),
@@ -141,7 +141,7 @@ REGISTRY: list[PromptCase] = [
         name="message_eval",
         lane="escalation",
         template_filename="message_eval_v1.txt",
-        expected_hash="sha256:474909f7426823c1f90deb430077f32e3ba815c577a79411d8b53a23abb5ced5",
+        expected_hash="sha256:74557fbdb405dd23bbe619229359c5840049f2424587dc45faf56591e7f068dc",
         fixture_filename="message_eval.golden.txt",
         variable_input=(
             "topic: dad health\n"
@@ -179,7 +179,7 @@ REGISTRY: list[PromptCase] = [
         name="model_picker",
         lane="background",
         template_filename="model_picker_v1.txt",
-        expected_hash="sha256:be9606ee26a0a5dfcec3260bbc0066a66be8378d6dd87bc9cc5a8e3354f8d0fa",
+        expected_hash="sha256:8a9807d7834b54d730138ae05532936d59d1368e1999dc571c90dc3a9d115384",
         fixture_filename="model_picker.golden.txt",
         variable_input=(
             '{\n'
@@ -242,7 +242,7 @@ REGISTRY: list[PromptCase] = [
         name="llm_classifier",
         lane="classifier",
         template_filename="llm_classifier_v1.txt",
-        expected_hash="sha256:3376c5b9df1d1b23620b75a5db5b1151500734f4bf98a26b5e90d636c18b7be3",
+        expected_hash="sha256:286f19293b9b1a802b9e657f753a87d37062a99d0096fa7cf95536160056205a",
         fixture_filename="llm_classifier.golden.txt",
         variable_input=(
             '{"type": "object", "properties": {"x": {"type": "string"}}}'

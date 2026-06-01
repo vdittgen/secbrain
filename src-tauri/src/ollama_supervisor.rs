@@ -1,11 +1,11 @@
 //! Ollama server supervisor.
 //!
-//! Ties the local Ollama server's lifecycle to SecBrain so Ollama only runs
-//! while SecBrain does. The supervisor:
+//! Ties the local Ollama server's lifecycle to Arandu so Ollama only runs
+//! while Arandu does. The supervisor:
 //!
 //! * Takes over on startup: kills any pre-existing `ollama serve` (and its
 //!   model `runner` children) left by the menu-bar app, a manual launch, or an
-//!   orphan from a prior SecBrain session that exited ungracefully.
+//!   orphan from a prior Arandu session that exited ungracefully.
 //! * Spawns `ollama serve` as a child with `kill_on_drop` so a clean Tauri exit
 //!   terminates the server via tokio's Drop impl.
 //! * Watches the child via `child.wait()` and respawns on death with
@@ -13,7 +13,7 @@
 //! * On `RunEvent::ExitRequested`, sends SIGTERM and waits up to 5s before
 //!   SIGKILL so the server can stop its runners cleanly.
 //!
-//! Note: macOS has no "die with parent" primitive, so a hard kill of SecBrain
+//! Note: macOS has no "die with parent" primitive, so a hard kill of Arandu
 //! (SIGKILL / crash) can orphan `ollama serve`. The startup take-over reaps any
 //! such orphan on the next launch — matching `whatsapp_supervisor`'s approach.
 //!
@@ -73,7 +73,7 @@ impl OllamaSupervisor {
 }
 
 async fn run_loop(supervisor: Arc<OllamaSupervisor>) {
-    // Take over: kill any Ollama server SecBrain doesn't own so we are the
+    // Take over: kill any Ollama server Arandu doesn't own so we are the
     // single instance and can reliably reap it on exit.
     kill_external_ollama().await;
 

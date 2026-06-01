@@ -1,12 +1,12 @@
 """Semantic injection scan via :class:`InjectionScanAgent`.
 
 Verifies that the injection firewall's semantic pass:
-- delegates to the new SBAgent when ``SECBRAIN_FIREWALL_DISABLE_SEMANTIC_SCAN``
+- delegates to the new SBAgent when ``ARANDU_FIREWALL_DISABLE_SEMANTIC_SCAN``
   is not set,
 - pins the call to the local route (we never send a suspected
   injection prompt to the third-party provider),
 - fails open when the local LLM stack is unavailable (default),
-- fails closed when ``SECBRAIN_FIREWALL_FAIL_CLOSED=1`` is set.
+- fails closed when ``ARANDU_FIREWALL_FAIL_CLOSED=1`` is set.
 
 sensitivity_tier: N/A
 """
@@ -32,7 +32,7 @@ from src.agents.firewall.injection_firewall import (
 @pytest.fixture(autouse=True)
 def _isolate(tmp_path, monkeypatch):
     monkeypatch.setenv(
-        "SECBRAIN_AUDIT_PATH", str(tmp_path / "audit.jsonl"),
+        "ARANDU_AUDIT_PATH", str(tmp_path / "audit.jsonl"),
     )
     reset_default_chain_for_tests()
     reset_injection_firewall_for_tests()
@@ -46,7 +46,7 @@ def test_semantic_scan_consulted_when_heuristic_clean(monkeypatch) -> None:
     invoked without spinning up a real pydantic-ai model.
     """
     monkeypatch.delenv(
-        "SECBRAIN_FIREWALL_DISABLE_SEMANTIC_SCAN", raising=False,
+        "ARANDU_FIREWALL_DISABLE_SEMANTIC_SCAN", raising=False,
     )
     called: list[tuple[str, str]] = []
 
@@ -71,7 +71,7 @@ def test_semantic_scan_consulted_when_heuristic_clean(monkeypatch) -> None:
 
 def test_semantic_scan_block_propagates(monkeypatch) -> None:
     monkeypatch.delenv(
-        "SECBRAIN_FIREWALL_DISABLE_SEMANTIC_SCAN", raising=False,
+        "ARANDU_FIREWALL_DISABLE_SEMANTIC_SCAN", raising=False,
     )
 
     def fake(*, prompt: str, context: str = "") -> InjectionVerdict:
@@ -97,7 +97,7 @@ def test_semantic_scan_block_propagates(monkeypatch) -> None:
 
 def test_semantic_scan_failure_fails_open_by_default(monkeypatch) -> None:
     monkeypatch.delenv(
-        "SECBRAIN_FIREWALL_DISABLE_SEMANTIC_SCAN", raising=False,
+        "ARANDU_FIREWALL_DISABLE_SEMANTIC_SCAN", raising=False,
     )
 
     def fake(*, prompt: str, context: str = "") -> InjectionVerdict | None:
@@ -116,9 +116,9 @@ def test_semantic_scan_failure_fails_open_by_default(monkeypatch) -> None:
 
 def test_semantic_scan_failure_fails_closed_with_env(monkeypatch) -> None:
     monkeypatch.delenv(
-        "SECBRAIN_FIREWALL_DISABLE_SEMANTIC_SCAN", raising=False,
+        "ARANDU_FIREWALL_DISABLE_SEMANTIC_SCAN", raising=False,
     )
-    monkeypatch.setenv("SECBRAIN_FIREWALL_FAIL_CLOSED", "1")
+    monkeypatch.setenv("ARANDU_FIREWALL_FAIL_CLOSED", "1")
 
     def fake(*, prompt: str, context: str = "") -> InjectionVerdict | None:
         return None
@@ -136,8 +136,8 @@ def test_semantic_scan_failure_fails_closed_with_env(monkeypatch) -> None:
 
 
 def test_disabled_semantic_scan_short_circuits(monkeypatch) -> None:
-    """``SECBRAIN_FIREWALL_DISABLE_SEMANTIC_SCAN=1`` bypasses the SBAgent."""
-    monkeypatch.setenv("SECBRAIN_FIREWALL_DISABLE_SEMANTIC_SCAN", "1")
+    """``ARANDU_FIREWALL_DISABLE_SEMANTIC_SCAN=1`` bypasses the SBAgent."""
+    monkeypatch.setenv("ARANDU_FIREWALL_DISABLE_SEMANTIC_SCAN", "1")
     sentinel = MagicMock(side_effect=AssertionError("should not be called"))
     monkeypatch.setattr(
         "src.agents.firewall.injection_scan_agent.run_injection_scan",

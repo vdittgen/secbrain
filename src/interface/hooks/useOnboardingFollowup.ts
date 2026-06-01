@@ -11,7 +11,7 @@
  * sync AND the full staging→intermediate→marts pipeline + ChromaDB
  * reindex. Running 4 of those serially is what made onboarding feel
  * stuck (~5 min for a fresh apple-* setup). Hoisting that off the
- * wizard's click handler is what makes the "Open SecBrain" experience
+ * wizard's click handler is what makes the "Open Arandu" experience
  * atomic — the user lands on the dashboard immediately and watches the
  * setup progress in the AmbientBar.
  *

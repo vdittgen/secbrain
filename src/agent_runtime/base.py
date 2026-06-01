@@ -1,6 +1,6 @@
-"""Base class for SecondBrain agents.
+"""Base class for Arandu agents.
 
-All agents (built-in and third-party) must subclass SecondBrainAgent
+All agents (built-in and third-party) must subclass BrainAgent
 and implement the run() method.
 
 sensitivity_tier: N/A (abstract interface)
@@ -16,8 +16,8 @@ if TYPE_CHECKING:
     from src.agent_runtime.models import AgentManifest, AgentResult
 
 
-class SecondBrainAgent(ABC):
-    """Abstract base for all SecondBrain agents.
+class BrainAgent(ABC):
+    """Abstract base for all Arandu agents.
 
     Every agent must:
     1. Define a ``manifest`` class attribute (:class:`AgentManifest`).

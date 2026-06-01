@@ -1,6 +1,6 @@
 """Embedding-meta sentinel for ChromaDB.
 
-A single JSON file at ``~/.secbrain/data/chromadb/.embedding_meta.json``
+A single JSON file at ``~/.arandu/data/chromadb/.embedding_meta.json``
 records the model + dimension that built the current index. On
 :class:`VectorEngine` init we compare it against the active embedding
 function and emit a loud warning when they don't match — a mismatch

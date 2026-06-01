@@ -613,7 +613,7 @@ class ConnectionManager:
         """
         path = (
             Path.home()
-            / ".secbrain"
+            / ".arandu"
             / "extensions"
             / connector_id
             / "metadata.json"

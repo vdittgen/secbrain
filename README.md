@@ -1,17 +1,19 @@
-# SecBrain
+# Arandu
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![CI](https://github.com/vdittgen/secbrain/actions/workflows/ci.yml/badge.svg)]()
+[![CI](https://github.com/vdittgen/arandu/actions/workflows/ci.yml/badge.svg)]()
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)]()
 [![Rust 2021](https://img.shields.io/badge/rust-2021-orange.svg)]()
 
 **Privacy-first AI assistant that runs on your machine and automatically aggregates your personal data without exposing it to AI providers.**
 
-Your whole life, in a closed loop — SecBrain ingest every source, connecting it by what matters, and handing you only what's relevant, when it's relevant.
+> **About the name** — *Arandu* (ah-rahn-DOO) is the Guaraní word for wisdom. It comes from **ára** ("the world", the cosmos, time itself) + **-ndu** ("to perceive", to sense): literally **"to perceive the world."** That is exactly what this system does — it perceives *your* world, your data and your context, entirely on your own machine, and turns that perception into understanding without ever sending it away.
+
+Your whole life, in a closed loop — Arandu ingest every source, connecting it by what matters, and handing you only what's relevant, when it's relevant.
 
 ---
 
-Most AI assistants know nothing about you. They start every conversation from zero. SecBrain changes that. It's a privacy-first personal operating system that runs entirely on your machine — understanding, aggregating and organizing your calendar, contacts, messages, notes, health data, and more into a knowledge engine (internal data warehouse, graph database and vector database) that a local LLM uses to understand your life and give you genuinely personalized actions and answers.
+Most AI assistants know nothing about you. They start every conversation from zero. Arandu changes that. It's a privacy-first personal operating system that runs entirely on your machine — understanding, aggregating and organizing your calendar, contacts, messages, notes, health data, and more into a knowledge engine (internal data warehouse, graph database and vector database) that a local LLM uses to understand your life and give you genuinely personalized actions and answers.
 
 Toggle on your data sources like you toggle on WiFi. Ask questions grounded in your actual data. Let the AI schedule meetings, send messages, and take actions on your behalf — with your explicit confirmation every time. Third-party agents generate insights you never thought to ask for, while a Rust firewall ensures every byte of data is classified, consented, scoped, and audited.
 
@@ -19,7 +21,7 @@ Toggle on your data sources like you toggle on WiFi. Ask questions grounded in y
 
 ## Building from source
 
-SecBrain ships as source code. Clone, build, run.
+Arandu ships as source code. Clone, build, run.
 
 ### Prerequisites
 
@@ -32,7 +34,7 @@ SecBrain ships as source code. Clone, build, run.
 ### Hardware requirements
 
 > [!IMPORTANT]
-> SecBrain runs the LLM **entirely on your machine**. The default model is
+> Arandu runs the LLM **entirely on your machine**. The default model is
 > **`llama3.1:70b`** because it's the smallest model that delivers acceptable
 > results — and it is demanding. **We strongly recommend installing on a machine
 > that meets the minimum specs below.**
@@ -50,8 +52,8 @@ SecBrain ships as source code. Clone, build, run.
 ### Build & run
 
 ```bash
-git clone https://github.com/vdittgen/secbrain.git
-cd secbrain
+git clone https://github.com/vdittgen/arandu.git
+cd arandu
 
 # Python environment
 python -m venv .venv && source .venv/bin/activate

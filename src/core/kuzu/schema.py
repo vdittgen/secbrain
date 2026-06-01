@@ -1,4 +1,4 @@
-"""Kuzu graph schema for SecBrain.
+"""Kuzu graph schema for Arandu.
 
 Defines node tables (Person, Event, Place, Emotion, Idea, Topic) and
 relationship tables that connect them.  All relationship tables carry

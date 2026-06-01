@@ -663,7 +663,7 @@ function CustomConnectorSection() {
       {expanded && (
         <div className="mt-4 space-y-3">
           <p className="text-xs text-muted">
-            Install any MCP-compatible server. SecBrain will auto-discover
+            Install any MCP-compatible server. Arandu will auto-discover
             its capabilities and data structure.
           </p>
           <input

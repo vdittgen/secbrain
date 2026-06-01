@@ -21,7 +21,7 @@ After the `refactor/ddd-review-cleanup` reorganization (May 2026):
 | `commands/bridge.rs` | `call_python_cli()`, `call_python_cli_stream()`, `spawn_pipeline_worker()` — subprocess bridge to Python (`python -m src.core.cli`) |
 | `commands/types.rs` | Serializable DTOs shared between Rust and frontend (source of truth) |
 | `firewall/types.rs` | `AuditEntry` row schema (mirrors `src/agents/core/audit.py`) |
-| `firewall/audit.rs` | Append-only SHA-256 hash chain reader/writer for `~/.secbrain/data/audit.jsonl` |
+| `firewall/audit.rs` | Append-only SHA-256 hash chain reader/writer for `~/.arandu/data/audit.jsonl` |
 
 ---
 
@@ -72,7 +72,7 @@ After the `refactor/ddd-review-cleanup` reorganization (May 2026):
 
 | File | Purpose |
 |------|---------|
-| `agent_runtime/base.py` | `SecondBrainAgent` ABC |
+| `agent_runtime/base.py` | `BrainAgent` ABC |
 | `agent_runtime/runner.py` | `AgentRunner` — discover, load, execute agents |
 | `agent_runtime/worker.py` | Subprocess entry point for third-party agents |
 | `agent_runtime/context.py` | `AgentContext` — sandboxed API (no direct DB) |

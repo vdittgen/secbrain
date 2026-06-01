@@ -835,7 +835,7 @@ pub async fn preload_ollama_model(state: State<'_, AppState>) -> Result<serde_js
 
 /// Read the current model-pull download progress, if a pull is in flight.
 ///
-/// Reads `~/.secbrain/data/ollama_pull_progress.json` directly (written by
+/// Reads `~/.arandu/data/ollama_pull_progress.json` directly (written by
 /// the Python pull loop) so the UI can poll cheaply once per second.
 /// Returns `None` when no pull is running (file absent) or mid-write.
 ///
@@ -846,7 +846,7 @@ pub async fn get_model_pull_progress() -> Result<Option<ModelPullProgress>, Stri
         return Ok(None);
     };
     let path = home
-        .join(".secbrain")
+        .join(".arandu")
         .join("data")
         .join("ollama_pull_progress.json");
     match tokio::fs::read_to_string(&path).await {
@@ -1403,7 +1403,7 @@ pub async fn rebuild_vector_index(
 
 fn settings_path() -> Result<std::path::PathBuf, String> {
     let home = dirs::home_dir().ok_or("Could not determine home directory")?;
-    Ok(home.join(".secbrain").join("settings.json"))
+    Ok(home.join(".arandu").join("settings.json"))
 }
 
 pub(crate) fn load_settings_from_disk() -> Result<AppSettings, String> {
@@ -2123,7 +2123,7 @@ pub async fn follow_up_insight(
 
 /// Run proactive intelligence evaluation (all 3 pillars).
 ///
-/// Emits a ``secbrain:proactive-refreshed`` Tauri event on success so
+/// Emits a ``arandu:proactive-refreshed`` Tauri event on success so
 /// dashboard widgets that depend on the proactive tables (active
 /// threads, inbox, agent stream) can refetch immediately — the 2h
 /// background cycle would otherwise leave those panels stale.
@@ -2142,7 +2142,7 @@ pub async fn evaluate_proactive(
     let result: types::ProactiveResult = serde_json::from_str(&output).map_err(|e| {
         format!("Failed to parse proactive result: {e}")
     })?;
-    if let Err(e) = app_handle.emit("secbrain:proactive-refreshed", ()) {
+    if let Err(e) = app_handle.emit("arandu:proactive-refreshed", ()) {
         eprintln!("[evaluate_proactive] WARNING: failed to emit proactive-refreshed event: {e}");
     }
     Ok(result)
@@ -2216,7 +2216,7 @@ pub async fn dismiss_pending_reply(
     let parsed: serde_json::Value = serde_json::from_str(&output).map_err(|e| {
         format!("Failed to parse dismiss response: {e}")
     })?;
-    if let Err(e) = app_handle.emit("secbrain:proactive-refreshed", ()) {
+    if let Err(e) = app_handle.emit("arandu:proactive-refreshed", ()) {
         eprintln!(
             "[dismiss_pending_reply] WARNING: failed to emit proactive-refreshed event: {e}"
         );
@@ -3920,7 +3920,7 @@ mod tests {
         let active = state.active_chat_session.lock().await;
         assert!(active.is_none());
 
-        // Settings may come from disk (~/.secbrain/settings.json) or defaults.
+        // Settings may come from disk (~/.arandu/settings.json) or defaults.
         // Exact field values are tested in test_settings_default (pure defaults).
         let settings = state.settings.lock().await;
         assert!(!settings.llm_model.is_empty());
@@ -4005,7 +4005,7 @@ mod tests {
     fn test_settings_default() {
         let settings = AppSettings::default();
         assert_eq!(settings.theme, "light");
-        assert_eq!(settings.data_dir, "~/.secbrain/data");
+        assert_eq!(settings.data_dir, "~/.arandu/data");
         assert!(!settings.onboarding_completed);
         assert!(settings.onboarding_completed_at.is_none());
         assert!(settings.initial_connectors.is_empty());

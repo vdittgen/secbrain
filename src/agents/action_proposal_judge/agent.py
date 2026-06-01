@@ -12,7 +12,7 @@ message plus the structured proposal, and emits an
 ``build_action_proposal`` applies the judge's patches before the
 confirmation card is rendered.
 
-In SecBrain the judge runs against the same local model as the
+In Arandu the judge runs against the same local model as the
 primary extractor (one Ollama model). Where multiple model families
 are available, the judge can be pinned to a different one via the
 Agents page so a hallucination shared by both extractor and judge is

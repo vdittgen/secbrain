@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 /// One line of the SHA-256 chained audit log at
-/// `~/.secbrain/data/audit.jsonl`.
+/// `~/.arandu/data/audit.jsonl`.
 ///
 /// Shape mirrors the Python writer in `src/agents/core/audit.py` so that
 /// the same file can be read by both runtimes without schema drift.
@@ -25,7 +25,7 @@ pub struct AuditEntry {
 
 /// Drilldown payload for an audit row that triggered a redaction.
 ///
-/// Loaded from `~/.secbrain/data/redactions/{payload_hash}.json` via the
+/// Loaded from `~/.arandu/data/redactions/{payload_hash}.json` via the
 /// Python CLI handler `get-redaction-detail`. Mirrors the JSON shape
 /// produced by `src/models/redaction_store.py`.
 ///

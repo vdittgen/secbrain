@@ -23,7 +23,7 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-_LOCK_DIR = Path.home() / ".secbrain" / "data"
+_LOCK_DIR = Path.home() / ".arandu" / "data"
 _LOCK_PATH = _LOCK_DIR / ".ollama_lock"
 
 _DEFAULT_TIMEOUT = 120  # interactive / proactive
@@ -59,7 +59,7 @@ def ollama_lock(
     *,
     priority: str = "normal",
 ) -> Generator[None, None, None]:
-    """Acquire Ollama access across all SecondBrain processes.
+    """Acquire Ollama access across all Arandu processes.
 
     Blocks until the lock is available or *timeout* seconds elapse.
     Raises ``TimeoutError`` if the lock cannot be acquired in time.

@@ -98,7 +98,7 @@ def register_injection_firewall_agent() -> None:
                 "LLM-judge sub-agent owned by the injection firewall. "
                 "Runs only when the heuristic pass is clean. Judges "
                 "the prompt against the configured LLM (local Ollama "
-                "in SecBrain) to catch what the heuristic layer "
+                "in Arandu) to catch what the heuristic layer "
                 "missed."
             ),
             category="firewall",
@@ -130,7 +130,7 @@ def register_egress_firewall_agent() -> None:
         system_prompt=(
             "Routes every outbound LLM call to the configured provider "
             "based on the routing policy and the prompt's maximum "
-            "sensitivity tier. In SecBrain all traffic is local. "
+            "sensitivity tier. In Arandu all traffic is local. "
             "See docs/PRIVACY.md."
         ),
         model_route="inherit",

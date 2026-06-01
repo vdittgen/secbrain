@@ -12,12 +12,12 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timedelta, timezone
 
-from src.agent_runtime.base import SecondBrainAgent
+from src.agent_runtime.base import BrainAgent
 from src.agent_runtime.context import AgentContext
 from src.agent_runtime.models import AgentResult
 
 
-class WeeklyDigestAgent(SecondBrainAgent):
+class WeeklyDigestAgent(BrainAgent):
     """Generates a weekly digest of messages, events, and notes.
 
     sensitivity_tier: 2

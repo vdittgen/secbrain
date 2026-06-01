@@ -36,8 +36,8 @@ logger = logging.getLogger(__name__)
 # Constants
 # ---------------------------------------------------------------------------
 
-_EXTENSIONS_BASE = Path.home() / ".secbrain" / "extensions"
-_EXTENSION_MODELS_PATH = Path.home() / ".secbrain" / "data" / "extension_models.json"
+_EXTENSIONS_BASE = Path.home() / ".arandu" / "extensions"
+_EXTENSION_MODELS_PATH = Path.home() / ".arandu" / "data" / "extension_models.json"
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 

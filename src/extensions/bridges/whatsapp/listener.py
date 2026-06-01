@@ -39,8 +39,8 @@ from src.extensions.models import ToolTemplate
 
 logger = logging.getLogger(__name__)
 
-_PIPELINE_LOCK_PATH = Path.home() / ".secbrain" / "data" / ".pipeline_running"
-_RUNTIME_DIR = Path.home() / ".secbrain" / "data" / "whatsapp_listener"
+_PIPELINE_LOCK_PATH = Path.home() / ".arandu" / "data" / ".pipeline_running"
+_RUNTIME_DIR = Path.home() / ".arandu" / "data" / "whatsapp_listener"
 _PID_PATH = _RUNTIME_DIR / "listener.pid.json"
 _STATUS_PATH = _RUNTIME_DIR / "status.json"
 _LOG_PATH = _RUNTIME_DIR / "listener.log"
@@ -899,7 +899,7 @@ def _maybe_process_replies(
         from src.notifications.reply_handler import ReplyHandler
 
         # Read phone from settings
-        settings_file = _Path.home() / ".secbrain" / "settings.json"
+        settings_file = _Path.home() / ".arandu" / "settings.json"
         if not settings_file.exists():
             return
         settings = _json.loads(settings_file.read_text(encoding="utf-8"))
@@ -964,7 +964,7 @@ def _maybe_process_replies(
                         _t.sleep(5)
             return False
 
-        data_dir = _Path.home() / ".secbrain" / "data"
+        data_dir = _Path.home() / ".arandu" / "data"
         with DatabaseEngine(db_path=DEFAULT_DB_PATH) as db:
             # Open Kuzu/ChromaDB with retry — another process (pipeline
             # worker, Tauri background task) may hold the lock briefly.
@@ -1082,7 +1082,7 @@ def _maybe_process_replies(
 def _maybe_transcribe_audio() -> None:
     """Transcribe downloaded WhatsApp audio files and update raw_messages.
 
-    Scans ``~/.secbrain/data/audio_cache/`` for OGG files, transcribes each
+    Scans ``~/.arandu/data/audio_cache/`` for OGG files, transcribes each
     using the local Whisper model, updates the corresponding ``raw_messages``
     row from ``[audio]`` to ``[voice note] {text}``, stores audio metadata
     in the ``metadata`` JSON column, and deletes the audio file.
@@ -1119,7 +1119,7 @@ def _maybe_transcribe_audio() -> None:
             return
 
         # Check settings for voice transcription
-        settings_file = _Path.home() / ".secbrain" / "settings.json"
+        settings_file = _Path.home() / ".arandu" / "settings.json"
         if settings_file.exists():
             try:
                 settings = _json.loads(
@@ -1132,7 +1132,7 @@ def _maybe_transcribe_audio() -> None:
         else:
             return
 
-        audio_dir = _Path.home() / ".secbrain" / "data" / "audio_cache"
+        audio_dir = _Path.home() / ".arandu" / "data" / "audio_cache"
         if not audio_dir.exists():
             return
 
@@ -1229,7 +1229,7 @@ def _maybe_evaluate_messages() -> None:
         from src.core.sqlite.engine import DEFAULT_DB_PATH, DatabaseEngine
         from src.notifications.preference_service import PreferenceService
 
-        settings_file = _Path.home() / ".secbrain" / "settings.json"
+        settings_file = _Path.home() / ".arandu" / "settings.json"
         if not settings_file.exists():
             return
         settings = _json.loads(

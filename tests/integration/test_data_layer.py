@@ -2,7 +2,7 @@
 
 These tests exercise the full initialization flow across all three embedded
 databases.  Each test uses a temporary directory so the real
-~/.secbrain/data/ is never touched.
+~/.arandu/data/ is never touched.
 
 Run with:
     python -m pytest tests/integration/test_data_layer.py -v
@@ -38,7 +38,7 @@ from tests.fixtures.sample_data import load_all_fixtures as load_sample
 @pytest.fixture()
 def layer(tmp_path: Path) -> DataLayer:
     """Fresh DataLayer backed by a temp directory; closed after test."""
-    dl = DataLayer(base_path=tmp_path / "secbrain_data")
+    dl = DataLayer(base_path=tmp_path / "arandu_data")
     yield dl
     dl.close()
 
@@ -52,7 +52,7 @@ def initialized_layer(tmp_path_factory: pytest.TempPathFactory) -> DataLayer:
     and reset tests have data to assert on.
     """
     base = tmp_path_factory.mktemp("data_layer_initialized")
-    dl = DataLayer(base_path=base / "secbrain_data")
+    dl = DataLayer(base_path=base / "arandu_data")
     dl.initialize()
     load_sample(dl.duckdb)
     load_kuzu(dl.kuzu)
@@ -64,7 +64,7 @@ def initialized_layer(tmp_path_factory: pytest.TempPathFactory) -> DataLayer:
 @pytest.fixture()
 def fresh_initialized_layer(tmp_path: Path) -> DataLayer:
     """Function-scoped initialized DataLayer for tests that mutate state."""
-    dl = DataLayer(base_path=tmp_path / "secbrain_data")
+    dl = DataLayer(base_path=tmp_path / "arandu_data")
     dl.initialize()
     load_sample(dl.duckdb)
     load_kuzu(dl.kuzu)

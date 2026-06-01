@@ -1,6 +1,6 @@
 """Unit tests for the Kuzu graph engine, schema, and fixtures.
 
-All tests use a temporary directory — never the real ~/.secbrain/data/kuzu_db/
+All tests use a temporary directory — never the real ~/.arandu/data/kuzu_db/
 — so they are isolated and safe to run in any environment.
 """
 
@@ -318,7 +318,7 @@ class TestGraphTraversal:
         assert len(rows) >= 1
 
     def test_idea_tagged_with_topic(self, seeded_engine: GraphEngine) -> None:
-        """SecBrain idea should be tagged with at least one topic."""
+        """Arandu idea should be tagged with at least one topic."""
         rows = seeded_engine.query(
             "MATCH (i:Idea {id: 'id-001'})-[:TAGGED_WITH]->(t:Topic)"
             " RETURN t.name AS topic"

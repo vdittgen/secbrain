@@ -1,7 +1,7 @@
 """Extension registry — persistent storage for enabled connector state.
 
 Tracks which connectors are enabled, their configuration, and sync history.
-Stored as a JSON file at ~/.secbrain/data/extensions.json.
+Stored as a JSON file at ~/.arandu/data/extensions.json.
 
 sensitivity_tier: 1 (connector config metadata, no user data)
 """
@@ -16,7 +16,7 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_REGISTRY_PATH = Path.home() / ".secbrain" / "data" / "extensions.json"
+DEFAULT_REGISTRY_PATH = Path.home() / ".arandu" / "data" / "extensions.json"
 
 
 @dataclass

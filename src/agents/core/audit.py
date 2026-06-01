@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 GENESIS_HASH = "0" * 64
 
 DEFAULT_AUDIT_PATH = (
-    Path.home() / ".secbrain" / "data" / "audit.jsonl"
+    Path.home() / ".arandu" / "data" / "audit.jsonl"
 )
 
 
@@ -200,7 +200,7 @@ _default_lock = threading.Lock()
 
 
 def default_chain() -> AuditChain:
-    """Return a process-wide default chain at ``~/.secbrain/data/audit.jsonl``.
+    """Return a process-wide default chain at ``~/.arandu/data/audit.jsonl``.
 
     sensitivity_tier: N/A
     """
@@ -208,7 +208,7 @@ def default_chain() -> AuditChain:
     if _default_chain is None:
         with _default_lock:
             if _default_chain is None:
-                override = os.environ.get("SECBRAIN_AUDIT_PATH")
+                override = os.environ.get("ARANDU_AUDIT_PATH")
                 path = Path(override) if override else DEFAULT_AUDIT_PATH
                 _default_chain = AuditChain(path=path)
     return _default_chain
@@ -217,7 +217,7 @@ def default_chain() -> AuditChain:
 def reset_default_chain_for_tests() -> None:
     """Drop the cached default chain.
 
-    Tests that swap ``SECBRAIN_AUDIT_PATH`` mid-run should call this to
+    Tests that swap ``ARANDU_AUDIT_PATH`` mid-run should call this to
     avoid leaking a chain pointed at the old path.
 
     sensitivity_tier: N/A

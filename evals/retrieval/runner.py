@@ -54,11 +54,11 @@ logger = logging.getLogger(__name__)
 REPO_DATASET = (
     Path(__file__).resolve().parent.parent / "datasets" / "retrieval_golden.yaml"
 )
-LOCAL_DATASET = Path.home() / ".secbrain" / "evals" / "retrieval_golden.yaml"
+LOCAL_DATASET = Path.home() / ".arandu" / "evals" / "retrieval_golden.yaml"
 # Results JSONs reference real record IDs and query text — same
 # privacy posture as the labelled golden YAML. Default to the
 # gitignored local location so baselines never leak into the repo.
-DEFAULT_RESULTS_DIR = Path.home() / ".secbrain" / "evals" / "retrieval_results"
+DEFAULT_RESULTS_DIR = Path.home() / ".arandu" / "evals" / "retrieval_results"
 
 
 def default_dataset() -> Path:

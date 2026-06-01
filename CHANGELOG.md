@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to SecondBrain OS will be documented in this file.
+All notable changes to Arandu will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
@@ -91,7 +91,7 @@ third-party agent runtime.
 
 ### Migration notes
 
-- `~/.secbrain/settings.json` keys that referenced `brain_v2` or
+- `~/.arandu/settings.json` keys that referenced `brain_v2` or
   pre-Phase-A1 paths are silently ignored — no migration step
   required.
 - Database schemas are unchanged. `_learned_facts`, `_triage_log`,
@@ -149,5 +149,5 @@ First alpha release. All core systems functional with sample data.
 ### Infrastructure
 - Tauri-Python bridge via subprocess CLI for clean language separation
 - Python CLI entry point (`python -m src.core.cli`) supporting init, status, reset, query, and ask commands
-- Data stored in `~/.secbrain/data/` (DuckDB, Kuzu, ChromaDB, audit log)
-- Settings persisted to `~/.secbrain/settings.json`
+- Data stored in `~/.arandu/data/` (DuckDB, Kuzu, ChromaDB, audit log)
+- Settings persisted to `~/.arandu/settings.json`

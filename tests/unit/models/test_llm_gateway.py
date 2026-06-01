@@ -44,10 +44,10 @@ from src.models.redaction_store import reset_default_store_for_tests
 @pytest.fixture(autouse=True)
 def _isolate(tmp_path: Path, monkeypatch):
     monkeypatch.setenv(
-        "SECBRAIN_AUDIT_PATH", str(tmp_path / "audit.jsonl"),
+        "ARANDU_AUDIT_PATH", str(tmp_path / "audit.jsonl"),
     )
     monkeypatch.setenv(
-        "SECBRAIN_REDACTION_STORE_PATH",
+        "ARANDU_REDACTION_STORE_PATH",
         str(tmp_path / "redaction_log.sqlite"),
     )
     reset_default_chain_for_tests()
@@ -85,7 +85,7 @@ def _capture_provider() -> tuple[MagicMock, list[str]]:
 
 
 def test_safe_prompt_routes_local() -> None:
-    """SecBrain is local-only: even under the legacy remote-default
+    """Arandu is local-only: even under the legacy remote-default
     policy field, a safe prompt resolves to the local route.
     """
     _, captured = _capture_provider()
@@ -155,7 +155,7 @@ def test_call_detail_persisted_for_audit_drilldown() -> None:
     """Every call's prompt detail is reachable via the same
     payload_hash the egress_decision audit row carries.
 
-    SecBrain never redacts (local-only pass-through), but the
+    Arandu never redacts (local-only pass-through), but the
     drilldown must still line up: the stored blob equals the original
     and the egress_decision row shares its hash.
     """

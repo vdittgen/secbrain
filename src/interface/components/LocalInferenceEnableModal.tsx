@@ -1,7 +1,7 @@
 /**
  * Eval-gated enable flow for the local-inference privacy mode.
  *
- * In SecBrain every prompt is already local — the toggle still
+ * In Arandu every prompt is already local — the toggle still
  * exists so the eval suite runs against the user's configured Ollama
  * model. The flag persists only when each suite returns
  * ``status="passed"``; otherwise the toggle snaps back to OFF and
@@ -105,7 +105,7 @@ export default function LocalInferenceEnableModal({
         {phase === "confirm" && (
           <div className="space-y-4 px-5 py-5 text-sm text-ink">
             <p>
-              Flipping this on means every agent in SecBrain will run
+              Flipping this on means every agent in Arandu will run
               entirely on your machine. Before we commit the change we
               run each agent's eval suite against your currently
               configured local model.

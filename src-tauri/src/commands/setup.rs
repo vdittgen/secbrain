@@ -1,11 +1,11 @@
 //! First-launch setup for the installed `.app` bundle.
 //!
 //! When the app runs from a packaged `.app` bundle (vs `cargo tauri dev`),
-//! the Python source ships inside `Contents/Resources/secbrain_app/` and the
+//! the Python source ships inside `Contents/Resources/arandu_app/` and the
 //! relocatable Python interpreter ships at `Contents/Resources/python_runtime/`.
 //! On first launch we use the bundled interpreter to create a user-persistent
-//! venv at `~/.secbrain/venv/` and pip-install the bundled app + deps. After
-//! that, all Python invocations go through `~/.secbrain/venv/bin/python3`.
+//! venv at `~/.arandu/venv/` and pip-install the bundled app + deps. After
+//! that, all Python invocations go through `~/.arandu/venv/bin/python3`.
 //!
 //! Subsequent launches detect the marker file and skip setup entirely.
 //!
@@ -85,8 +85,8 @@ fn emit_error(app: &AppHandle, error: &str) {
     );
 }
 
-/// Create `~/.secbrain/venv/` using the bundled python-build-standalone runtime,
-/// then `pip install` the bundled secbrain app (which pulls in pyproject.toml
+/// Create `~/.arandu/venv/` using the bundled python-build-standalone runtime,
+/// then `pip install` the bundled arandu app (which pulls in pyproject.toml
 /// dependencies). Emits `setup-progress` events line-by-line.
 #[tauri::command]
 pub async fn run_first_launch_setup(app: AppHandle) -> Result<(), String> {
@@ -103,13 +103,13 @@ pub async fn run_first_launch_setup(app: AppHandle) -> Result<(), String> {
     let app_dir =
         bundled_app_dir().ok_or_else(|| "bundled app dir not found".to_string())?;
     let venv_dir = user_venv_dir()
-        .ok_or_else(|| "could not resolve ~/.secbrain/venv".to_string())?;
+        .ok_or_else(|| "could not resolve ~/.arandu/venv".to_string())?;
     let venv_py = user_venv_python().expect("user_venv_python paired with user_venv_dir");
     let venv_pip = venv_dir.join("bin").join("pip");
 
     if let Some(parent) = venv_dir.parent() {
         std::fs::create_dir_all(parent)
-            .map_err(|e| format!("create ~/.secbrain: {e}"))?;
+            .map_err(|e| format!("create ~/.arandu: {e}"))?;
     }
 
     if venv_dir.exists() {
@@ -203,7 +203,7 @@ pub async fn run_first_launch_setup(app: AppHandle) -> Result<(), String> {
         return Err(msg);
     }
 
-    let marker = venv_dir.join(".secbrain_setup_complete");
+    let marker = venv_dir.join(".arandu_setup_complete");
     std::fs::write(&marker, env!("CARGO_PKG_VERSION"))
         .map_err(|e| format!("write setup marker: {e}"))?;
 

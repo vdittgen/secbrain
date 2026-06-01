@@ -1,5 +1,5 @@
 [project]
-name = "secbrain"
+name = "arandu"
 version = "0.5.0b1"
 description = "Privacy-first AI operating system - Python data pipeline and ML layer"
 license = {text = "Apache-2.0"}

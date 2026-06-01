@@ -22,7 +22,7 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-SKILLS_DIR: Path = Path.home() / ".secbrain" / "skills"
+SKILLS_DIR: Path = Path.home() / ".arandu" / "skills"
 BUILTIN_SKILLS_DIR: Path = Path(__file__).parent / "builtin_skills"
 
 _FRONTMATTER_RE = re.compile(

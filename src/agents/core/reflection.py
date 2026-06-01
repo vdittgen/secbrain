@@ -14,7 +14,7 @@ makes a single Tier A LLM call that returns a
   ``extended_research_announced`` so the UI can show a "Researching
   deeper" banner with a Stop button.
 
-In SecBrain the reflector uses the same local model as everything
+In Arandu the reflector uses the same local model as everything
 else (one Ollama model per install). The checkpoint adds ~1-2s of
 wall-clock per review, which is acceptable at the budget cadence
 (10s or 30s between checks).

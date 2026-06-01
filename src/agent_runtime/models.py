@@ -38,7 +38,7 @@ class TablePermission:
 
 @dataclass(frozen=True)
 class AgentManifest:
-    """Declarative manifest for a SecondBrain agent.
+    """Declarative manifest for a Arandu agent.
 
     Loaded from manifest.yaml. Defines permissions, triggers,
     resource limits, and metadata.

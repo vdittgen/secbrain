@@ -1,9 +1,9 @@
 {
-  "name": "secbrain-whatsapp",
+  "name": "arandu-whatsapp",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Custom Baileys WhatsApp client for SecondBrain OS",
+  "description": "Custom Baileys WhatsApp client for Arandu",
   "main": "client.js",
   "scripts": {
     "start": "node client.js"

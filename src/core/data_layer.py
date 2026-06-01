@@ -1,4 +1,4 @@
-"""Unified data access layer for SecBrain.
+"""Unified data access layer for Arandu.
 
 Coordinates the three embedded databases — SQLite (analytical), Kuzu (graph),
 and ChromaDB (vector) — through a single facade.  Callers interact with this
@@ -39,7 +39,7 @@ from src.core.sqlite.schemas import ALL_TABLE_NAMES, create_all_tables
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_BASE_PATH = Path.home() / ".secbrain" / "data"
+DEFAULT_BASE_PATH = Path.home() / ".arandu" / "data"
 
 
 # ---------------------------------------------------------------------------
@@ -118,7 +118,7 @@ class DataLayer:
 
     Args:
         base_path: Root directory under which each engine stores its data.
-                   Defaults to ~/.secbrain/data/.
+                   Defaults to ~/.arandu/data/.
 
     sensitivity_tier: N/A
     """
@@ -134,7 +134,7 @@ class DataLayer:
 
         Args:
             base_path: Root directory under which each engine stores
-                its data. Defaults to ``~/.secbrain/data``.
+                its data. Defaults to ``~/.arandu/data``.
             read_only: Open SQLite in read-only mode. Set True for
                 query-only callers that must not contend with the
                 pipeline writer.
@@ -175,7 +175,7 @@ class DataLayer:
         if self._duck is None:
             logger.info("Lazy-initializing SQLite engine…")
             self._duck = DatabaseEngine(
-                db_path=self._base / "secbrain.sqlite3",
+                db_path=self._base / "arandu.sqlite3",
                 read_only=self._read_only,
             )
         return self._duck
@@ -612,9 +612,9 @@ class DataLayer:
     def _delete_engine_files(self) -> None:
         """Remove all engine-specific storage paths under the base directory."""
         targets = [
-            self._base / "secbrain.sqlite3",
-            self._base / "secbrain.sqlite3-wal",
-            self._base / "secbrain.sqlite3-shm",
+            self._base / "arandu.sqlite3",
+            self._base / "arandu.sqlite3-wal",
+            self._base / "arandu.sqlite3-shm",
             self._base / "kuzu_db",
             self._base / "chromadb",
         ]
@@ -629,7 +629,7 @@ class DataLayer:
     def _reopen_engines(self) -> None:
         """Recreate engine instances after storage has been wiped."""
         self._duck = DatabaseEngine(
-            db_path=self._base / "secbrain.sqlite3",
+            db_path=self._base / "arandu.sqlite3",
         )
         self._kuzu = GraphEngine(
             db_path=self._base / "kuzu_db",

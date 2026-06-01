@@ -32,7 +32,7 @@ DEFAULT_EMBED_MODEL = "nomic-embed-text"
 # poll it (see the Rust `get_model_pull_progress` command). Absent file = no
 # pull in flight.
 PULL_PROGRESS_PATH = (
-    Path.home() / ".secbrain" / "data" / "ollama_pull_progress.json"
+    Path.home() / ".arandu" / "data" / "ollama_pull_progress.json"
 )
 
 
@@ -177,14 +177,14 @@ class OllamaManager:
         if self._is_reachable():
             return True
 
-        # When running under the SecBrain desktop app, the Tauri
+        # When running under the Arandu desktop app, the Tauri
         # ``OllamaSupervisor`` owns the server lifecycle (it ties Ollama to the
         # app: started on launch, reaped on exit). Don't spawn a second,
         # un-owned ``ollama serve`` here — just report it as unreachable.
-        if os.environ.get("SECBRAIN_OLLAMA_MANAGED") == "1":
+        if os.environ.get("ARANDU_OLLAMA_MANAGED") == "1":
             logger.info(
-                "Ollama unreachable but SecBrain manages its lifecycle "
-                "(SECBRAIN_OLLAMA_MANAGED=1); not auto-starting.",
+                "Ollama unreachable but Arandu manages its lifecycle "
+                "(ARANDU_OLLAMA_MANAGED=1); not auto-starting.",
             )
             return False
 
@@ -224,7 +224,7 @@ class OllamaManager:
         return False
 
     def stop_server(self) -> bool:
-        """Stop the Ollama server if it was auto-started by SecBrain.
+        """Stop the Ollama server if it was auto-started by Arandu.
 
         Sends SIGTERM to the ``ollama serve`` process.  Only kills
         processes whose command line matches ``ollama serve``.

@@ -19,7 +19,7 @@ Concrete providers shipped in this module:
   follow-up once we decide to take the ``voyageai`` SDK dep.
 
 The factory :func:`create_embedding_provider_from_settings` reads
-``~/.secbrain/settings.json`` and selects a provider that matches the
+``~/.arandu/settings.json`` and selects a provider that matches the
 chat provider's locality, so a user on local-only chat does not
 silently get their embedding text sent to a cloud API.
 
@@ -295,7 +295,7 @@ class OpenAIEmbeddingProvider(EmbeddingProvider):
             from openai import OpenAI
         except ImportError as exc:
             raise EmbeddingUnavailableError(
-                "openai SDK not installed — `pip install secbrain[remote-llm]`",
+                "openai SDK not installed — `pip install arandu[remote-llm]`",
             ) from exc
         self._model = model
         self._dimensions = dimensions

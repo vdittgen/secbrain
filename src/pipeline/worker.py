@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 # before each write cycle and skip writes while the pipeline is active.
 # ---------------------------------------------------------------------------
 
-PIPELINE_LOCK_PATH = Path.home() / ".secbrain" / "data" / ".pipeline_running"
+PIPELINE_LOCK_PATH = Path.home() / ".arandu" / "data" / ".pipeline_running"
 
 
 def _is_pid_alive(pid: int) -> bool:
@@ -309,7 +309,7 @@ def _read_whatsapp_phone() -> str | None:
     try:
         from pathlib import Path
 
-        settings_file = Path.home() / ".secbrain" / "settings.json"
+        settings_file = Path.home() / ".arandu" / "settings.json"
         if settings_file.exists():
             data = json.loads(settings_file.read_text(encoding="utf-8"))
             if data.get("notifications_enabled"):

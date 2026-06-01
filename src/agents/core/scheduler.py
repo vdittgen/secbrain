@@ -3,7 +3,7 @@
 Every agent LLM call passes through the scheduler, which decides:
 
 1. **When** the call may proceed (tier priority + concurrency cap).
-2. **Where** the call goes — in SecBrain every call routes to the
+2. **Where** the call goes — in Arandu every call routes to the
    local Ollama backend regardless of tier. The routing seam is a
    reserved extension point for alternate destinations.
 
@@ -60,7 +60,7 @@ class SchedulerConfig:
     """Tunable caps and timeouts per tier.
 
     Defaults are conservative and intended to be overridden via
-    ``~/.secbrain/settings.json`` in Phase 4.
+    ``~/.arandu/settings.json`` in Phase 4.
 
     sensitivity_tier: 1
     """

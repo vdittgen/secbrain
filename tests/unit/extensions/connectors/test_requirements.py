@@ -370,7 +370,7 @@ class TestOAuthFlow:
         with (
             patch.dict(
                 "os.environ",
-                {"SECBRAIN_OAUTH_GOOGLE_OAUTH_TEST_TOKEN": "test-token"},
+                {"ARANDU_OAUTH_GOOGLE_OAUTH_TEST_TOKEN": "test-token"},
                 clear=True,
             ),
             patch.object(
@@ -420,7 +420,7 @@ class TestOAuthFlow:
             patch.dict(
                 "os.environ",
                 {
-                    "SECBRAIN_OAUTH_GOOGLE_OAUTH_AUTH_URL": (
+                    "ARANDU_OAUTH_GOOGLE_OAUTH_AUTH_URL": (
                         "https://example.com/oauth"
                     ),
                 },

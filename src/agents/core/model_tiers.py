@@ -1,6 +1,6 @@
 """Cost-tiered model assignment for built-in agents.
 
-In SecBrain this is a no-op: all inference runs against the single
+In Arandu this is a no-op: all inference runs against the single
 local Ollama model the user configured in Settings, so per-agent tier
 overrides serve no purpose. The function stays in the codebase as an
 extension point for downstream builds that map agents to multiple

@@ -407,7 +407,7 @@ export function usePipelineProgress(): UsePipelineProgressResult {
 
     // Notify widgets to re-fetch after a successful run
     if (wasComplete) {
-      window.dispatchEvent(new CustomEvent("secbrain:pipeline-refreshed"));
+      window.dispatchEvent(new CustomEvent("arandu:pipeline-refreshed"));
     }
   }, [cleanupListener, cleanupTimer, state.step]);
 

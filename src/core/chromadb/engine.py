@@ -1,10 +1,10 @@
-"""ChromaDB embedded vector store engine for SecBrain.
+"""ChromaDB embedded vector store engine for Arandu.
 
 Provides a single persistent ChromaDB client with pre-defined domain
 collections.  Uses Ollama's nomic-embed-text model for embeddings by default,
 with automatic fallback to all-MiniLM-L6-v2 when Ollama is unavailable.
 
-Persistent storage: ~/.secbrain/data/chromadb/
+Persistent storage: ~/.arandu/data/chromadb/
 
 sensitivity_tier: infrastructure layer — no user data stored here directly.
 """
@@ -35,7 +35,7 @@ from src.models.embedding_provider import (
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_DB_PATH = Path.home() / ".secbrain" / "data" / "chromadb"
+DEFAULT_DB_PATH = Path.home() / ".arandu" / "data" / "chromadb"
 
 # Domain namespaces for the five vector collections.
 COLLECTION_NAMES: list[str] = [

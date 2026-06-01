@@ -31,7 +31,7 @@ class TestGetMemoryUsage:
     def test_db_sizes_with_files(self, tmp_path: Path) -> None:
         """DB sizes should reflect actual file sizes."""
         # Create a fake DuckDB file
-        db_file = tmp_path / "secbrain.duckdb"
+        db_file = tmp_path / "arandu.duckdb"
         db_file.write_bytes(b"x" * 1024 * 1024)  # 1 MB
 
         report = get_memory_usage(data_dir=tmp_path)
