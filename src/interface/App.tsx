@@ -24,6 +24,7 @@ import SettingsPage from "./pages/SettingsPage";
 import KeepAwakeModal from "./components/KeepAwakeModal";
 import { dedupInvoke } from "./utils/requestDedup";
 import { useTheme } from "./hooks/useTheme";
+import { ModelStatusProvider } from "./hooks/useModelStatus";
 
 // sensitivity_tier: 1 (only checks onboarding_completed flag)
 interface BootSettings {
@@ -166,6 +167,7 @@ function PostOnboarding({
   const followup = useOnboardingFollowup();
   return (
     <OnboardingFollowupContext.Provider value={followup}>
+      <ModelStatusProvider>
       <BrowserRouter>
         <Routes>
           <Route element={<Layout />}>
@@ -202,6 +204,7 @@ function PostOnboarding({
           onRetry={recheckNow}
         />
       )}
+      </ModelStatusProvider>
     </OnboardingFollowupContext.Provider>
   );
 }

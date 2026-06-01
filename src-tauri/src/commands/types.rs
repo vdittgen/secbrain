@@ -314,6 +314,12 @@ pub struct OllamaStatus {
     pub embed_model_status: String,
     #[serde(default)]
     pub server_version: String,
+    /// Set only when the status probe itself could not run (e.g. the Python
+    /// CLI failed to spawn or returned unparseable output). Lets the UI tell
+    /// a crashed backend apart from a genuinely-unreachable Ollama server.
+    /// Absent (`None`) for every status that came from a real CLI response.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub probe_error: Option<String>,
 }
 
 /// Live progress of an in-flight `ollama pull`, published by the Python
@@ -332,7 +338,8 @@ pub struct ModelPullProgress {
 }
 
 impl OllamaStatus {
-    /// Return a safe offline fallback when the CLI call fails.
+    /// Return a safe offline fallback — used when the CLI ran and reported
+    /// the server as unreachable.
     pub fn offline() -> Self {
         Self {
             provider: default_llm_provider(),
@@ -342,6 +349,24 @@ impl OllamaStatus {
             embed_model: String::new(),
             embed_model_status: "offline".to_string(),
             server_version: String::new(),
+            probe_error: None,
+        }
+    }
+
+    /// Return a backend-error status — used when the status probe could not
+    /// run at all (CLI spawn failure, empty stdout, or unparseable output).
+    /// Distinct from [`offline`] so the UI can guide the user toward a setup
+    /// problem rather than implying their Ollama server is down.
+    pub fn backend_error(detail: String) -> Self {
+        Self {
+            provider: default_llm_provider(),
+            server_reachable: false,
+            chat_model: String::new(),
+            chat_model_status: "backend_error".to_string(),
+            embed_model: String::new(),
+            embed_model_status: "backend_error".to_string(),
+            server_version: String::new(),
+            probe_error: Some(detail),
         }
     }
 }

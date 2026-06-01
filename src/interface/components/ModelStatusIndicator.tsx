@@ -16,7 +16,8 @@ const META: Record<ModelState, { readonly text: string; readonly dot: string }> 
   loading: { text: "Loading model…", dot: "bg-faint" },
   ready: { text: "Model ready", dot: "bg-success" },
   missing: { text: "Model not installed", dot: "bg-amber" },
-  offline: { text: "Model offline", dot: "bg-faint" },
+  offline: { text: "Model offline", dot: "bg-danger" },
+  "backend-error": { text: "Model unavailable", dot: "bg-danger" },
   unknown: { text: "Checking model…", dot: "bg-faint" },
 };
 

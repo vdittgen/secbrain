@@ -5,6 +5,7 @@ import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
 import PipelineRefreshModal from "./PipelineRefreshModal";
 import OnboardingPendingPermissionsBanner from "./OnboardingPendingPermissionsBanner";
+import { ModelStatusBanner } from "./ModelStatusBanner";
 import { usePipelineProgress } from "../hooks/usePipelineProgress";
 import { useAutoRefresh } from "../hooks/useAutoRefresh";
 
@@ -67,6 +68,7 @@ function Layout() {
       >
         <div className="flex flex-1 flex-col overflow-hidden">
           <TopBar />
+          <ModelStatusBanner />
           <OnboardingPendingPermissionsBanner />
           <main className="flex-1 overflow-y-auto px-10 py-8">
             <Outlet />
