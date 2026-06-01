@@ -12,7 +12,7 @@ dependencies = [
     "duckduckgo-search>=7.0.0",
     "pydantic>=2.7.0",
     "pydantic-ai-slim[openai]>=1.104.0",
-    "tiktoken>=0.7.0",
+    "tiktoken>=0.13.0",
 ]
 
 [project.optional-dependencies]
