@@ -220,7 +220,7 @@ def test_route_chosen_by_egress_firewall(monkeypatch) -> None:
         return fake_agent
 
     monkeypatch.setattr(brain, "_get_pa_agent", fake_get)
-    # SecBrain is local-only: every tier resolves to the local route
+    # Arandu is local-only: every tier resolves to the local route
     # regardless of the (legacy) remote-default policy field.
     brain.ask("Summarize today's weather", max_sensitivity_tier=1)
     assert captured["route"] == "local"
