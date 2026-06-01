@@ -321,7 +321,7 @@ class TestHealthCheckAllPass:
             c["component"] for c in output["checks"]
         }
         expected = {
-            "duckdb", "kuzu", "chromadb", "pipeline",
+            "sqlite", "kuzu", "chromadb", "pipeline",
             "ollama", "connectors", "tool_registry",
         }
         assert components == expected

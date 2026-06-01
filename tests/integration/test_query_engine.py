@@ -22,8 +22,10 @@ from src.core.kuzu.engine import GraphEngine
 from src.core.kuzu.schema import create_schema
 from src.core.query_engine import (
     ContextItem,
+    DuckDBQuerySpec,
     QueryContext,
     QueryEngine,
+    RetrievalPlan,
     extract_entities,
     merge_and_deduplicate,
     normalize_vector_distance,
@@ -59,6 +61,48 @@ def _make_mock_llm_provider(
         }
     provider.chat_json.return_value = plan_json
     return provider
+
+
+def _plan_from_json(plan_json: dict | None = None) -> RetrievalPlan:
+    """Convert a plan dict into the ``RetrievalPlan`` the router returns.
+
+    The router was refactored to call ``QueryRouterAgent`` (a pydantic-ai
+    agent) instead of ``LLMProvider.chat_json``; injecting a built plan
+    keeps these tests deterministic without a live model.
+    """
+    if plan_json is None:
+        plan_json = {
+            "duckdb_queries": [],
+            "chromadb_collections": [
+                "personal", "work", "health", "social", "ideas",
+            ],
+            "use_graph": True,
+            "reasoning": "mock: search all collections",
+        }
+    return RetrievalPlan(
+        duckdb_queries=[
+            DuckDBQuerySpec(
+                table=q["table"],
+                columns=q["columns"],
+                where=q.get("where"),
+                order_by=q.get("order_by"),
+                limit=q.get("limit", 10),
+            )
+            for q in plan_json.get("duckdb_queries", [])
+        ],
+        chromadb_collections=list(plan_json.get("chromadb_collections", [])),
+        use_graph=bool(plan_json.get("use_graph", False)),
+        reasoning=plan_json.get("reasoning", ""),
+    )
+
+
+def _install_plan(engine: QueryEngine, plan_json: dict | None) -> QueryEngine:
+    """Pin the engine's LLM router to a fixed plan (no network call)."""
+    plan = _plan_from_json(plan_json)
+    engine._llm_router.plan = (  # type: ignore[method-assign]
+        lambda question, reference_date=None: plan
+    )
+    return engine
 
 
 def _make_calendar_plan(ref_date: str = "2025-06-03") -> dict:
@@ -168,11 +212,11 @@ def engines(tmp_path_factory: pytest.TempPathFactory):
 def qe(engines) -> QueryEngine:
     """A fully initialised QueryEngine backed by fixture data."""
     duck, kuzu, chroma = engines
-    provider = _make_mock_llm_provider()
-    return QueryEngine(
+    engine = QueryEngine(
         duckdb=duck, kuzu=kuzu, chromadb=chroma,
-        llm_provider=provider,
+        llm_provider=_make_mock_llm_provider(),
     )
+    return _install_plan(engine, None)
 
 
 def _qe_with_plan(
@@ -180,11 +224,11 @@ def _qe_with_plan(
 ) -> QueryEngine:
     """Build a QueryEngine with a specific routing plan."""
     duck, kuzu, chroma = engines
-    provider = _make_mock_llm_provider(plan_json)
-    return QueryEngine(
+    engine = QueryEngine(
         duckdb=duck, kuzu=kuzu, chromadb=chroma,
-        llm_provider=provider,
+        llm_provider=_make_mock_llm_provider(plan_json),
     )
+    return _install_plan(engine, plan_json)
 
 
 # ------------------------------------------------------------------

@@ -17,6 +17,7 @@ from dataclasses import dataclass
 from typing import Any
 from unittest.mock import patch
 
+import time_machine
 from src.agents.brain import actions as actions_mod
 from src.agents.brain.actions import _apply_judge_patches
 from src.agents.core.output_types import ActionProposalVerdict
@@ -205,6 +206,10 @@ class TestBuildActionProposalWithJudge:
         # No warning suffix when cannot_recover is False.
         assert "⚠" not in proposal.description
 
+    # Freeze "today" so the deterministic "tomorrow" override in
+    # build_action_proposal resolves to the absolute date the
+    # primary_output below asserts (2026-05-23).
+    @time_machine.travel("2026-05-22", tick=False)
     def test_judge_ok_passes_proposal_through(self) -> None:
         primary = {
             "title": "Play Tennis with Tiago",

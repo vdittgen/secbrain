@@ -161,7 +161,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full system design.
 | Knowledge Graph | Kuzu | Entity relationships and multi-hop traversals |
 | Vector Search | ChromaDB | Semantic similarity with Ollama embeddings |
 | Data Pipeline | Manifest-driven Python | ELT with staging, intermediate, marts + smart refresh |
-| Local LLM | Ollama | On-device inference (gemma4:e2b) — zero cloud calls |
+| Local LLM | Ollama | On-device inference (llama3.1:70b) — zero cloud calls |
 | Connectors | MCP Protocol | Universal data source protocol (15 pre-verified + any custom) |
 
 ## Contributing
@@ -174,4 +174,4 @@ Apache-2.0 — see [LICENSE](LICENSE) for details.
 
 ---
 
-Built by **Newton Data Intelligence**
+Built by **Vinicius Dittgen**
