@@ -28,7 +28,10 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { dedupInvoke } from "../utils/requestDedup";
-import { WhatsAppPairingPanel } from "./WhatsAppPairingPanel";
+import {
+  WhatsAppPairingPanel,
+  type WhatsappListenerStatus,
+} from "./WhatsAppPairingPanel";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -954,13 +957,20 @@ function NotificationsSlide({
                   <button
                     onClick={onStartWhatsappPairing}
                     disabled={!phoneValid || whatsappStartingPair}
-                    className={`rounded-pill px-4 py-2 text-xs font-medium text-white transition-colors ${
+                    className={`flex items-center gap-1.5 rounded-pill px-4 py-2 text-xs font-medium text-white transition-colors ${
                       phoneValid && !whatsappStartingPair
                         ? "bg-indigo hover:bg-indigo/90"
                         : "cursor-not-allowed bg-indigo/40"
                     }`}
                   >
-                    {whatsappStartingPair ? "Starting..." : "Pair WhatsApp"}
+                    {whatsappStartingPair ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        Starting...
+                      </>
+                    ) : (
+                      "Pair WhatsApp"
+                    )}
                   </button>
                 )}
                 {whatsappPaired && (
@@ -1180,13 +1190,38 @@ function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
     };
   }, []);
 
-  // Pre-fill the name if one was already saved (e.g. re-running onboarding)
+  // Pre-fill the name + WhatsApp phone if already saved (e.g. re-running
+  // onboarding).
   useEffect(() => {
     let active = true;
     dedupInvoke<AppSettings>("get_settings")
       .then((s) => {
-        const existing = s.user_name;
-        if (active && typeof existing === "string") setFirstName(existing);
+        if (!active) return;
+        if (typeof s.user_name === "string") setFirstName(s.user_name);
+        if (typeof s.whatsapp_notification_phone === "string") {
+          setWhatsappPhone(s.whatsapp_notification_phone);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Reflect an already-connected listener on the Notifications slide. The
+  // only thing that polls listener status is WhatsAppPairingPanel, and it
+  // doesn't mount until the user clicks "Pair WhatsApp" — so a WhatsApp that
+  // was paired in a prior session shows no status feedback (and prompts a
+  // needless re-pair) until we surface it here on mount.
+  useEffect(() => {
+    let active = true;
+    dedupInvoke<WhatsappListenerStatus>("get_whatsapp_listener_status")
+      .then((status) => {
+        if (!active) return;
+        if (status?.status_file?.phase === "connected") {
+          setWhatsappPairingStarted(true);
+          setWhatsappPaired(true);
+        }
       })
       .catch(() => {});
     return () => {
