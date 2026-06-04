@@ -957,13 +957,20 @@ function NotificationsSlide({
                   <button
                     onClick={onStartWhatsappPairing}
                     disabled={!phoneValid || whatsappStartingPair}
-                    className={`rounded-pill px-4 py-2 text-xs font-medium text-white transition-colors ${
+                    className={`flex items-center gap-1.5 rounded-pill px-4 py-2 text-xs font-medium text-white transition-colors ${
                       phoneValid && !whatsappStartingPair
                         ? "bg-indigo hover:bg-indigo/90"
                         : "cursor-not-allowed bg-indigo/40"
                     }`}
                   >
-                    {whatsappStartingPair ? "Starting..." : "Pair WhatsApp"}
+                    {whatsappStartingPair ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        Starting...
+                      </>
+                    ) : (
+                      "Pair WhatsApp"
+                    )}
                   </button>
                 )}
                 {whatsappPaired && (
