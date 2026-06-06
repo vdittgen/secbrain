@@ -84,12 +84,22 @@ export function useOnboardingFollowup(): OnboardingFollowupState {
   // start two parallel toggle loops, doubling the work and racing on
   // the settings flag.
   const startedRef = useRef(false);
+  // Cancellation lives in a ref (not an effect-local `let`) so StrictMode's
+  // dev-only mount→unmount→remount cycle can't permanently abort the single
+  // in-flight run. The cleanup sets it true, but the immediately-following
+  // remount re-arms it to false before `run()`'s first `await` resolves.
+  // Without this, the double-invoke cancels the follow-up forever, leaving
+  // `onboarding_followup_pending` stuck true and connectors never enabled.
+  const cancelledRef = useRef(false);
 
   useEffect(() => {
-    if (startedRef.current) return;
+    cancelledRef.current = false;
+    if (startedRef.current) {
+      return () => {
+        cancelledRef.current = true;
+      };
+    }
     startedRef.current = true;
-
-    let cancelled = false;
 
     // Ordering contract for the post-wizard sequence:
     //   1. Wizard `handleFinish` awaits `update_settings(...,
@@ -118,7 +128,7 @@ export function useOnboardingFollowup(): OnboardingFollowupState {
       } catch {
         return;
       }
-      if (cancelled) return;
+      if (cancelledRef.current) return;
       if (!settings.onboarding_followup_pending) return;
       const ids = settings.initial_connectors ?? [];
 
@@ -159,7 +169,7 @@ export function useOnboardingFollowup(): OnboardingFollowupState {
 
       const collected: PendingPermission[] = [];
       for (const id of remaining) {
-        if (cancelled) return;
+        if (cancelledRef.current) return;
         const connectorName = byId.get(id)?.name ?? id;
         setCurrent(connectorName);
         try {
@@ -183,7 +193,7 @@ export function useOnboardingFollowup(): OnboardingFollowupState {
         } catch (err) {
           console.error(`Follow-up toggle failed for ${id}:`, err);
         }
-        if (cancelled) return;
+        if (cancelledRef.current) return;
         setDone((d) => d + 1);
       }
 
@@ -195,7 +205,7 @@ export function useOnboardingFollowup(): OnboardingFollowupState {
 
     run();
     return () => {
-      cancelled = true;
+      cancelledRef.current = true;
     };
   }, []);
 
