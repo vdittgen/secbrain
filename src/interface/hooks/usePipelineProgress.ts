@@ -25,7 +25,13 @@ interface PipelineProgressEvent {
     | "done"
     | "cancelled"
     | "error"
-    | "plan";
+    | "plan"
+    | "reindexing"
+    | "reindex_complete"
+    | "reindex_error"
+    | "graph_reindexing"
+    | "graph_reindex_complete"
+    | "graph_reindex_error";
   readonly model_name: string | null;
   readonly step_index: number;
   readonly total_steps: number;
@@ -100,6 +106,12 @@ export interface PipelineProgressState {
   readonly error: string | null;
   readonly runId: string | null;
   readonly durationSeconds: number | null;
+  /**
+   * Set when the marts completed but the vector/graph re-index (which
+   * runs after "done") reported a failure — e.g. an embedding
+   * dimension mismatch. Non-fatal: the run is still "complete".
+   */
+  readonly indexWarning: string | null;
 }
 
 export interface UsePipelineProgressResult extends PipelineProgressState {
@@ -126,6 +138,7 @@ const INITIAL_STATE: PipelineProgressState = {
   error: null,
   runId: null,
   durationSeconds: null,
+  indexWarning: null,
 };
 
 // ---------------------------------------------------------------------------
@@ -237,6 +250,7 @@ export function usePipelineProgress(): UsePipelineProgressResult {
         error: null,
         runId: null,
         durationSeconds: null,
+        indexWarning: null,
       }));
 
       // Start elapsed timer (1s tick)
@@ -301,8 +315,11 @@ export function usePipelineProgress(): UsePipelineProgressResult {
               break;
 
             case "done":
+              // Marts are done, but the vector/graph re-index runs
+              // *after* this event. Keep the listener alive so a
+              // reindex_error can still surface as a warning; the
+              // listener is torn down by closeModal / startRun / unmount.
               cleanupTimer();
-              cleanupListener();
               setState((prev) => ({
                 ...prev,
                 step: "complete",
@@ -312,6 +329,16 @@ export function usePipelineProgress(): UsePipelineProgressResult {
                 elapsedSeconds: Math.round(
                   (Date.now() - startTimeRef.current) / 1000,
                 ),
+              }));
+              break;
+
+            case "reindex_error":
+            case "graph_reindex_error":
+              // Non-fatal: the run stays "complete"; we just annotate it
+              // so the modal can show that an index stage failed.
+              setState((prev) => ({
+                ...prev,
+                indexWarning: chunk.error ?? "Index update failed",
               }));
               break;
 

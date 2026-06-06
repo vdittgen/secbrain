@@ -133,6 +133,38 @@ class VectorEngine:
             model,
         )
 
+    def embedding_mismatch_message(self) -> str | None:
+        """Actionable message when the active embedder differs from the
+        stored index meta, else ``None``.
+
+        A dimension/provider mismatch makes every upsert fail and is the
+        usual cause of an empty vector store after a model/provider
+        switch.  Callers surface this so the user knows to run the
+        migration rather than seeing a generic "0 docs".
+
+        sensitivity_tier: N/A
+        """
+        provider, model, dim = self._describe_active_embedder()
+        if not provider:
+            return None
+        try:
+            mismatch = check_compatibility(
+                self._db_path, provider, model, dim,
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("embedding meta check failed: %s", exc)
+            return None
+        if mismatch is None:
+            return None
+        return (
+            f"Embedding model changed: index built with "
+            f"{mismatch.provider}/{mismatch.model_name} "
+            f"(dim {mismatch.dimension}), now using "
+            f"{provider}/{model} (dim {dim}). Run "
+            f"`python -m src.core.chromadb.migrate --to-model {model}` "
+            f"to rebuild."
+        )
+
     def _describe_active_embedder(self) -> tuple[str, str, int]:
         """Best-effort introspection of the embedder's identity.
 

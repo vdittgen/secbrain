@@ -482,6 +482,10 @@ class ConnectionManager:
                     "last_sync": (
                         registered.last_sync_at if registered else None
                     ),
+                    "last_success": (
+                        registered.last_success_at if registered else None
+                    ),
+                    "error": registered.error if registered else None,
                     "next_sync": (
                         next_sync.isoformat() if next_sync else None
                     ),
@@ -511,6 +515,8 @@ class ConnectionManager:
                 "stats": {
                     "records_synced": ext.records_synced,
                     "last_sync": ext.last_sync_at,
+                    "last_success": ext.last_success_at,
+                    "error": ext.error,
                     "next_sync": (
                         next_sync.isoformat() if next_sync else None
                     ),
@@ -596,6 +602,9 @@ class ConnectionManager:
                 ),
                 "last_sync": (
                     registered.last_sync_at if registered else None
+                ),
+                "last_success": (
+                    registered.last_success_at if registered else None
                 ),
                 "error": (
                     registered.error if registered else None
@@ -700,6 +709,7 @@ class ConnectionManager:
             "stats": {
                 "records_synced": registered.records_synced,
                 "last_sync": registered.last_sync_at,
+                "last_success": registered.last_success_at,
                 "error": registered.error,
             },
         }

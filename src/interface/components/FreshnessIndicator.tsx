@@ -24,6 +24,8 @@ interface FreshnessIndicatorProps {
   readonly isStale: boolean;
   readonly pendingChanges?: number;
   readonly isRunning?: boolean;
+  /** A pipeline stage (run / vector / graph index) is failing. */
+  readonly failing?: boolean;
   readonly className?: string;
 }
 
@@ -32,6 +34,7 @@ function FreshnessIndicator({
   isStale,
   pendingChanges = 0,
   isRunning = false,
+  failing = false,
   className = "",
 }: FreshnessIndicatorProps) {
   // Force re-render every 30s so relative time label stays fresh
@@ -48,6 +51,10 @@ function FreshnessIndicator({
   if (isRunning) {
     dotColor = "bg-indigo animate-pulse";
     label = "Updating...";
+  } else if (failing) {
+    // Red: a stage is failing — takes priority over stale/fresh.
+    dotColor = "bg-danger";
+    label = "Sync issue";
   } else if (isStale && pendingChanges > 0 && timestamp) {
     // Orange: stale with pending changes
     dotColor = "bg-orange-400 animate-pulse";

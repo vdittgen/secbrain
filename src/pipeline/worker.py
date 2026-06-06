@@ -128,15 +128,20 @@ def _emit_json(event: dict[str, Any]) -> None:
 def _reindex_chromadb(
     db: Any,
     since: Any,
-) -> None:
+) -> tuple[str, str | None]:
     """Re-index ChromaDB after a successful pipeline run.
 
     Falls back to a full reindex when all collections are empty
     (first run, or after a data wipe).  Otherwise performs an
     incremental reindex for records created since *since*.
 
-    Non-fatal: indexing errors are reported but do not fail the
-    pipeline run.
+    Non-fatal to the process (marts are valid even if indexing
+    fails), but the outcome is returned so the run record can flag a
+    failing index stage.
+
+    Returns ``(status, error)`` where status is ``"success"`` or
+    ``"error"`` and error is the verbatim cause (so a dimension
+    mismatch message reaches the user) or ``None``.
 
     sensitivity_tier: 3
     """
@@ -146,6 +151,16 @@ def _reindex_chromadb(
         from src.core.chromadb.indexer import Indexer
 
         chroma = VectorEngine()
+
+        # A model/provider switch makes every upsert fail with an
+        # opaque dimension error; surface the actionable cause instead
+        # of attempting a doomed reindex.
+        mismatch = chroma.embedding_mismatch_message()
+        if mismatch is not None:
+            logger.warning("ChromaDB re-index skipped: %s", mismatch)
+            _emit_json({"type": "reindex_error", "error": mismatch})
+            return "error", mismatch
+
         indexer = Indexer(duckdb=db, chromadb=chroma)
 
         total_docs = sum(
@@ -161,12 +176,14 @@ def _reindex_chromadb(
             "type": "reindex_complete",
             "counts": {k: v for k, v in counts.items()},
         })
+        return "success", None
     except Exception as exc:  # noqa: BLE001
         logger.warning("ChromaDB re-index failed: %s", exc)
         _emit_json({
             "type": "reindex_error",
             "error": str(exc),
         })
+        return "error", str(exc)
 
 
 # ---------------------------------------------------------------------------
@@ -174,11 +191,14 @@ def _reindex_chromadb(
 # ---------------------------------------------------------------------------
 
 
-def _reindex_kuzu(db: Any) -> None:
+def _reindex_kuzu(db: Any) -> tuple[str, str | None]:
     """Re-index the Kuzu knowledge graph after a successful pipeline run.
 
     Full reindex when graph is empty, otherwise incremental.
-    Non-fatal: errors are reported but do not fail the pipeline run.
+    Non-fatal to the process, but the outcome is returned so the run
+    record can flag a failing graph stage.
+
+    Returns ``(status, error)``.
 
     sensitivity_tier: 2
     """
@@ -204,12 +224,14 @@ def _reindex_kuzu(db: Any) -> None:
             "type": "graph_reindex_complete",
             "counts": {k: v for k, v in counts.items()},
         })
+        return "success", None
     except Exception as exc:  # noqa: BLE001
         logger.warning("Kuzu re-index failed: %s", exc)
         _emit_json({
             "type": "graph_reindex_error",
             "error": str(exc),
         })
+        return "error", str(exc)
 
 
 # ---------------------------------------------------------------------------
@@ -452,8 +474,19 @@ def cmd_run(trigger: str, mode: str = "full") -> int:
         # Re-index ChromaDB and Kuzu after successful pipeline run so
         # the QueryEngine has fresh embeddings and graph for chat queries.
         if result.status == "success":
-            _reindex_chromadb(db, result.started_at)
-            _reindex_kuzu(db)
+            vector_status, vector_error = _reindex_chromadb(
+                db, result.started_at,
+            )
+            graph_status, graph_error = _reindex_kuzu(db)
+            # The run record was written before re-index ran; patch it
+            # so a later pipeline-status poll reflects a failing index
+            # stage even though the marts themselves succeeded.
+            stats.update_index_status(
+                run_id=result.run_id,
+                vector_index_status=vector_status,
+                graph_index_status=graph_status,
+                index_error=vector_error or graph_error,
+            )
             _maybe_notify_pipeline(db, result)
 
         return 0 if result.status == "success" else 1

@@ -27,6 +27,9 @@ class TestReindexChromadb:
         self, mock_vector_cls, mock_indexer_cls, mock_emit,
     ):
         """Successful re-index emits reindex_complete event."""
+        mock_vector_cls.return_value.embedding_mismatch_message.return_value = (
+            None
+        )
         mock_indexer = MagicMock()
         mock_indexer.incremental_index.return_value = {
             "personal": 5, "work": 3,
@@ -35,8 +38,10 @@ class TestReindexChromadb:
 
         db = MagicMock()
         since = datetime(2025, 6, 1, tzinfo=timezone.utc)
-        _reindex_chromadb(db, since)
+        status, error = _reindex_chromadb(db, since)
 
+        assert status == "success"
+        assert error is None
         mock_indexer.incremental_index.assert_called_once_with(
             since=since,
         )
@@ -57,6 +62,9 @@ class TestReindexChromadb:
         self, mock_vector_cls, mock_indexer_cls, mock_emit,
     ):
         """Indexing failure emits reindex_error but does not raise."""
+        mock_vector_cls.return_value.embedding_mismatch_message.return_value = (
+            None
+        )
         mock_indexer = MagicMock()
         mock_indexer.incremental_index.side_effect = RuntimeError(
             "ChromaDB unavailable",
@@ -67,8 +75,10 @@ class TestReindexChromadb:
         since = datetime(2025, 6, 1, tzinfo=timezone.utc)
 
         # Should NOT raise
-        _reindex_chromadb(db, since)
+        status, error = _reindex_chromadb(db, since)
 
+        assert status == "error"
+        assert "ChromaDB unavailable" in error
         calls = mock_emit.call_args_list
         assert len(calls) == 2
         assert calls[0][0][0]["type"] == "reindexing"
@@ -84,6 +94,7 @@ class TestReindexChromadb:
         """Indexer is created with provided db and a new VectorEngine."""
         mock_indexer_cls.return_value.incremental_index.return_value = {}
         mock_chroma = MagicMock()
+        mock_chroma.embedding_mismatch_message.return_value = None
         mock_vector_cls.return_value = mock_chroma
 
         db = MagicMock()
@@ -100,15 +111,19 @@ class TestCmdRunReindex:
     sensitivity_tier: N/A
     """
 
+    @patch("src.pipeline.worker._maybe_notify_pipeline")
+    @patch("src.pipeline.worker._reindex_kuzu")
     @patch("src.pipeline.worker._reindex_chromadb")
     @patch("src.core.sqlite.engine.DatabaseEngine")
     @patch("src.pipeline.stats.ProcessingStats")
     @patch("src.pipeline.runner.PipelineRunner")
     def test_calls_reindex_on_success(
         self, mock_runner_cls, mock_stats_cls, mock_db_cls,
-        mock_reindex,
+        mock_reindex, mock_reindex_kuzu, mock_notify,
     ):
         """cmd_run calls _reindex_chromadb when pipeline succeeds."""
+        mock_reindex.return_value = ("success", None)
+        mock_reindex_kuzu.return_value = ("success", None)
         mock_run = MagicMock()
         mock_run.status = "success"
         mock_run.started_at = datetime(
@@ -123,6 +138,8 @@ class TestCmdRunReindex:
             mock_db_cls.return_value,
             mock_run.started_at,
         )
+        # The run record is patched with the re-index outcome.
+        mock_stats_cls.return_value.update_index_status.assert_called_once()
 
     @patch("src.pipeline.worker._reindex_chromadb")
     @patch("src.core.sqlite.engine.DatabaseEngine")

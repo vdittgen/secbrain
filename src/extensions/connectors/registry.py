@@ -32,6 +32,7 @@ class RegisteredExtension:
     env_values: dict[str, str] = field(default_factory=dict)
     enabled_at: str = ""
     last_sync_at: str | None = None
+    last_success_at: str | None = None
     records_synced: int = 0
     error: str | None = None
     tools_count: int = 0
@@ -199,6 +200,9 @@ class ExtensionRegistry:
             ext.status = "connected"
             ext.error = None
             ext.missing_requirements = []
+            # Track when rows last actually flowed so the UI can
+            # distinguish "last attempt" from "last working sync".
+            ext.last_success_at = ext.last_sync_at
         self._save()
 
     def update_status(

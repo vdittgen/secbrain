@@ -14,6 +14,8 @@ import { SkeletonTable } from "../components/LoadingState";
 import { formatCount } from "../components/GenericDataTable";
 import { useAsyncData } from "../hooks/useAsyncData";
 import { dedupInvoke } from "../utils/requestDedup";
+import { usePipelineStatus } from "../hooks/usePipelineStatus";
+import { AlertTriangle } from "lucide-react";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -159,6 +161,14 @@ function VectorExplorer() {
     ? summary.collections.reduce((s, c) => s + c.count, 0)
     : 0;
 
+  // Explain an empty store: the last re-index may have failed (e.g.
+  // embedding dimension mismatch after a model change).
+  const { pipelineStatus } = usePipelineStatus();
+  const indexError =
+    pipelineStatus?.last_run?.vector_index_status === "error"
+      ? pipelineStatus.last_run.index_error
+      : null;
+
   return (
     <div className="flex flex-col gap-4 p-6">
       {/* Header */}
@@ -182,6 +192,16 @@ function VectorExplorer() {
           Refresh
         </button>
       </div>
+
+      {indexError && (
+        <div className="flex items-start gap-2 rounded-2 border border-danger/30 bg-danger/10 px-4 py-3 text-xs text-danger">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <div>
+            <p className="font-medium">Last index update failed</p>
+            <p className="mt-0.5">{indexError}</p>
+          </div>
+        </div>
+      )}
 
       {summaryResult.isLoading && <SkeletonTable />}
 
