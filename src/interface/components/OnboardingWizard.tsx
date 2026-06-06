@@ -41,6 +41,11 @@ type Slide = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 type Mode = "local" | "remote";
 
+// How much history a fresh install should back-fill on first sync. Stored as
+// component state on the Sources slide and translated into `ingest_cutoff_iso`
+// (honored by src/extensions/ingestion/adapter.py) before any connector syncs.
+type SyncWindow = "30d" | "today";
+
 interface OllamaStatusResponse {
   readonly server_reachable: boolean;
   readonly chat_model: string;
@@ -155,6 +160,41 @@ const CONNECTOR_DEFS: readonly ConnectorDef[] = [
     tag: "Official",
   },
 ];
+
+// ---------------------------------------------------------------------------
+// Sync-window options (Sources slide)
+// ---------------------------------------------------------------------------
+
+interface SyncWindowDef {
+  readonly id: SyncWindow;
+  readonly name: string;
+  readonly description: string;
+  readonly recommended: boolean;
+}
+
+const SYNC_WINDOW_OPTIONS: readonly SyncWindowDef[] = [
+  {
+    id: "30d",
+    name: "Last 30 days",
+    description: "Import the past month, then keep up live",
+    recommended: true,
+  },
+  {
+    id: "today",
+    name: "From today onward",
+    description: "Start fresh — only new activity from now",
+    recommended: false,
+  },
+];
+
+// Translate a sync-window choice into a timezone-aware UTC ISO 8601 cutoff.
+// "30d" → 30 days ago; "today" → right now. The adapter drops any record
+// older than this before it ever reaches the raw tables.
+function computeIngestCutoffIso(syncWindow: SyncWindow): string {
+  const cutoffMs =
+    syncWindow === "30d" ? Date.now() - 30 * 24 * 60 * 60 * 1000 : Date.now();
+  return new Date(cutoffMs).toISOString();
+}
 
 // ---------------------------------------------------------------------------
 // Gradient constant
@@ -783,11 +823,15 @@ function KeepAwakeSlide({
 
 function ConnectorsSlide({
   selected,
+  syncWindow,
   onToggle,
+  onSyncWindowChange,
   onContinue,
 }: {
   readonly selected: Set<string>;
+  readonly syncWindow: SyncWindow;
   readonly onToggle: (id: string) => void;
+  readonly onSyncWindowChange: (w: SyncWindow) => void;
   readonly onContinue: () => void;
 }) {
   const canContinue = selected.size > 0;
@@ -856,6 +900,43 @@ function ConnectorsSlide({
       <p className="mt-4 text-[11px] text-muted">
         More integrations available in Settings &rarr; Connectors &rarr; Discover
       </p>
+
+      {/* Sync window — bound how much history the first sync back-fills */}
+      <div className="mt-6">
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-medium text-ink">How much history to import</p>
+        </div>
+        <p className="mt-1 text-[11px] text-muted">
+          A fresh import can pull years of messages at once. Start small — you
+          can always widen this later in Settings.
+        </p>
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          {SYNC_WINDOW_OPTIONS.map((opt) => {
+            const isActive = syncWindow === opt.id;
+            return (
+              <button
+                key={opt.id}
+                onClick={() => onSyncWindowChange(opt.id)}
+                className={`relative flex flex-col items-start gap-1 rounded-3 border p-4 text-left transition-all ${
+                  isActive
+                    ? "border-indigo shadow-2"
+                    : "border-hairline hover:border-hairline-2"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium text-ink">{opt.name}</p>
+                  {opt.recommended && (
+                    <span className="rounded-pill bg-indigo-soft px-1.5 py-0.5 text-[9px] font-medium text-indigo">
+                      Recommended
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-muted">{opt.description}</p>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       <div className="mt-auto pt-10 flex items-center justify-between">
         <TrustChip>
@@ -1137,6 +1218,10 @@ function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   const [selectedConnectors, setSelectedConnectors] = useState<Set<string>>(
     () => new Set(CONNECTOR_DEFS.filter((c) => c.defaultChecked).map((c) => c.id)),
   );
+  // How much message/calendar history the first sync should back-fill.
+  // Defaults to the recommended 30-day window so a fresh install doesn't
+  // ingest a user's entire history.
+  const [syncWindow, setSyncWindow] = useState<SyncWindow>("30d");
   const catalogLoaded = useRef(false);
 
   // --- Slide 2: Profile ---
@@ -1306,6 +1391,10 @@ function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
           ...current,
           whatsapp_notification_phone: normalized,
           notifications_enabled: true,
+          // Persist the ingest cutoff BEFORE enabling the WhatsApp connector
+          // below — otherwise the Baileys listener back-fills the user's full
+          // history before the cutoff exists.
+          ingest_cutoff_iso: computeIngestCutoffIso(syncWindow),
         },
       });
       await invoke("toggle_connector", {
@@ -1321,7 +1410,7 @@ function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
     } finally {
       setWhatsappStartingPair(false);
     }
-  }, [whatsappPhone]);
+  }, [whatsappPhone, syncWindow]);
 
   const handleWhatsappConnected = useCallback(() => {
     setWhatsappPaired(true);
@@ -1367,6 +1456,11 @@ function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
         launch_at_login: launchAtLogin,
         menu_bar_mode: menuBarMode,
         ...notificationSettings,
+        // Bound the first sync's back-fill for every connector enabled by the
+        // post-onboarding followup. WhatsApp already wrote this during inline
+        // pairing; re-asserting it here keeps the value present even if the
+        // user never paired.
+        ingest_cutoff_iso: computeIngestCutoffIso(syncWindow),
         initial_connectors: connectorIds,
         ollama_configured:
           mode === "local" && ollamaStatus?.server_reachable === true,
@@ -1395,6 +1489,7 @@ function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
     menuBarMode,
     whatsappNotifications,
     whatsappPhone,
+    syncWindow,
     ollamaStatus,
     onComplete,
   ]);
@@ -1464,7 +1559,9 @@ function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
             {slide === 5 && (
               <ConnectorsSlide
                 selected={selectedConnectors}
+                syncWindow={syncWindow}
                 onToggle={handleConnectorToggle}
+                onSyncWindowChange={setSyncWindow}
                 onContinue={goForward}
               />
             )}
