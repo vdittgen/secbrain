@@ -1,12 +1,10 @@
-import { useCallback, useContext, useState } from "react";
+import { useCallback, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { Bell, RefreshCw } from "lucide-react";
+import { Bell } from "lucide-react";
 import PrivacyIndicator from "./PrivacyIndicator";
 import NotificationsPanel from "./NotificationsPanel";
 import { useNotifications } from "../hooks/useNotifications";
-import { usePipelineStatus } from "../hooks/usePipelineStatus";
-import { PipelineRefreshContext } from "./Layout";
-import { formatRelativeTime } from "../utils/timeFormat";
+import SystemHealthIndicator from "./SystemHealthIndicator";
 
 const pageTitles: Record<string, string> = {
   "/": "Dashboard",
@@ -21,76 +19,6 @@ const pageTitles: Record<string, string> = {
   "/settings": "Settings",
   "/profile": "Profile",
 };
-
-function PipelinePill() {
-  const pipeline = usePipelineStatus();
-  const { openRefreshModal } = useContext(PipelineRefreshContext);
-
-  if (pipeline.runState === "running") {
-    return (
-      <button
-        type="button"
-        onClick={openRefreshModal}
-        className="inline-flex items-center gap-1.5 rounded-pill bg-indigo-soft px-3 py-1.5 text-[12.5px] font-medium text-indigo transition-colors hover:bg-indigo/15"
-        title="Show refresh progress"
-      >
-        <RefreshCw className="h-3 w-3 animate-spin" strokeWidth={1.6} />
-        Syncing…
-      </button>
-    );
-  }
-
-  // A failing stage (run failed, or vector/graph index failed) takes
-  // priority over the normal stale/fresh states — the user needs to
-  // know data isn't fully flowing even if marts are "synced".
-  if (pipeline.anyStageFailing) {
-    return (
-      <button
-        type="button"
-        onClick={openRefreshModal}
-        className="inline-flex items-center gap-1.5 rounded-pill bg-danger/10 px-3 py-1.5 text-[12.5px] font-medium text-danger transition-colors hover:bg-danger/15"
-        title={pipeline.stageFailureReason ?? "A pipeline stage is failing"}
-      >
-        <span className="h-1.5 w-1.5 rounded-full bg-danger" />
-        Sync issue
-      </button>
-    );
-  }
-
-  if (pipeline.isStale) {
-    return (
-      <button
-        type="button"
-        onClick={openRefreshModal}
-        className="inline-flex items-center gap-1.5 rounded-pill bg-amber-soft px-3 py-1.5 text-[12.5px] font-medium transition-colors hover:bg-amber/15"
-        style={{ color: "oklch(0.36 0.10 70)" }}
-        title={`${pipeline.totalPending} items pending`}
-      >
-        <RefreshCw className="h-3 w-3" strokeWidth={1.6} />
-        {pipeline.lastCompletedAt
-          ? `Synced ${formatRelativeTime(pipeline.lastCompletedAt)}`
-          : "Needs sync"}
-      </button>
-    );
-  }
-
-  if (pipeline.lastCompletedAt) {
-    return (
-      <button
-        type="button"
-        onClick={openRefreshModal}
-        className="inline-flex items-center gap-1.5 rounded-pill bg-success-soft px-3 py-1.5 text-[12.5px] font-medium transition-colors hover:bg-success/15"
-        style={{ color: "oklch(0.36 0.10 155)" }}
-        title="Run sync now"
-      >
-        <span className="h-1.5 w-1.5 rounded-full bg-success" />
-        Synced {formatRelativeTime(pipeline.lastCompletedAt)}
-      </button>
-    );
-  }
-
-  return null;
-}
 
 function TopBar() {
   const { pathname } = useLocation();
@@ -121,7 +49,7 @@ function TopBar() {
       </nav>
 
       <div className="ml-auto flex items-center gap-2">
-        <PipelinePill />
+        <SystemHealthIndicator />
         <PrivacyIndicator />
 
         <div className="relative">
