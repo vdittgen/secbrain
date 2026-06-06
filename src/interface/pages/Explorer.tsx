@@ -11,7 +11,6 @@
 import { useState, useCallback, useMemo } from "react";
 import { Search, RefreshCw, Database } from "lucide-react";
 import { SkeletonTable } from "../components/LoadingState";
-import FreshnessIndicator from "../components/FreshnessIndicator";
 import {
   TableCard,
   TierLegend,
@@ -19,7 +18,6 @@ import {
   type TableInfo,
 } from "../components/GenericDataTable";
 import { useAsyncData } from "../hooks/useAsyncData";
-import { usePipelineStatus } from "../hooks/usePipelineStatus";
 import { dedupInvoke } from "../utils/requestDedup";
 
 // ---------------------------------------------------------------------------
@@ -38,15 +36,6 @@ function Explorer() {
       [],
     ),
   );
-
-  // Pipeline freshness
-  const { pipelineStatus, anyStageFailing } = usePipelineStatus();
-  const lastSyncedAt = pipelineStatus?.last_run?.completed_at;
-  const isStale = pipelineStatus?.is_stale ?? true;
-  const isRunning = pipelineStatus
-    ? pipelineStatus.pending_changes !== undefined &&
-      Object.keys(pipelineStatus.pending_changes).length > 0
-    : false;
 
   // Filter tables by search
   const filteredTables = useMemo(() => {
@@ -84,12 +73,6 @@ function Explorer() {
             <h1 className="text-[28px] font-semibold leading-tight" style={{ background: "linear-gradient(135deg, var(--ink), var(--ink-2))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
               Data Sources
             </h1>
-            <FreshnessIndicator
-              timestamp={lastSyncedAt ?? null}
-              isStale={isStale}
-              isRunning={isRunning}
-              failing={anyStageFailing}
-            />
           </div>
           <p className="mt-1 text-xs text-muted">
             {tablesResult.data
