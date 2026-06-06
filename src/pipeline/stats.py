@@ -48,6 +48,12 @@ class PipelineRun:
     trigger: str  # "manual" | "scheduled" | "startup"
     error: str | None = None
     plan_summary: str | None = None
+    # Re-index outcomes are recorded after the SQLMesh marts complete.
+    # The run can be a "success" at producing marts while the vector or
+    # graph index separately fails — these surface that distinction.
+    vector_index_status: str | None = None  # "success" | "error" | None
+    graph_index_status: str | None = None  # "success" | "error" | None
+    index_error: str | None = None
 
 
 @dataclass
@@ -97,6 +103,46 @@ class ProcessingStats:
         record["completed_at"] = run.completed_at.isoformat()
         with self._path.open("a", encoding="utf-8") as f:
             f.write(json.dumps(record) + "\n")
+
+    def update_index_status(
+        self,
+        run_id: str,
+        vector_index_status: str | None,
+        graph_index_status: str | None,
+        index_error: str | None,
+    ) -> None:
+        """Patch a previously-recorded run with its re-index outcome.
+
+        The run record is written by :meth:`record_run` before the
+        vector/graph re-index runs, so this rewrites the matching line
+        in place.  The history file is small (hundreds of runs), so a
+        full read/patch/rewrite is acceptable and keeps all mutation of
+        the JSONL in one place.
+
+        sensitivity_tier: 1
+        """
+        if not self._path.exists():
+            return
+        runs = self._load_all()
+        patched = False
+        for run in runs:
+            if run.run_id == run_id:
+                run.vector_index_status = vector_index_status
+                run.graph_index_status = graph_index_status
+                run.index_error = index_error
+                patched = True
+                break
+        if not patched:
+            return
+
+        lines: list[str] = []
+        for run in runs:
+            record = asdict(run)
+            record["started_at"] = run.started_at.isoformat()
+            record["completed_at"] = run.completed_at.isoformat()
+            lines.append(json.dumps(record))
+        with self._path.open("w", encoding="utf-8") as f:
+            f.write("\n".join(lines) + "\n")
 
     # ------------------------------------------------------------------
     # Read

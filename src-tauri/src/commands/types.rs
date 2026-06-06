@@ -410,6 +410,15 @@ pub struct PipelineRunSummary {
     pub error: Option<String>,
     #[serde(default)]
     pub plan_summary: Option<String>,
+    /// Vector index outcome after marts completed ("success"/"error").
+    #[serde(default)]
+    pub vector_index_status: Option<String>,
+    /// Graph index outcome after marts completed ("success"/"error").
+    #[serde(default)]
+    pub graph_index_status: Option<String>,
+    /// Verbatim re-index error (e.g. embedding dimension mismatch).
+    #[serde(default)]
+    pub index_error: Option<String>,
 }
 
 /// A single model selected for execution with its priority.
@@ -715,6 +724,12 @@ impl Default for AppSettings {
 pub struct ConnectorSyncStats {
     pub records_synced: i64,
     pub last_sync: Option<String>,
+    /// When rows last actually flowed (distinct from last attempt).
+    #[serde(default)]
+    pub last_success: Option<String>,
+    /// Error from the most recent sync attempt, if it failed.
+    #[serde(default)]
+    pub error: Option<String>,
     pub next_sync: Option<String>,
 }
 

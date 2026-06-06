@@ -548,13 +548,20 @@ class IngestionAdapter:
         try:
             records = fn(args)
         except Exception as exc:
+            # A genuinely empty result must stay a clean success; only an
+            # actual failure (TCC permission denied, AppleScript error,
+            # SQLite read failure) is an error.  Swallowing this hid the
+            # failure behind a "connected / 0 rows" status.
             logger.warning(
                 "Native Apple fetch failed for %s/%s: %s",
                 self._connector_id,
                 self._tool.tool_name,
                 exc,
             )
-            return []
+            raise SyncError(
+                f"Apple native fetch failed for "
+                f"{self._connector_id}/{self._tool.tool_name}: {exc}",
+            ) from exc
         return _apply_ingest_cutoff(records, _load_ingest_cutoff())
 
     def _fetch_filesystem_native(self) -> list[dict[str, Any]]:

@@ -37,6 +37,8 @@ import { formatRelativeTime } from "../utils/timeFormat";
 interface ConnectorSyncStats {
   readonly records_synced: number;
   readonly last_sync: string | null;
+  readonly last_success: string | null;
+  readonly error: string | null;
   readonly next_sync: string | null;
 }
 
@@ -481,6 +483,13 @@ function ConnectorRow({
   const isConnected = connector.status === "connected";
   const needsSetup = connector.status === "needs_setup";
   const hasError = connector.status === "error";
+  // Connected (handshake OK) but no rows have ever flowed — surfaces
+  // the silent-empty case (e.g. permission granted but no data, or a
+  // failure that predates error reporting).
+  const connectedButEmpty =
+    isConnected &&
+    connector.stats.records_synced === 0 &&
+    !connector.stats.last_success;
 
   const hint =
     !connector.enabled && connector.missing_requirements.length > 0
@@ -527,6 +536,14 @@ function ConnectorRow({
             </p>
           )}
 
+          {/* Connected but no data ever ingested */}
+          {connectedButEmpty && (
+            <p className="mt-0.5 flex items-center gap-1 pl-7 text-[11px] text-amber">
+              <AlertTriangle className="h-3 w-3" />
+              Connected, but no data has been ingested yet.
+            </p>
+          )}
+
           {/* Requirement hint (when disabled with requirements) */}
           {hint && HintIcon && !needsSetup && (
             <p className="mt-0.5 flex items-center gap-1 pl-7 text-[11px] text-muted">
@@ -545,7 +562,12 @@ function ConnectorRow({
           {/* Error message */}
           {hasError && (
             <p className="mt-0.5 pl-7 text-[11px] text-amber">
-              Connection error. Try toggling off and on.
+              {connector.stats.error ??
+                "Connection error. Try toggling off and on."}
+              {connector.stats.last_success &&
+                ` · last worked ${formatRelativeTime(
+                  connector.stats.last_success,
+                )}`}
             </p>
           )}
         </div>
@@ -877,6 +899,20 @@ function DataSourcesPage() {
     ? catalog.filter((c) => c.status === "connected").length
     : 0;
 
+  // Health rollup: connectors that errored, plus connectors that look
+  // connected but have never actually ingested any rows.
+  const errorCount = catalog
+    ? catalog.filter((c) => c.status === "error").length
+    : 0;
+  const emptyCount = catalog
+    ? catalog.filter(
+        (c) =>
+          c.status === "connected" &&
+          c.stats.records_synced === 0 &&
+          !c.stats.last_success,
+      ).length
+    : 0;
+
   // --- Render ---
   return (
     <div className="flex-1 space-y-6 overflow-y-auto p-6">
@@ -899,6 +935,27 @@ function DataSourcesPage() {
           </button>
         )}
       </div>
+
+      {/* Health rollup */}
+      {(errorCount > 0 || emptyCount > 0) && (
+        <div className="flex items-start gap-2 rounded-2 border border-amber/30 bg-amber/10 px-4 py-3 text-xs text-amber">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <div>
+            {errorCount > 0 && (
+              <p>
+                {errorCount} connector{errorCount === 1 ? "" : "s"} reporting
+                errors — expand them to see the cause.
+              </p>
+            )}
+            {emptyCount > 0 && (
+              <p>
+                {emptyCount} connector{emptyCount === 1 ? "" : "s"} connected
+                but haven't ingested any data yet.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Search */}
       <div className="flex items-center gap-2 rounded-2 bg-surface px-3 py-2">

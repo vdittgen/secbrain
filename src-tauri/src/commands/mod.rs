@@ -941,6 +941,9 @@ pub async fn trigger_pipeline_run(
                     trigger: "api".to_string(),
                     error: Some(format!("Failed to parse pipeline output: {e}")),
                     plan_summary: None,
+                    vector_index_status: None,
+                    graph_index_status: None,
+                    index_error: None,
                 },
             },
             Err(e) => PipelineRunSummary {
@@ -955,6 +958,9 @@ pub async fn trigger_pipeline_run(
                 trigger: "api".to_string(),
                 error: Some(format!("Pipeline subprocess failed: {e}")),
                 plan_summary: None,
+                vector_index_status: None,
+                graph_index_status: None,
+                index_error: None,
             },
         };
 

@@ -40,7 +40,7 @@ function Explorer() {
   );
 
   // Pipeline freshness
-  const { pipelineStatus } = usePipelineStatus();
+  const { pipelineStatus, anyStageFailing } = usePipelineStatus();
   const lastSyncedAt = pipelineStatus?.last_run?.completed_at;
   const isStale = pipelineStatus?.is_stale ?? true;
   const isRunning = pipelineStatus
@@ -88,6 +88,7 @@ function Explorer() {
               timestamp={lastSyncedAt ?? null}
               isStale={isStale}
               isRunning={isRunning}
+              failing={anyStageFailing}
             />
           </div>
           <p className="mt-1 text-xs text-muted">

@@ -501,6 +501,22 @@ function CompleteStep({
           </p>
         </div>
 
+        {/* Index warning — marts succeeded but vector/graph index failed */}
+        {state.indexWarning && (
+          <div className="flex items-start gap-2 rounded-2 border border-amber/30 bg-amber/10 p-3 text-xs text-amber">
+            <AlertTriangle
+              strokeWidth={1.6}
+              className="mt-0.5 h-4 w-4 shrink-0"
+            />
+            <div>
+              <p className="font-medium">
+                Data updated, but search index didn't refresh
+              </p>
+              <p className="mt-0.5 text-amber/90">{state.indexWarning}</p>
+            </div>
+          </div>
+        )}
+
         {/* Summary */}
         {state.completedModels.length > 0 && (
           <div className="space-y-1 rounded-2 bg-surface/60 p-3">

@@ -40,6 +40,23 @@ function PipelinePill() {
     );
   }
 
+  // A failing stage (run failed, or vector/graph index failed) takes
+  // priority over the normal stale/fresh states — the user needs to
+  // know data isn't fully flowing even if marts are "synced".
+  if (pipeline.anyStageFailing) {
+    return (
+      <button
+        type="button"
+        onClick={openRefreshModal}
+        className="inline-flex items-center gap-1.5 rounded-pill bg-danger/10 px-3 py-1.5 text-[12.5px] font-medium text-danger transition-colors hover:bg-danger/15"
+        title={pipeline.stageFailureReason ?? "A pipeline stage is failing"}
+      >
+        <span className="h-1.5 w-1.5 rounded-full bg-danger" />
+        Sync issue
+      </button>
+    );
+  }
+
   if (pipeline.isStale) {
     return (
       <button

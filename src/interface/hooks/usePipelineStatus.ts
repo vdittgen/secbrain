@@ -25,6 +25,11 @@ interface PipelineRunSummary {
   rows_changed: Record<string, number>;
   trigger: string;
   error: string | null;
+  // Re-index outcomes recorded after marts complete. A run can be a
+  // "success" at producing marts while a vector/graph index failed.
+  vector_index_status: string | null;
+  graph_index_status: string | null;
+  index_error: string | null;
 }
 
 interface PipelineStatus {
@@ -57,6 +62,10 @@ export interface PipelineStatusHook {
   readonly lastCompletedAt: string | null;
   readonly isStale: boolean;
   readonly totalPending: number;
+  /** True when the last run failed OR a vector/graph index stage failed. */
+  readonly anyStageFailing: boolean;
+  /** Human-readable reason for the failing stage, when known. */
+  readonly stageFailureReason: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -198,6 +207,27 @@ export function usePipelineStatus(): PipelineStatusHook {
       )
     : 0;
 
+  // Default to false when status is unknown (loading / fetch failed) so
+  // we don't false-alarm on first paint.
+  const lastRun = pipelineStatus?.last_run ?? null;
+  const vectorFailed = lastRun?.vector_index_status === "error";
+  const graphFailed = lastRun?.graph_index_status === "error";
+  const runFailed = lastRun?.status === "failed";
+  const anyStageFailing = runFailed || vectorFailed || graphFailed;
+  let stageFailureReason: string | null = null;
+  if (runFailed) {
+    stageFailureReason = lastRun?.error ?? "Pipeline run failed";
+  } else if (vectorFailed || graphFailed) {
+    const stages = [
+      vectorFailed ? "vector" : null,
+      graphFailed ? "graph" : null,
+    ]
+      .filter(Boolean)
+      .join(" & ");
+    stageFailureReason =
+      lastRun?.index_error ?? `${stages} index failed`;
+  }
+
   return {
     pipelineStatus,
     runState,
@@ -206,5 +236,7 @@ export function usePipelineStatus(): PipelineStatusHook {
     lastCompletedAt,
     isStale,
     totalPending,
+    anyStageFailing,
+    stageFailureReason,
   };
 }
