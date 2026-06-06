@@ -15,9 +15,6 @@ import DataMarts from "./DataMarts";
 import GraphExplorer from "./GraphExplorer";
 import VectorExplorer from "./VectorExplorer";
 import AuditPage from "./AuditPage";
-import { usePipelineStatus } from "../hooks/usePipelineStatus";
-import { useAsyncData } from "../hooks/useAsyncData";
-import { dedupInvoke } from "../utils/requestDedup";
 
 const ICON_STROKE = 1.6;
 
@@ -38,29 +35,10 @@ const TABS: ReadonlyArray<TabDef> = [
 
 const DEFAULT_TAB = "models";
 
-interface ConnectorStatusLite {
-  readonly status: string;
-}
-
 function Data() {
   const [searchParams, setSearchParams] = useSearchParams();
   const requested = searchParams.get("tab") ?? DEFAULT_TAB;
   const active = TABS.find((t) => t.id === requested) ?? TABS[0];
-
-  // Per-tab health badges: surface which surface is failing without
-  // making the user open each one.
-  const { pipelineStatus } = usePipelineStatus();
-  const lastRun = pipelineStatus?.last_run ?? null;
-  const connectors = useAsyncData<ConnectorStatusLite[]>(() =>
-    dedupInvoke<ConnectorStatusLite[]>("get_connector_catalog"),
-  );
-  const sourcesFailing =
-    connectors.data?.some((c) => c.status === "error") ?? false;
-  const tabErrors: Record<string, boolean> = {
-    sources: sourcesFailing,
-    vectors: lastRun?.vector_index_status === "error",
-    graph: lastRun?.graph_index_status === "error",
-  };
 
   function selectTab(id: string) {
     if (id === DEFAULT_TAB) {
@@ -92,12 +70,6 @@ function Data() {
                   strokeWidth={ICON_STROKE}
                 />
                 <span style={{ letterSpacing: "-0.005em" }}>{label}</span>
-                {tabErrors[id] && (
-                  <span
-                    className="h-1.5 w-1.5 rounded-full bg-danger"
-                    title="This stage is reporting an error"
-                  />
-                )}
               </button>
             );
           })}

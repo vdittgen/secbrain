@@ -86,6 +86,7 @@ pub fn run() {
             commands::rebuild_vector_index,
             // Connector commands
             commands::get_connector_catalog,
+            commands::get_system_health,
             commands::open_macos_permission_settings,
             commands::toggle_connector,
             commands::sync_connector_now,

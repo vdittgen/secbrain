@@ -18,9 +18,30 @@ import typing as t
 
 logger = logging.getLogger(__name__)
 
-# Only label messages from this year onwards to control LLM costs.
-# Older messages get the 'unlabeled' fallback.
-_LABEL_SINCE = "2026-01-01"
+# Default lower bound for LLM labeling when no ingest window is set —
+# a cost-control floor. Older messages get the 'unlabeled' fallback.
+_LABEL_SINCE_FLOOR = "2026-01-01"
+
+
+def _label_since() -> str:
+    """Effective lower bound for LLM labeling.
+
+    Aligns with the user's ingest window (``ingest_cutoff_iso``, set at
+    onboarding) so that choosing e.g. "last 30 days" also bounds
+    labeling to ~30 days instead of always reaching back to the static
+    floor. Falls back to the floor when no cutoff is configured.
+
+    sensitivity_tier: 1
+    """
+    try:
+        from src.models.llm_provider import load_llm_settings
+
+        cutoff = load_llm_settings().get("ingest_cutoff_iso")
+    except Exception:  # noqa: BLE001
+        cutoff = None
+    if isinstance(cutoff, str) and cutoff:
+        return cutoff
+    return _LABEL_SINCE_FLOOR
 
 _UNLABELED_ROW = {
     "primary_emotion": "unlabeled",
@@ -69,26 +90,28 @@ def _make_row(msg_id: str, label: dict[str, t.Any] | None) -> dict[str, t.Any]:
 def execute(db: DatabaseEngine) -> list[dict[str, t.Any]]:
     """Execute the labeling pipeline.
 
-    Labels only messages from ``_LABEL_SINCE`` onwards via LLM.
-    The triager drops promos/automated/ack-only/system noise before
-    labelling so we don't pay per-message cost on trash.
+    Labels only messages since the effective cutoff (the configured
+    ingest window, else the static floor) via LLM. The triager drops
+    promos/automated/ack-only/system noise before labelling so we don't
+    pay per-message cost on trash.
 
     sensitivity_tier: 3
     """
+    since = _label_since()
     recent = db.query(
         "SELECT id, content FROM stg_messages WHERE timestamp >= ? "
         "ORDER BY timestamp",
-        [_LABEL_SINCE],
+        [since],
     )
     older = db.query(
         "SELECT id FROM stg_messages WHERE timestamp < ?",
-        [_LABEL_SINCE],
+        [since],
     )
 
     logger.info(
         "Labeling %d recent messages (since %s), %d older as unlabeled",
         len(recent),
-        _LABEL_SINCE,
+        since,
         len(older),
     )
 

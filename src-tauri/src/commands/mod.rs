@@ -1533,6 +1533,20 @@ pub async fn get_connector_catalog(
         .map_err(|e| format!("Failed to parse connector catalog JSON: {e}"))
 }
 
+/// Aggregated system health: overall verdict, data-flow stages, and a
+/// flat list of actionable issues. Single source of truth for the
+/// unified status surface (passthrough; the frontend owns the shape).
+///
+/// # sensitivity_tier: 1
+#[tauri::command]
+pub async fn get_system_health(
+    state: State<'_, AppState>,
+) -> Result<serde_json::Value, String> {
+    let output = call_python_cli(&["system-health"], &state.project_root).await?;
+    serde_json::from_str(&output)
+        .map_err(|e| format!("Failed to parse system health JSON: {e}"))
+}
+
 /// Toggle a connector on or off.
 ///
 /// # sensitivity_tier: 1

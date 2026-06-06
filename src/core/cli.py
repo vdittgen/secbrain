@@ -2556,6 +2556,268 @@ def cmd_connector_catalog() -> int:
         return 1
 
 
+def _build_system_health(layer: DataLayer) -> dict[str, Any]:
+    """Aggregate connector, pipeline, graph, and vector state into one
+    health payload: an ``overall`` verdict, the data-flow ``stages``
+    (connectors -> ingest -> transform -> graph -> vectors), and a flat,
+    severity-sorted list of actionable ``issues``.
+
+    This is the single source of truth the unified status surface reads,
+    so the frontend stops stitching four separate calls together. Each
+    section is best-effort; a failure in one never blanks the rest.
+
+    sensitivity_tier: 1
+    """
+    stages: list[dict[str, Any]] = []
+    issues: list[dict[str, Any]] = []
+
+    # --- Connectors -------------------------------------------------
+    try:
+        from src.extensions.connectors.connection_manager import (
+            ConnectionManager,
+        )
+
+        catalog = ConnectionManager().get_connector_catalog()
+    except Exception:  # noqa: BLE001
+        catalog = []
+    enabled = [c for c in catalog if c.get("enabled")]
+    errored = [c for c in enabled if c.get("status") == "error"]
+    connected = [c for c in enabled if c.get("status") == "connected"]
+    empty = [
+        c
+        for c in connected
+        if (c.get("stats") or {}).get("records_synced", 0) == 0
+        and not (c.get("stats") or {}).get("last_success")
+    ]
+    last_syncs = [
+        (c.get("stats") or {}).get("last_sync")
+        for c in enabled
+        if (c.get("stats") or {}).get("last_sync")
+    ]
+    conn_status = (
+        "error" if errored
+        else "warning" if empty
+        else "ok" if connected
+        else "idle"
+    )
+    stages.append({
+        "id": "connectors",
+        "label": "Connectors",
+        "status": conn_status,
+        "summary": (
+            f"{len(connected)}/{len(enabled)} connected"
+            if enabled else "none enabled"
+        ),
+        "last_run_at": max(last_syncs) if last_syncs else None,
+        "route": "/connectors",
+    })
+    for c in errored:
+        issues.append({
+            "id": f"connector:{c['connector_id']}",
+            "stage": "connectors",
+            "severity": "error",
+            "title": f"{c.get('name')} sync failed",
+            "detail": (c.get("stats") or {}).get("error") or "Connector error",
+            "action": {
+                "label": "Retry",
+                "kind": "retry_connector",
+                "target": c["connector_id"],
+            },
+        })
+    for c in empty:
+        issues.append({
+            "id": f"connector-empty:{c['connector_id']}",
+            "stage": "connectors",
+            "severity": "warning",
+            "title": f"{c.get('name')} has no data yet",
+            "detail": "Connected, but nothing has been ingested.",
+            "action": {
+                "label": "Sync now",
+                "kind": "retry_connector",
+                "target": c["connector_id"],
+            },
+        })
+
+    # --- Pipeline status (drives ingest / transform / graph / vectors)
+    try:
+        ps = layer.get_pipeline_status()
+    except Exception:  # noqa: BLE001
+        ps = {}
+    last = ps.get("last_run") or {}
+    is_stale = bool(ps.get("is_stale"))
+
+    # Ingest — total raw rows currently landed.
+    raw_total = 0
+    raw_sources = 0
+    try:
+        rows = layer.duckdb.query(
+            "SELECT name FROM sqlite_master WHERE type='table' "
+            "AND name LIKE 'raw_%'",
+        )
+        for r in rows:
+            try:
+                cnt = layer.duckdb.query(
+                    f"SELECT COUNT(*) AS n FROM {r['name']}",
+                )
+                n = cnt[0]["n"] if cnt else 0
+            except Exception:  # noqa: BLE001
+                n = 0
+            raw_total += n
+            if n > 0:
+                raw_sources += 1
+    except Exception:  # noqa: BLE001
+        pass
+    stages.append({
+        "id": "ingest",
+        "label": "Ingest",
+        "status": "ok" if raw_total else "idle",
+        "summary": (
+            f"{raw_total:,} rows · {raw_sources} sources"
+            if raw_total else "no data"
+        ),
+        "last_run_at": None,
+        "route": "/data?tab=sources",
+    })
+
+    # Transform — last pipeline run over the staging/mart models.
+    run_status = last.get("status")
+    transform_status = (
+        "error" if run_status == "failed"
+        else "warning" if is_stale
+        else "ok" if last
+        else "idle"
+    )
+    stages.append({
+        "id": "transform",
+        "label": "Transform",
+        "status": transform_status,
+        "summary": (
+            "Failed" if run_status == "failed"
+            else "Stale" if is_stale
+            else "Up to date" if last
+            else "never run"
+        ),
+        "last_run_at": last.get("completed_at"),
+        "route": "/data?tab=models",
+    })
+    if run_status == "failed":
+        issues.append({
+            "id": "transform:failed",
+            "stage": "transform",
+            "severity": "error",
+            "title": "Last pipeline run failed",
+            "detail": last.get("error") or "Pipeline run failed",
+            "action": {
+                "label": "Run now",
+                "kind": "run_pipeline",
+                "target": None,
+            },
+        })
+
+    # Graph — Kuzu node count + reindex outcome.
+    graph_nodes = 0
+    try:
+        for nt in ALL_NODE_TABLES:
+            try:
+                gr = layer.kuzu.query(
+                    f"MATCH (n:{nt}) RETURN count(n) AS c",
+                )
+                graph_nodes += gr[0]["c"] if gr else 0
+            except Exception:  # noqa: BLE001
+                pass
+    except Exception:  # noqa: BLE001
+        pass
+    graph_idx = last.get("graph_index_status")
+    stages.append({
+        "id": "graph",
+        "label": "Graph",
+        "status": (
+            "error" if graph_idx == "error"
+            else "ok" if graph_nodes else "idle"
+        ),
+        "summary": f"{graph_nodes:,} nodes" if graph_nodes else "empty",
+        "last_run_at": last.get("completed_at"),
+        "route": "/data?tab=graph",
+    })
+    if graph_idx == "error":
+        issues.append({
+            "id": "graph:index",
+            "stage": "graph",
+            "severity": "error",
+            "title": "Knowledge graph index failed",
+            "detail": last.get("index_error") or "Graph re-index failed",
+            "action": {
+                "label": "View",
+                "kind": "open_route",
+                "target": "/data?tab=graph",
+            },
+        })
+
+    # Vectors — ChromaDB doc count + reindex outcome.
+    doc_total = 0
+    try:
+        for name in COLLECTION_NAMES:
+            try:
+                doc_total += layer.chromadb.get_or_create_collection(
+                    name,
+                ).count()
+            except Exception:  # noqa: BLE001
+                pass
+    except Exception:  # noqa: BLE001
+        pass
+    vec_idx = last.get("vector_index_status")
+    stages.append({
+        "id": "vectors",
+        "label": "Vectors",
+        "status": (
+            "error" if vec_idx == "error"
+            else "ok" if doc_total else "idle"
+        ),
+        "summary": f"{doc_total:,} documents" if doc_total else "empty",
+        "last_run_at": last.get("completed_at"),
+        "route": "/data?tab=vectors",
+    })
+    if vec_idx == "error":
+        issues.append({
+            "id": "vectors:index",
+            "stage": "vectors",
+            "severity": "error",
+            "title": "Vector index failed",
+            "detail": last.get("index_error") or "Vector re-index failed",
+            "action": {
+                "label": "View",
+                "kind": "open_route",
+                "target": "/data?tab=vectors",
+            },
+        })
+
+    has_error = any(i["severity"] == "error" for i in issues)
+    has_warning = (
+        any(i["severity"] == "warning" for i in issues) or is_stale
+    )
+    overall = (
+        "failing" if has_error
+        else "degraded" if has_warning
+        else "healthy"
+    )
+    issues.sort(key=lambda i: 0 if i["severity"] == "error" else 1)
+
+    return {"overall": overall, "stages": stages, "issues": issues}
+
+
+def cmd_system_health(layer: DataLayer) -> int:
+    """Output the aggregated system-health payload as JSON.
+
+    sensitivity_tier: 1
+    """
+    try:
+        print(_json_output(_build_system_health(layer)))
+        return 0
+    except Exception as exc:  # noqa: BLE001
+        print(_json_output({"error": str(exc)}), file=sys.stderr)
+        return 1
+
+
 def cmd_toggle_connector(
     layer: DataLayer,
     connector_id: str,
@@ -8157,6 +8419,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="List all connectors with status (JSON)",
     )
 
+    subparsers.add_parser(
+        "system-health",
+        help="Aggregated connector/pipeline/graph/vector health (JSON)",
+    )
+
     toggle_parser = subparsers.add_parser(
         "toggle-connector",
         help="Enable or disable a connector (JSON)",
@@ -9493,6 +9760,8 @@ def main(argv: list[str] | None = None) -> int:
         # Connector commands
         if args.command == "connector-catalog":
             return cmd_connector_catalog()
+        if args.command == "system-health":
+            return cmd_system_health(layer)
         if args.command == "toggle-connector":
             return cmd_toggle_connector(
                 layer,

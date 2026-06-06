@@ -17,9 +17,8 @@ import {
   Loader2,
 } from "lucide-react";
 import { useBackgroundTasks, type BackgroundTask } from "../hooks/useBackgroundTasks";
-import { usePipelineStatus } from "../hooks/usePipelineStatus";
 import { ModelStatusIndicator } from "./ModelStatusIndicator";
-import { formatElapsedTime, formatRelativeTime } from "../utils/timeFormat";
+import { formatElapsedTime } from "../utils/timeFormat";
 
 const ICON_STROKE = 1.6;
 
@@ -101,45 +100,7 @@ function BackgroundTaskIndicator({ collapsed }: { readonly collapsed: boolean })
   );
 }
 
-function syncIndicator(pipeline: ReturnType<typeof usePipelineStatus>): {
-  readonly label: string;
-  readonly dotClass: string;
-  readonly dotShadow: string;
-} {
-  if (pipeline.runState === "running") {
-    return {
-      label: "Syncing…",
-      dotClass: "bg-indigo animate-pulse",
-      dotShadow: "0 0 0 3px oklch(0.55 0.20 265 / 0.18)",
-    };
-  }
-  if (pipeline.isStale) {
-    return {
-      label: pipeline.lastCompletedAt
-        ? `Synced ${formatRelativeTime(pipeline.lastCompletedAt)}`
-        : "Needs sync",
-      dotClass: "bg-amber",
-      dotShadow: "0 0 0 3px oklch(0.75 0.15 70 / 0.18)",
-    };
-  }
-  if (pipeline.lastCompletedAt) {
-    return {
-      label: `Synced ${formatRelativeTime(pipeline.lastCompletedAt)}`,
-      dotClass: "bg-success",
-      dotShadow: "0 0 0 3px oklch(0.62 0.16 155 / 0.18)",
-    };
-  }
-  return {
-    label: "Not synced",
-    dotClass: "bg-muted",
-    dotShadow: "none",
-  };
-}
-
 function Sidebar({ collapsed, onToggle }: SidebarProps) {
-  const pipeline = usePipelineStatus();
-  const sync = syncIndicator(pipeline);
-
   return (
     <aside
       className={`frosted flex h-screen flex-col border-r border-hairline transition-all duration-200 ${
@@ -231,13 +192,6 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
           {!collapsed && (
             <div className="min-w-0">
               <div className="text-[13.5px] font-semibold tracking-tight text-ink">Vinicius</div>
-              <div className="flex items-center gap-1.5 text-[11.5px] text-muted">
-                <span
-                  className={`h-1.5 w-1.5 rounded-full ${sync.dotClass}`}
-                  style={{ boxShadow: sync.dotShadow }}
-                />
-                {sync.label}
-              </div>
             </div>
           )}
         </div>
