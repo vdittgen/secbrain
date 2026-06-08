@@ -9,6 +9,7 @@ sensitivity_tier: infrastructure layer — no user data stored here.
 from __future__ import annotations
 
 import logging
+import time
 from pathlib import Path
 from typing import Any
 
@@ -19,6 +20,20 @@ from src.core.profiler import timed
 logger = logging.getLogger(__name__)
 
 DEFAULT_DB_PATH = Path.home() / ".arandu" / "data" / "kuzu_db"
+
+# Kuzu takes an exclusive cross-process file lock for a read-write handle.
+# While the pipeline holds it (writing graph nodes), every other open —
+# even read-only — fails with "Could not set lock on file". Those holds are
+# usually short, so a read-only opener retries with backoff before giving up
+# and letting the caller surface an honest "temporarily unavailable" error
+# instead of a misleading empty graph.
+_LOCK_RETRY_ATTEMPTS = 5
+_LOCK_RETRY_BASE_DELAY_S = 0.2
+
+
+def _is_lock_contention(exc: Exception) -> bool:
+    """Return True if ``exc`` is Kuzu's cross-process lock-contention error."""
+    return "set lock on file" in str(exc).lower()
 
 
 class GraphEngine:
@@ -56,14 +71,40 @@ class GraphEngine:
         # RuntimeError ("path cannot be a directory").  We only ensure the
         # *parent* exists so that the path is reachable.
         self._db_path.parent.mkdir(parents=True, exist_ok=True)
-        self._db: kuzu.Database = kuzu.Database(
-            str(self._db_path), read_only=read_only,
-        )
+        self._db: kuzu.Database = self._open_with_retry(read_only)
         self._conn: kuzu.Connection = kuzu.Connection(self._db)
         logger.info(
             "Kuzu graph DB opened: %s (read_only=%s)",
             self._db_path, read_only,
         )
+
+    def _open_with_retry(self, read_only: bool) -> kuzu.Database:
+        """Open the Kuzu database, retrying transient lock contention.
+
+        A concurrent read-write holder (the pipeline) blocks every other
+        open until it releases. Those holds are usually brief, so we retry
+        with linear backoff and only re-raise once attempts are exhausted —
+        letting the caller report the failure rather than silently treating
+        an unreachable graph as an empty one.
+        """
+        last_exc: Exception | None = None
+        for attempt in range(_LOCK_RETRY_ATTEMPTS):
+            try:
+                return kuzu.Database(str(self._db_path), read_only=read_only)
+            except RuntimeError as exc:
+                if not _is_lock_contention(exc):
+                    raise
+                last_exc = exc
+                if attempt < _LOCK_RETRY_ATTEMPTS - 1:
+                    delay = _LOCK_RETRY_BASE_DELAY_S * (attempt + 1)
+                    logger.warning(
+                        "Kuzu open blocked by lock on %s (attempt %d/%d); "
+                        "retrying in %.2fs",
+                        self._db_path, attempt + 1, _LOCK_RETRY_ATTEMPTS, delay,
+                    )
+                    time.sleep(delay)
+        assert last_exc is not None  # only reached after a contention failure
+        raise last_exc
 
     # ------------------------------------------------------------------
     # Public API

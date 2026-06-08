@@ -787,6 +787,24 @@ def cmd_query_table(
         return 1
 
 
+_GRAPH_BUSY_MESSAGE = (
+    "Graph is being updated by the pipeline. Try again in a moment."
+)
+
+
+def _graph_error_message(exc: Exception) -> str:
+    """Map a graph access failure to a user-facing message.
+
+    Kuzu's read-write lock is held exclusively while the pipeline writes
+    graph nodes, blocking every read with "Could not set lock on file".
+    That is transient contention, not a real fault, so we surface a clear,
+    retry-able message instead of the raw Kuzu IO exception.
+    """
+    if "set lock on file" in str(exc).lower():
+        return _GRAPH_BUSY_MESSAGE
+    return str(exc)
+
+
 def cmd_graph_summary(layer: DataLayer) -> int:
     """Return node and relationship type counts from the Kuzu graph.
 
@@ -799,10 +817,16 @@ def cmd_graph_summary(layer: DataLayer) -> int:
     sensitivity_tier: 1
     """
     try:
+        # Force the engine open up front so a failure to reach the graph
+        # (e.g. the pipeline holding Kuzu's read-write lock) surfaces as an
+        # error the UI can show, instead of being swallowed by the per-table
+        # guards below and rendered as a misleading all-zeros "empty graph".
+        graph = layer.kuzu
+
         nodes: list[dict[str, Any]] = []
         for node_type in ALL_NODE_TABLES:
             try:
-                rows = layer.kuzu.query(
+                rows = graph.query(
                     f"MATCH (n:{node_type}) RETURN count(n) AS cnt",
                 )
                 count = rows[0]["cnt"] if rows else 0
@@ -813,7 +837,7 @@ def cmd_graph_summary(layer: DataLayer) -> int:
         relationships: list[dict[str, Any]] = []
         for rel_type in ALL_REL_TABLES:
             try:
-                rows = layer.kuzu.query(
+                rows = graph.query(
                     f"MATCH ()-[r:{rel_type}]->() RETURN count(r) AS cnt",
                 )
                 count = rows[0]["cnt"] if rows else 0
@@ -832,7 +856,10 @@ def cmd_graph_summary(layer: DataLayer) -> int:
         }))
         return 0
     except Exception as exc:
-        print(_json_output({"error": str(exc)}), file=sys.stderr)
+        print(
+            _json_output({"error": _graph_error_message(exc)}),
+            file=sys.stderr,
+        )
         return 1
 
 
@@ -893,7 +920,10 @@ def cmd_query_graph_nodes(
         }))
         return 0
     except Exception as exc:
-        print(_json_output({"error": str(exc)}), file=sys.stderr)
+        print(
+            _json_output({"error": _graph_error_message(exc)}),
+            file=sys.stderr,
+        )
         return 1
 
 
@@ -959,7 +989,10 @@ def cmd_query_graph_rels(
         }))
         return 0
     except Exception as exc:
-        print(_json_output({"error": str(exc)}), file=sys.stderr)
+        print(
+            _json_output({"error": _graph_error_message(exc)}),
+            file=sys.stderr,
+        )
         return 1
 
 
