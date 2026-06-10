@@ -48,9 +48,16 @@ pub fn user_venv_python() -> Option<PathBuf> {
     user_venv_dir().map(|v| v.join("bin").join("python3"))
 }
 
-/// True if the user's venv exists AND the setup-complete marker is present.
-/// The marker is written by `setup_venv` only after `pip install` succeeds,
-/// so a partially-created venv from a crashed setup won't be falsely accepted.
+/// True if the user's venv exists AND the setup-complete marker was
+/// written by THIS app version.
+///
+/// The marker is written by `setup_venv` (with the app version as its
+/// content) only after `pip install` succeeds, so a partially-created
+/// venv from a crashed setup won't be falsely accepted. Comparing the
+/// content — not just existence — makes app updates rebuild the venv:
+/// the updater replaces the .app, but the Python code lives in
+/// `~/.arandu/venv`, and without the version check an updated install
+/// would keep executing the previous version's Python forever.
 pub fn is_venv_ready() -> bool {
     let py = match user_venv_python() {
         Some(p) => p,
@@ -60,7 +67,20 @@ pub fn is_venv_ready() -> bool {
         Some(d) => d.join(".arandu_setup_complete"),
         None => return false,
     };
-    py.exists() && marker.exists()
+    if !py.exists() {
+        return false;
+    }
+    match std::fs::read_to_string(&marker) {
+        Ok(contents) => marker_is_current(&contents),
+        Err(_) => false,
+    }
+}
+
+/// Whether a setup-complete marker's content matches this app version.
+/// Stale (other-version), empty, or unreadable markers all mean the
+/// venv must be rebuilt; `setup_venv` wipes and recreates it.
+fn marker_is_current(contents: &str) -> bool {
+    contents.trim() == env!("CARGO_PKG_VERSION")
 }
 
 /// Resolve the Python executable.
@@ -446,6 +466,25 @@ mod tests {
     fn test_resolve_project_root_returns_string() {
         let root = resolve_project_root();
         assert!(!root.is_empty());
+    }
+
+    #[test]
+    fn test_marker_is_current_accepts_this_version() {
+        assert!(marker_is_current(env!("CARGO_PKG_VERSION")));
+        // Tolerate a trailing newline from manual writes.
+        assert!(marker_is_current(&format!(
+            "{}\n",
+            env!("CARGO_PKG_VERSION")
+        )));
+    }
+
+    #[test]
+    fn test_marker_from_another_version_is_stale() {
+        // A venv built by a previous (or future) app version must read
+        // as not-ready so updates rebuild it.
+        assert!(!marker_is_current("0.0.1-previous"));
+        assert!(!marker_is_current(""));
+        assert!(!marker_is_current("   "));
     }
 
     #[tokio::test]
