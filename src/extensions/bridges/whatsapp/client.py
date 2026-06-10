@@ -56,21 +56,41 @@ def _version_key(name: str) -> tuple[int, ...]:
     return tuple(parts)
 
 
-def _resolve_tool(name: str) -> str | None:
-    """Locate the ``name`` binary via PATH, then well-known locations.
+def _runs(candidate: str) -> bool:
+    """True if ``candidate --version`` executes successfully.
 
-    Returns the executable path, or ``None`` when it is nowhere to be
-    found (the caller raises with an actionable message).
+    A binary can exist yet be unrunnable — e.g. a Homebrew node linked
+    against a since-upgraded icu4c dylib aborts at load time (SIGABRT)
+    on every spawn. Candidates must prove they execute before being
+    chosen, so a broken install is skipped in favour of the next
+    working one.
+
+    sensitivity_tier: 1
+    """
+    try:
+        result = subprocess.run(
+            [candidate, "--version"],
+            capture_output=True,
+            timeout=10,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+    return result.returncode == 0
+
+
+def _tool_candidates(name: str) -> Iterator[str]:
+    """Yield existing executable candidates for ``name``, best first.
 
     sensitivity_tier: 1
     """
     found = shutil.which(name)
     if found:
-        return found
+        yield found
     for d in _TOOL_FALLBACK_DIRS:
         candidate = d / name
         if candidate.is_file() and os.access(candidate, os.X_OK):
-            return str(candidate)
+            yield str(candidate)
     # nvm keeps one dir per installed version; prefer the newest.
     nvm_dir = Path.home() / ".nvm" / "versions" / "node"
     try:
@@ -84,7 +104,25 @@ def _resolve_tool(name: str) -> str | None:
     for v in versions:
         candidate = v / "bin" / name
         if candidate.is_file() and os.access(candidate, os.X_OK):
-            return str(candidate)
+            yield str(candidate)
+
+
+def _resolve_tool(name: str) -> str | None:
+    """Locate a WORKING ``name`` binary via PATH, then known locations.
+
+    Returns the first candidate that actually executes, or ``None``
+    when none does (the caller raises with an actionable message).
+
+    sensitivity_tier: 1
+    """
+    for candidate in _tool_candidates(name):
+        if _runs(candidate):
+            return candidate
+        logger.warning(
+            "%s found at %s but it does not run; trying next candidate",
+            name,
+            candidate,
+        )
     return None
 
 
