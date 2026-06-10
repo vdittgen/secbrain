@@ -50,7 +50,12 @@ from typing import Any
 
 from src.core.chromadb.engine import COLLECTION_NAMES
 from src.core.data_layer import DataLayer
-from src.core.db_helpers import safe_str, table_exists, utc_now_iso
+from src.core.db_helpers import (
+    safe_str,
+    table_exists,
+    utc_ago_iso,
+    utc_now_iso,
+)
 from src.core.kuzu.schema import ALL_NODE_TABLES, ALL_REL_TABLES
 from src.core.sqlite.column_tiers import get_column_tier
 
@@ -4768,6 +4773,12 @@ def cmd_goals_mine(layer: DataLayer) -> int:
     try:
         curator = _task_curator(layer)
         created = curator.mine_goals()
+        if created is None:
+            # Failed run, not an empty result — the UI must not render
+            # this as "no goals found".
+            raise RuntimeError(
+                "goal mining failed — the model call did not complete",
+            )
         print(_dataclass_list_json(created))
         return 0
     except Exception as exc:
@@ -7617,14 +7628,18 @@ def _maybe_curate_tasks(
 
     curator = TaskCurator(db_engine=layer.duckdb)
     recent: list[dict[str, Any]] = []
+    # ISO-T columns: bind a Python cutoff. SQLite's datetime('now', …)
+    # compares as a space-separated string and 'T' > ' ' admits the
+    # whole UTC day instead of the lookback window.
+    cutoff = utc_ago_iso(minutes=int(lookback_minutes))
     for table in target_tables:
         try:
             rows = layer.duckdb.query(
                 "SELECT id, source, sender, content, timestamp "
                 f"FROM {table} "  # noqa: S608
-                "WHERE timestamp >= datetime('now', ?) "
+                "WHERE timestamp >= ? "
                 "ORDER BY timestamp DESC LIMIT 50",
-                [f"-{int(lookback_minutes)} minutes"],
+                [cutoff],
             )
         except Exception:  # noqa: BLE001
             continue

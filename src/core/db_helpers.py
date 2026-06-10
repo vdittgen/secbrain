@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -27,6 +27,25 @@ def utc_now_iso() -> str:
     sensitivity_tier: 1
     """
     return datetime.now(tz=timezone.utc).isoformat()
+
+
+def utc_ago_iso(
+    *, days: int = 0, hours: int = 0, minutes: int = 0,
+) -> str:
+    """Return a UTC timestamp ``days/hours/minutes`` ago as ISO 8601 text.
+
+    Use this (as a bind parameter) for time-window predicates over
+    ISO-8601 columns. Comparing them against SQLite's
+    ``datetime('now', '-N minutes')`` is a string comparison against a
+    space-separated timestamp, and since ``'T' > ' '`` every same-day
+    row passes — the "window" silently becomes the whole UTC day.
+
+    sensitivity_tier: 1
+    """
+    cutoff = datetime.now(tz=timezone.utc) - timedelta(
+        days=days, hours=hours, minutes=minutes,
+    )
+    return cutoff.isoformat()
 
 
 def make_hash_id(*parts: str) -> str:

@@ -24,6 +24,7 @@ from src.agents.core.output_types import (
 )
 from src.agents.tasks import TaskCurator
 from src.agents.tasks.persistence import find_topic_id_by_name
+from src.core.db_helpers import utc_now_iso
 from src.core.sqlite.engine import DatabaseEngine
 
 
@@ -222,6 +223,81 @@ def test_mine_goals_dedups_and_writes_linked_topic(
         "SELECT linked_goal_id FROM _topics WHERE id = 't1'",
     )
     assert rows and rows[0]["linked_goal_id"] == new_goal.id
+
+
+def test_mine_goals_returns_none_when_extractor_fails(
+    monkeypatch, curator: TaskCurator,
+) -> None:
+    """Failed extraction must be distinguishable from an empty result —
+    callers (proactive pillar, CLI) must not record a failed run as
+    'no goals found'."""
+    monkeypatch.setattr(
+        "src.agents.goal_extractor.agent.GoalExtractorAgent",
+        MagicMock(return_value=MagicMock(extract=MagicMock(return_value=None))),
+    )
+    monkeypatch.setattr(curator, "_fetch_recent_messages", lambda n: [{"id": "m1"}])
+    monkeypatch.setattr(curator, "_fetch_recent_notes", lambda n: [])
+    monkeypatch.setattr(curator, "_fetch_recent_facts", lambda n: [])
+    monkeypatch.setattr(curator, "_fetch_recent_chat_excerpts", lambda n: [])
+    assert curator.mine_goals() is None
+
+
+def test_fetch_recent_messages_filters_noise_and_inactive_groups(
+    curator: TaskCurator, db: DatabaseEngine,
+) -> None:
+    """Evidence quality gate: placeholder stubs and spectator-group
+    chatter must never reach the extractor prompt; direct messages,
+    own messages, and active-group messages must."""
+    db.execute(
+        """CREATE TABLE IF NOT EXISTS raw_messages (
+            id VARCHAR PRIMARY KEY, source VARCHAR, sender VARCHAR,
+            recipient VARCHAR, content TEXT, timestamp TEXT,
+            is_from_me INTEGER DEFAULT 0, chat_name TEXT,
+            is_group INTEGER DEFAULT 0
+        )""",
+    )
+    now = utc_now_iso()
+    rows = [
+        # (id, content, is_group, is_from_me, chat_name)
+        ("direct", "can you review the lease tomorrow?", 0, 0, None),
+        ("stub", "[audio]", 0, 0, None),
+        ("ctx-stub", "[messageContextInfo]", 1, 1, "Family"),
+        ("spectator", "lineup for saturday", 1, 0, "Futebol"),
+        ("mine-in-group", "I'll bring the cake", 1, 1, "Family"),
+        ("active-group", "the party is at 7pm", 1, 0, "Family"),
+        ("blank", "   ", 0, 0, None),
+    ]
+    for rid, content, grp, mine, chat in rows:
+        db.execute(
+            "INSERT INTO raw_messages (id, source, sender, recipient, "
+            "content, timestamp, is_from_me, chat_name, is_group) "
+            "VALUES (?, 'whatsapp', 's', 'r', ?, ?, ?, ?, ?)",
+            [rid, content, now, mine, chat, grp],
+        )
+
+    got = {r["id"] for r in curator._fetch_recent_messages(50)}
+    # "Family" is active (user sent a message there); "Futebol" is
+    # spectator-only. Bracketed stubs and blank rows never qualify.
+    assert got == {"direct", "mine-in-group", "active-group"}
+
+
+def test_fetch_recent_chat_excerpts_reads_query_log(
+    curator: TaskCurator, db: DatabaseEngine,
+) -> None:
+    db.execute(
+        """CREATE TABLE IF NOT EXISTS _query_log (
+            id VARCHAR PRIMARY KEY, question VARCHAR NOT NULL,
+            asked_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )""",
+    )
+    db.execute(
+        "INSERT INTO _query_log (id, question) VALUES "
+        "('q1', 'how do I staff the clinic by Q3?')",
+    )
+    excerpts = curator._fetch_recent_chat_excerpts(10)
+    assert len(excerpts) == 1
+    assert "q1" in excerpts[0]
+    assert "staff the clinic" in excerpts[0]
 
 
 def test_regenerate_habits_anchors_to_goal_and_drops_user_habits(

@@ -55,7 +55,7 @@ from src.agents.tasks.persistence import (
     update_task_fields,
     upsert_schedule,
 )
-from src.core.db_helpers import make_hash_id, utc_now_iso
+from src.core.db_helpers import make_hash_id, utc_ago_iso, utc_now_iso
 
 logger = logging.getLogger(__name__)
 
@@ -366,12 +366,16 @@ class TaskCurator:
         message_limit: int = 200,
         note_limit: int = 50,
         fact_limit: int = 50,
-    ) -> list[Goal]:
+        chat_limit: int = 20,
+    ) -> list[Goal] | None:
         """Run goal_extractor over recent evidence; upsert new goals.
 
         Existing active goals matching ``(title, category)`` get
         ``last_confirmed_at`` bumped instead of duplicated. Returns the
-        list of *new* goals inserted this pass.
+        list of *new* goals inserted this pass, an empty list when the
+        evidence legitimately yields nothing, or ``None`` when the
+        extractor itself failed (model error, provider down) — callers
+        must not treat a failed run as "no goals found".
 
         sensitivity_tier: 2
         """
@@ -379,6 +383,7 @@ class TaskCurator:
             messages = self._fetch_recent_messages(message_limit)
             notes = self._fetch_recent_notes(note_limit)
             facts = self._fetch_recent_facts(fact_limit)
+            chat_excerpts = self._fetch_recent_chat_excerpts(chat_limit)
             known_topics = topics_for_prompt(self._db)
         except Exception:  # noqa: BLE001
             logger.warning("Goal mining evidence fetch failed", exc_info=True)
@@ -391,13 +396,15 @@ class TaskCurator:
                 messages=messages,
                 notes=notes,
                 facts=facts,
+                chat_excerpts=chat_excerpts,
                 known_topics=known_topics,
             )
         except Exception:  # noqa: BLE001
             logger.warning("GoalExtractorAgent failed", exc_info=True)
-            return []
+            return None
         if batch is None:
-            return []
+            logger.warning("Goal extraction did not complete (model error)")
+            return None
 
         created: list[Goal] = []
         for draft in batch.goals:
@@ -679,18 +686,72 @@ class TaskCurator:
     def _fetch_recent_messages(
         self, limit: int,
     ) -> list[dict[str, Any]]:
-        """sensitivity_tier: 3"""
+        """Recent messages worth mining, newest first.
+
+        Filters the raw stream down to signal before it ever reaches a
+        prompt budget (unfiltered, the newest rows are dominated by
+        group chatter and bridge media stubs):
+
+        - drops bridge placeholder stubs (``[audio]``, ``[image]``,
+          ``[messageContextInfo]`` …) — structural artifacts of the
+          WhatsApp bridge, not content;
+        - keeps direct messages and anything the user authored;
+        - keeps group messages only from groups the user actively
+          participates in (sent at least one message in the past
+          month) — other groups are spectator noise.
+
+        sensitivity_tier: 3
+        """
         try:
             rows = self._db.query(
                 "SELECT id, source, sender, content, timestamp "
                 "FROM raw_messages "
-                "WHERE timestamp >= datetime('now', '-30 days') "
+                "WHERE timestamp >= ? "
+                "  AND TRIM(content) != '' "
+                "  AND content NOT LIKE '[%]' "
+                "  AND ( "
+                "    COALESCE(is_group, 0) = 0 "
+                "    OR COALESCE(is_from_me, 0) = 1 "
+                "    OR chat_name IN ( "
+                "      SELECT DISTINCT chat_name FROM raw_messages "
+                "      WHERE COALESCE(is_group, 0) = 1 "
+                "        AND COALESCE(is_from_me, 0) = 1 "
+                "        AND chat_name IS NOT NULL "
+                "        AND timestamp >= ? "
+                "    ) "
+                "  ) "
                 "ORDER BY timestamp DESC "
                 f"LIMIT {int(limit)}",
+                [utc_ago_iso(days=30), utc_ago_iso(days=30)],
             )
         except Exception:  # noqa: BLE001
             return []
         return [dict(r) for r in rows]
+
+    def _fetch_recent_chat_excerpts(self, limit: int) -> list[str]:
+        """Recent questions the user asked the Brain, oldest first.
+
+        What the user asks about is direct evidence of what they care
+        about; ``_query_log`` records every ``ask``/``ask-stream``.
+
+        sensitivity_tier: 3
+        """
+        try:
+            # asked_at is CURRENT_TIMESTAMP (space-separated UTC), so
+            # SQLite's own datetime() is the format-matched comparison
+            # here — unlike the ISO-T raw_* columns above.
+            rows = self._db.query(
+                "SELECT id, question FROM _query_log "
+                "WHERE asked_at >= datetime('now', '-30 days') "
+                "ORDER BY asked_at DESC "
+                f"LIMIT {int(limit)}",
+            )
+        except Exception:  # noqa: BLE001
+            return []
+        return [
+            f"[{r['id']}] user asked: {r['question']}"
+            for r in reversed(list(rows))
+        ]
 
     def _fetch_recent_notes(self, limit: int) -> list[dict[str, Any]]:
         """sensitivity_tier: 2"""

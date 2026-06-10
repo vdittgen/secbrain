@@ -10,6 +10,7 @@ from src.core.db_helpers import (
     make_hash_id,
     safe_str,
     table_exists,
+    utc_ago_iso,
     utc_now_iso,
 )
 
@@ -163,3 +164,23 @@ class TestEnsureTables:
         db = MagicMock()
         ensure_tables(db, [])
         db.execute.assert_not_called()
+
+
+# ------------------------------------------------------------------
+# utc_ago_iso
+# ------------------------------------------------------------------
+
+
+class TestUtcAgoIso:
+    def test_compares_correctly_against_iso_t_timestamps(self) -> None:
+        """The cutoff must be format-identical to utc_now_iso so plain
+        string comparison (what SQLite does) orders correctly — the
+        whole point of the helper vs datetime('now', ...)."""
+        now = utc_now_iso()
+        one_hour = utc_ago_iso(hours=1)
+        two_hours = utc_ago_iso(hours=2)
+        assert two_hours < one_hour < now
+        assert "T" in one_hour  # ISO-T form, not SQLite's space form
+
+    def test_units_combine(self) -> None:
+        assert utc_ago_iso(days=1) < utc_ago_iso(hours=23, minutes=59)

@@ -801,6 +801,35 @@ class TestEvaluateAll:
         result = proactive.evaluate_all()
         assert isinstance(result, ProactiveResult)
 
+    def test_failed_goal_mining_does_not_store_fingerprint(
+        self,
+        proactive: ProactiveIntelligence,
+        tmp_db: DatabaseEngine,
+        monkeypatch,
+    ) -> None:
+        """A failed cycle must not mark the data state as evaluated —
+        otherwise (e.g. with the provider down) later cycles skip
+        re-evaluation until unrelated new data changes the hash, and
+        goals are never re-mined."""
+        _seed_messages(tmp_db)
+        calls: list[int] = []
+
+        def mine_goals_flaky(self, **kwargs):  # noqa: ANN001, ANN003
+            calls.append(1)
+            # First cycle: extractor failure (None). Then: empty result.
+            return None if len(calls) == 1 else []
+
+        monkeypatch.setattr(
+            "src.agents.tasks.TaskCurator.mine_goals", mine_goals_flaky,
+        )
+        proactive.evaluate_all()
+        assert proactive._get_stored_fingerprint() is None
+
+        # Mining recovers → the SAME data state is re-evaluated and the
+        # fingerprint is stored this time.
+        proactive.evaluate_all()
+        assert proactive._get_stored_fingerprint() is not None
+
 
 # ================================================================
 # Test: Data class serialization

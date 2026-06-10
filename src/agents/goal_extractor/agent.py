@@ -58,11 +58,18 @@ For each goal return a GoalDraft with:
 - ``why`` one short sentence the user could read back and recognise \
 ("so I can finish my PhD"). NEVER invent a *why* — leave it as an \
 empty string if the evidence doesn't support one.
-- ``source_kind`` one of "message" | "note" | "fact" | "chat"
+- ``source_kind`` one of "message" | "note" | "fact" | "chat" | \
+"topic"
 - ``source_ref`` the evidence id you read it from (message id, note \
-id, fact id, or chat session id)
+id, fact id, chat session id, or topic id)
 - ``linked_topic_hint`` a topic name from the supplied list that \
 this goal subsumes, or null. Pick at most one.
+
+The supplied topics are evidence too: when a topic clearly reflects \
+an ongoing commitment of the user's own (high importance, recurring, \
+user-driven — not just something a contact mentioned), you may mine \
+a goal from it directly with ``source_kind`` "topic" and the topic's \
+id as ``source_ref`` (also set ``linked_topic_hint`` to its name).
 
 Rules:
 - Emit at most 8 goals. Quality over quantity.
@@ -166,7 +173,7 @@ class GoalExtractorAgent(SBAgent[GoalExtractorDeps | str, GoalBatch]):
             f"{facts_json}\n\n"
             "Chat excerpts:\n"
             f"{chat_block}\n\n"
-            "Known topics you may link to (JSON):\n"
+            "Known topics (JSON) — evidence and link targets:\n"
             f"{topics_json}\n\n"
             "Return up to 8 GoalDraft entries grounded in this evidence."
         )
@@ -187,7 +194,7 @@ class GoalExtractorAgent(SBAgent[GoalExtractorDeps | str, GoalBatch]):
 
         sensitivity_tier: 2
         """
-        if not any([messages, notes, facts, chat_excerpts]):
+        if not any([messages, notes, facts, chat_excerpts, known_topics]):
             return GoalBatch(goals=[])
         deps = GoalExtractorDeps(
             messages=tuple(messages or []),
