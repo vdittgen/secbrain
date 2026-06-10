@@ -15,6 +15,7 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
+from src.extensions.bridges.whatsapp import client as client_module
 from src.extensions.bridges.whatsapp.client import (
     WhatsAppClient,
     WhatsAppClientError,
@@ -253,6 +254,10 @@ class TestConnect:
             "src.extensions.bridges.whatsapp.client.shutil.which",
             lambda _name: None,
         )
+        # Neutralise the well-known-location fallback so the machine's
+        # real node install can't satisfy the lookup.
+        monkeypatch.setattr(client_module, "_TOOL_FALLBACK_DIRS", ())
+        monkeypatch.setattr(client_module.Path, "home", lambda: tmp_path)
 
         client = WhatsAppClient(auth_dir=tmp_path)
         monkeypatch.setattr(client, "_ensure_npm_installed", lambda: None)
@@ -645,6 +650,10 @@ class TestNpmInstall:
             "src.extensions.bridges.whatsapp.client.shutil.which",
             lambda _name: None,
         )
+        # Neutralise the well-known-location fallback so the machine's
+        # real npm install can't satisfy the lookup.
+        monkeypatch.setattr(wc, "_TOOL_FALLBACK_DIRS", ())
+        monkeypatch.setattr(wc.Path, "home", lambda: tmp_path)
 
         client = WhatsAppClient(auth_dir=tmp_path)
         with pytest.raises(WhatsAppClientError, match="npm not found"):
@@ -678,3 +687,78 @@ class TestIsConnected:
         client._proc = MagicMock()
         client._connected.set()
         assert client.is_connected is True
+
+
+# ================================================================
+# _resolve_tool — node/npm discovery for GUI-launched apps
+# ================================================================
+
+
+class TestResolveTool:
+    """PATH lookup first, then well-known install locations.
+
+    A Finder-launched app gets launchd's minimal GUI PATH, so the
+    fallback is what keeps the listener alive on machines where Node
+    lives in Homebrew or a version manager."""
+
+    def test_prefers_path_lookup(self, monkeypatch) -> None:
+        monkeypatch.setattr(
+            client_module.shutil, "which", lambda name: "/from/path/node",
+        )
+        assert client_module._resolve_tool("node") == "/from/path/node"
+
+    def test_falls_back_to_known_dirs(self, tmp_path, monkeypatch) -> None:
+        monkeypatch.setattr(client_module.shutil, "which", lambda name: None)
+        fake_bin = tmp_path / "homebrew-bin"
+        fake_bin.mkdir()
+        node = fake_bin / "node"
+        node.write_text("#!/bin/sh\n")
+        node.chmod(0o755)
+        monkeypatch.setattr(
+            client_module, "_TOOL_FALLBACK_DIRS", (fake_bin,),
+        )
+        assert client_module._resolve_tool("node") == str(node)
+
+    def test_skips_non_executable_candidates(
+        self, tmp_path, monkeypatch,
+    ) -> None:
+        monkeypatch.setattr(client_module.shutil, "which", lambda name: None)
+        fake_bin = tmp_path / "bin"
+        fake_bin.mkdir()
+        (fake_bin / "node").write_text("not executable")
+        (fake_bin / "node").chmod(0o644)
+        monkeypatch.setattr(
+            client_module, "_TOOL_FALLBACK_DIRS", (fake_bin,),
+        )
+        monkeypatch.setattr(client_module.Path, "home", lambda: tmp_path)
+        assert client_module._resolve_tool("node") is None
+
+    def test_nvm_picks_newest_version_numerically(
+        self, tmp_path, monkeypatch,
+    ) -> None:
+        monkeypatch.setattr(client_module.shutil, "which", lambda name: None)
+        monkeypatch.setattr(client_module, "_TOOL_FALLBACK_DIRS", ())
+        monkeypatch.setattr(client_module.Path, "home", lambda: tmp_path)
+        for version in ("v9.11.2", "v20.11.0"):
+            bin_dir = tmp_path / ".nvm" / "versions" / "node" / version / "bin"
+            bin_dir.mkdir(parents=True)
+            node = bin_dir / "node"
+            node.write_text("#!/bin/sh\n")
+            node.chmod(0o755)
+        resolved = client_module._resolve_tool("node")
+        # v20 must win despite 'v9' sorting later lexicographically.
+        assert resolved is not None
+        assert "v20.11.0" in resolved
+
+    def test_returns_none_when_nowhere(self, tmp_path, monkeypatch) -> None:
+        monkeypatch.setattr(client_module.shutil, "which", lambda name: None)
+        monkeypatch.setattr(client_module, "_TOOL_FALLBACK_DIRS", ())
+        monkeypatch.setattr(client_module.Path, "home", lambda: tmp_path)
+        assert client_module._resolve_tool("node") is None
+
+
+def test_version_key_orders_numerically() -> None:
+    key = client_module._version_key
+    assert key("v20.11.0") > key("v9.11.2")
+    assert key("v20.11.0") > key("v20.9.9")
+    assert key("vgarbage") == (0,)
