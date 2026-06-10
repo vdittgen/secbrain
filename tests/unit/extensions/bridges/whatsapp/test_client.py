@@ -179,6 +179,8 @@ class TestConnect:
             "src.extensions.bridges.whatsapp.client.shutil.which",
             lambda _name: "/usr/local/bin/node",
         )
+        # The stubbed path has no real binary; skip runnability probing.
+        monkeypatch.setattr(client_module, "_runs", lambda _c: True)
         monkeypatch.setattr(
             subprocess, "Popen", lambda *a, **kw: proc,
         )
@@ -206,6 +208,8 @@ class TestConnect:
             "src.extensions.bridges.whatsapp.client.shutil.which",
             lambda _name: "/usr/local/bin/node",
         )
+        # The stubbed path has no real binary; skip runnability probing.
+        monkeypatch.setattr(client_module, "_runs", lambda _c: True)
         monkeypatch.setattr(
             subprocess, "Popen", lambda *a, **kw: proc,
         )
@@ -236,6 +240,8 @@ class TestConnect:
             "src.extensions.bridges.whatsapp.client.shutil.which",
             lambda _name: "/usr/local/bin/node",
         )
+        # The stubbed path has no real binary; skip runnability probing.
+        monkeypatch.setattr(client_module, "_runs", lambda _c: True)
         monkeypatch.setattr(
             subprocess, "Popen", lambda *a, **kw: proc,
         )
@@ -308,6 +314,8 @@ class TestClose:
             "src.extensions.bridges.whatsapp.client.shutil.which",
             lambda _name: "/usr/local/bin/node",
         )
+        # The stubbed path has no real binary; skip runnability probing.
+        monkeypatch.setattr(client_module, "_runs", lambda _c: True)
         monkeypatch.setattr(
             subprocess, "Popen", lambda *a, **kw: proc,
         )
@@ -701,23 +709,56 @@ class TestResolveTool:
     fallback is what keeps the listener alive on machines where Node
     lives in Homebrew or a version manager."""
 
-    def test_prefers_path_lookup(self, monkeypatch) -> None:
+    @staticmethod
+    def _fake_tool(directory, name: str = "node", exit_code: int = 0):
+        directory.mkdir(parents=True, exist_ok=True)
+        tool = directory / name
+        tool.write_text(f"#!/bin/sh\nexit {exit_code}\n")
+        tool.chmod(0o755)
+        return tool
+
+    def test_prefers_path_lookup(self, tmp_path, monkeypatch) -> None:
+        path_node = self._fake_tool(tmp_path / "pathbin")
         monkeypatch.setattr(
-            client_module.shutil, "which", lambda name: "/from/path/node",
+            client_module.shutil, "which", lambda name: str(path_node),
         )
-        assert client_module._resolve_tool("node") == "/from/path/node"
+        assert client_module._resolve_tool("node") == str(path_node)
 
     def test_falls_back_to_known_dirs(self, tmp_path, monkeypatch) -> None:
         monkeypatch.setattr(client_module.shutil, "which", lambda name: None)
-        fake_bin = tmp_path / "homebrew-bin"
-        fake_bin.mkdir()
-        node = fake_bin / "node"
-        node.write_text("#!/bin/sh\n")
-        node.chmod(0o755)
+        node = self._fake_tool(tmp_path / "homebrew-bin")
         monkeypatch.setattr(
-            client_module, "_TOOL_FALLBACK_DIRS", (fake_bin,),
+            client_module, "_TOOL_FALLBACK_DIRS", (tmp_path / "homebrew-bin",),
         )
         assert client_module._resolve_tool("node") == str(node)
+
+    def test_skips_broken_binary_for_next_working_one(
+        self, tmp_path, monkeypatch,
+    ) -> None:
+        """A binary that exists but cannot execute (e.g. Homebrew node
+        linked against a since-upgraded icu4c — aborts at dyld load)
+        must be skipped in favour of the next working candidate."""
+        monkeypatch.setattr(client_module.shutil, "which", lambda name: None)
+        self._fake_tool(tmp_path / "broken-bin", exit_code=1)
+        working = self._fake_tool(tmp_path / "working-bin")
+        monkeypatch.setattr(
+            client_module,
+            "_TOOL_FALLBACK_DIRS",
+            (tmp_path / "broken-bin", tmp_path / "working-bin"),
+        )
+        monkeypatch.setattr(client_module.Path, "home", lambda: tmp_path)
+        assert client_module._resolve_tool("node") == str(working)
+
+    def test_returns_none_when_all_candidates_broken(
+        self, tmp_path, monkeypatch,
+    ) -> None:
+        monkeypatch.setattr(client_module.shutil, "which", lambda name: None)
+        self._fake_tool(tmp_path / "broken-bin", exit_code=134)  # SIGABRT-ish
+        monkeypatch.setattr(
+            client_module, "_TOOL_FALLBACK_DIRS", (tmp_path / "broken-bin",),
+        )
+        monkeypatch.setattr(client_module.Path, "home", lambda: tmp_path)
+        assert client_module._resolve_tool("node") is None
 
     def test_skips_non_executable_candidates(
         self, tmp_path, monkeypatch,
@@ -741,10 +782,7 @@ class TestResolveTool:
         monkeypatch.setattr(client_module.Path, "home", lambda: tmp_path)
         for version in ("v9.11.2", "v20.11.0"):
             bin_dir = tmp_path / ".nvm" / "versions" / "node" / version / "bin"
-            bin_dir.mkdir(parents=True)
-            node = bin_dir / "node"
-            node.write_text("#!/bin/sh\n")
-            node.chmod(0o755)
+            self._fake_tool(bin_dir)
         resolved = client_module._resolve_tool("node")
         # v20 must win despite 'v9' sorting later lexicographically.
         assert resolved is not None
