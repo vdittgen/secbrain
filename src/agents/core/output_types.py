@@ -669,7 +669,7 @@ class GoalDraft(AgentOutput):
     importance: int = Field(ge=1, le=10)
     why: str
     source_kind: Literal[
-        "message", "note", "fact", "chat",
+        "message", "note", "fact", "chat", "topic",
     ]
     source_ref: str
     # The proposer/extractor names a topic it thinks this goal subsumes;

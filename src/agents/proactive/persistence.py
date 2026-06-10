@@ -27,6 +27,7 @@ from src.core.db_helpers import (
     make_hash_id,
     safe_str,
     table_exists,
+    utc_ago_iso,
     utc_now_iso,
 )
 from src.core.sqlite.engine import DatabaseEngine
@@ -416,27 +417,32 @@ class ProactiveIntelligence:
         contexts: list[ContactContext] = []
         events: list[ActionableEvent] = []
         digest: list[TopicDigestEntry] = []
+        pillar_failed = False
 
         try:
             replies = self.evaluate_pending_replies(
                 on_sender_result=on_sender_result,
             )
         except Exception:
+            pillar_failed = True
             logger.warning("Pending replies evaluation failed", exc_info=True)
 
         try:
             contexts = self.evaluate_contact_contexts()
         except Exception:
+            pillar_failed = True
             logger.warning("Contact context evaluation failed", exc_info=True)
 
         try:
             events = self.evaluate_actionable_events()
         except Exception:
+            pillar_failed = True
             logger.warning("Actionable events evaluation failed", exc_info=True)
 
         try:
             digest = self.build_topic_digest()
         except Exception:
+            pillar_failed = True
             logger.warning("Topic digest build failed", exc_info=True)
 
         # Pillar 5: tasks + goals via the task_curator. Non-fatal —
@@ -444,12 +450,22 @@ class ProactiveIntelligence:
         try:
             self._run_task_curator_pillar()
         except Exception:
+            pillar_failed = True
             logger.warning(
                 "Task curator pillar failed", exc_info=True,
             )
 
-        # Save fingerprint after successful evaluation
-        self._store_fingerprint(current_fp)
+        # Save the fingerprint only when every pillar completed.
+        # Storing it after a failed cycle (e.g. provider down) would
+        # mark this data state as "evaluated" and skip re-evaluation
+        # until unrelated new data happens to change the fingerprint.
+        if pillar_failed:
+            logger.info(
+                "Fingerprint not stored — a pillar failed; the cycle "
+                "will re-run on the next tick",
+            )
+        else:
+            self._store_fingerprint(current_fp)
 
         return ProactiveResult(
             pending_replies=replies,
@@ -473,14 +489,21 @@ class ProactiveIntelligence:
         from src.agents.tasks import TaskCurator
 
         curator = TaskCurator(db_engine=self._db)
-        curator.mine_goals()
+        if curator.mine_goals() is None:
+            # Surface model/provider failure to evaluate_all so the
+            # fingerprint is not stored and the cycle retries.
+            raise RuntimeError("goal mining failed (model error)")
 
         try:
+            # ISO-T column: bind a Python cutoff. SQLite's
+            # datetime('now', ...) compares as a space-separated string
+            # and 'T' > ' ' admits the whole UTC day.
             rows = self._db.query(
                 "SELECT id, source, sender, content, timestamp "
                 "FROM raw_messages "
-                "WHERE timestamp >= datetime('now', '-6 hours') "
+                "WHERE timestamp >= ? "
                 "ORDER BY timestamp DESC LIMIT 80",
+                [utc_ago_iso(hours=6)],
             )
         except Exception:  # noqa: BLE001
             rows = []
