@@ -27,6 +27,67 @@ logger = logging.getLogger(__name__)
 _PACKAGE_DIR = Path(__file__).resolve().parent / "node"
 _CLIENT_SCRIPT = _PACKAGE_DIR / "client.js"
 
+# Well-known install dirs probed when the PATH lookup fails. An app
+# launched from Finder gets launchd's minimal GUI PATH
+# (/usr/bin:/bin:...), which never contains Homebrew or version-manager
+# installs — without the fallback the listener dies with "node not
+# found" on every tick even though Node is present on the machine.
+_TOOL_FALLBACK_DIRS: tuple[Path, ...] = (
+    Path("/opt/homebrew/bin"),  # Homebrew (Apple Silicon)
+    Path("/usr/local/bin"),  # Homebrew (Intel) / manual installs
+    Path.home() / ".asdf" / "shims",
+    Path.home() / ".volta" / "bin",
+)
+
+
+def _version_key(name: str) -> tuple[int, ...]:
+    """Numeric sort key for an nvm version dir name like ``v20.11.0``.
+
+    Lexicographic order would rank ``v9...`` above ``v20...``.
+
+    sensitivity_tier: 1
+    """
+    parts: list[int] = []
+    for part in name.lstrip("v").split("."):
+        try:
+            parts.append(int(part))
+        except ValueError:
+            parts.append(0)
+    return tuple(parts)
+
+
+def _resolve_tool(name: str) -> str | None:
+    """Locate the ``name`` binary via PATH, then well-known locations.
+
+    Returns the executable path, or ``None`` when it is nowhere to be
+    found (the caller raises with an actionable message).
+
+    sensitivity_tier: 1
+    """
+    found = shutil.which(name)
+    if found:
+        return found
+    for d in _TOOL_FALLBACK_DIRS:
+        candidate = d / name
+        if candidate.is_file() and os.access(candidate, os.X_OK):
+            return str(candidate)
+    # nvm keeps one dir per installed version; prefer the newest.
+    nvm_dir = Path.home() / ".nvm" / "versions" / "node"
+    try:
+        versions = sorted(
+            (p for p in nvm_dir.iterdir() if p.name.startswith("v")),
+            key=lambda p: _version_key(p.name),
+            reverse=True,
+        )
+    except OSError:
+        versions = []
+    for v in versions:
+        candidate = v / "bin" / name
+        if candidate.is_file() and os.access(candidate, os.X_OK):
+            return str(candidate)
+    return None
+
+
 # ---------------------------------------------------------------------------
 # Exceptions
 # ---------------------------------------------------------------------------
@@ -131,9 +192,12 @@ class WhatsAppClient:
 
         self._ensure_npm_installed()
 
-        node = shutil.which("node")
+        node = _resolve_tool("node")
         if node is None:
-            raise WhatsAppClientError("Node.js (node) not found in PATH")
+            raise WhatsAppClientError(
+                "Node.js (node) not found in PATH or common install "
+                "locations — install Node 20+ (e.g. `brew install node`)",
+            )
 
         cmd = [
             node,
@@ -432,10 +496,11 @@ class WhatsAppClient:
         if node_modules.exists():
             return
 
-        npm = shutil.which("npm")
+        npm = _resolve_tool("npm")
         if npm is None:
             raise WhatsAppClientError(
-                "npm not found in PATH — cannot install WhatsApp client dependencies",
+                "npm not found in PATH or common install locations — "
+                "cannot install WhatsApp client dependencies",
             )
 
         logger.info("Installing WhatsApp client dependencies...")
