@@ -13,12 +13,13 @@ from __future__ import annotations
 
 import json
 import re
-import sqlite3
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+from src.core.sqlite.engine import connect_with_pragmas
 
 DEFAULT_DB_PATH: Path = (
     Path.home() / ".arandu" / "data" / "arandu.sqlite3"
@@ -226,7 +227,7 @@ class UserAgentStore:
     def __init__(self, path: Path | None = None) -> None:
         self._path = path or DEFAULT_DB_PATH
         self._path.parent.mkdir(parents=True, exist_ok=True)
-        self._conn = sqlite3.connect(self._path, isolation_level=None)
+        self._conn = connect_with_pragmas(self._path)
         self._conn.execute(_SCHEMA)
         self._run_migrations()
 

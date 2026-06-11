@@ -807,6 +807,7 @@ class QueryEngine:
         t0 = _now_ms()
         entities: list[tuple[str, str]] = []
         graph_context: list[dict[str, Any]] = []
+        graph_degraded = False
         if plan.use_graph and self._kuzu is not None:
             vector_texts = [r["document"] for r in vector_results]
             entities = extract_entities(
@@ -814,7 +815,7 @@ class QueryEngine:
                 self._name_to_node_id,
             )
             if entities:
-                graph_context = self._graph_traverse(
+                graph_context, graph_degraded = self._graph_traverse(
                     entities, max_sensitivity_tier,
                 )
         timing["entity_extraction"] = _now_ms() - t0
@@ -834,6 +835,7 @@ class QueryEngine:
             effective_date=effective_date,
             timing=timing,
             routing_reasoning=plan.reasoning,
+            graph_degraded=graph_degraded,
         )
         timing["assembly"] = _now_ms() - t0
         timing["total"] = _now_ms() - total_start
@@ -934,6 +936,7 @@ class QueryEngine:
         effective_date: date,
         timing: dict[str, float],
         routing_reasoning: str = "",
+        graph_degraded: bool = False,
     ) -> QueryContext:
         """Assemble final QueryContext from retrieval results.
 
@@ -1006,6 +1009,12 @@ class QueryEngine:
             "routing_reasoning": routing_reasoning,
             "max_sensitivity_tier": max_sensitivity_tier,
             "reference_date": effective_date.isoformat(),
+            # True when a Kuzu traversal failed (e.g. lock contention
+            # during a pipeline reindex) — the answer was produced
+            # WITHOUT some or all graph context.  Consumers can surface
+            # a "graph context unavailable" hint instead of presenting
+            # a silently degraded answer as complete.
+            "graph_degraded": graph_degraded,
         }
 
         return QueryContext(
@@ -1167,15 +1176,21 @@ class QueryEngine:
         self,
         entities: list[tuple[str, str]],
         max_tier: int,
-    ) -> list[dict[str, Any]]:
+    ) -> tuple[list[dict[str, Any]], bool]:
         """1-hop and 2-hop Kuzu traversals for entities.
+
+        Returns ``(results, degraded)`` — *degraded* is True when any
+        traversal failed (typically Kuzu lock contention during a
+        pipeline reindex), so callers can surface that graph context is
+        missing instead of silently answering without it.
 
         sensitivity_tier: 3
         """
         if self._kuzu is None:
-            return []
+            return [], False
 
         results: list[dict[str, Any]] = []
+        degraded = False
 
         for entity_name, node_id in entities:
             if not node_id:
@@ -1202,6 +1217,7 @@ class QueryEngine:
                     row["source_entity"] = entity_name
                 results.extend(rows)
             except Exception:  # noqa: BLE001
+                degraded = True
                 logger.warning(
                     "1-hop out failed for %s", node_id,
                 )
@@ -1226,6 +1242,7 @@ class QueryEngine:
                     row["source_entity"] = entity_name
                 results.extend(rows)
             except Exception:  # noqa: BLE001
+                degraded = True
                 logger.warning(
                     "1-hop in failed for %s", node_id,
                 )
@@ -1255,11 +1272,12 @@ class QueryEngine:
                     row["source_entity"] = entity_name
                 results.extend(rows)
             except Exception:  # noqa: BLE001
+                degraded = True
                 logger.warning(
                     "2-hop failed for %s", node_id,
                 )
 
-        return results
+        return results, degraded
 
     # ----------------------------------------------------------
     # Conversion helpers

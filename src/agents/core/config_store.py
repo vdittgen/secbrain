@@ -30,6 +30,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from src.core.sqlite.engine import connect_with_pragmas
+
 logger = logging.getLogger(__name__)
 
 # When set, :func:`current_model_override` returns this proposed value
@@ -353,7 +355,7 @@ def current_model_override(agent_id: str) -> str | None:
         return None
     conn = None
     try:
-        conn = sqlite3.connect(DEFAULT_DB_PATH, isolation_level=None)
+        conn = connect_with_pragmas(DEFAULT_DB_PATH)
         cur = conn.execute(
             "SELECT model_override FROM agent_configs WHERE agent_id = ?",
             (agent_id,),

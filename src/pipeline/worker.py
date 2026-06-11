@@ -23,6 +23,7 @@ import os
 import signal
 import sys
 import threading
+import time
 from pathlib import Path
 from typing import Any
 
@@ -32,9 +33,20 @@ logger = logging.getLogger(__name__)
 # Pipeline lock file — prevents concurrent SQLite write contention.
 # The WhatsApp listener (and other long-running writers) check this file
 # before each write cycle and skip writes while the pipeline is active.
+#
+# Staleness protocol (mirrored in bridges/whatsapp/listener.py — keep in
+# sync): a live worker heartbeats the lock mtime on every progress event,
+# so the lock is stale when the mtime is older than
+# ``PIPELINE_LOCK_STALE_SECONDS`` AND the recorded PID is dead — the PID
+# check alone is not enough (macOS recycles PIDs quickly) and the mtime
+# alone is not enough (a slow-but-alive worker must keep its lock).
+# ``PIPELINE_LOCK_MAX_AGE_SECONDS`` is the hard cap past which the lock
+# is stolen even from a live PID (matches the Tauri-side auto-reset).
 # ---------------------------------------------------------------------------
 
 PIPELINE_LOCK_PATH = Path.home() / ".arandu" / "data" / ".pipeline_running"
+PIPELINE_LOCK_STALE_SECONDS = 900
+PIPELINE_LOCK_MAX_AGE_SECONDS = 3600
 
 
 def _is_pid_alive(pid: int) -> bool:
@@ -71,13 +83,42 @@ def _acquire_pipeline_lock() -> bool:
                 and existing_pid != os.getpid()
                 and _is_pid_alive(existing_pid)
             )
-            if is_other:
+            try:
+                age = time.time() - PIPELINE_LOCK_PATH.stat().st_mtime
+            except OSError:
+                age = 0.0
+            # Stale: no heartbeat for 15 min and the PID is dead (or the
+            # hard cap is exceeded — a dead worker's PID may have been
+            # recycled by an unrelated live process).
+            stale = age > PIPELINE_LOCK_STALE_SECONDS and (
+                not is_other or age > PIPELINE_LOCK_MAX_AGE_SECONDS
+            )
+            if stale:
+                PIPELINE_LOCK_PATH.unlink(missing_ok=True)
+                logger.info(
+                    "Removed stale pipeline lock (%.0fs old)", age,
+                )
+            elif is_other:
                 return False
         PIPELINE_LOCK_PATH.write_text(str(os.getpid()), encoding="utf-8")
         return True
     except OSError as exc:
         logger.warning("Could not create pipeline lock file: %s", exc)
         return True  # Proceed on lock-file errors
+
+
+def _heartbeat_pipeline_lock() -> None:
+    """Refresh the lock file mtime so other processes see us as alive.
+
+    Uses ``os.utime`` (not ``touch``) so a lock already released is NOT
+    recreated by a late heartbeat.
+
+    sensitivity_tier: 1
+    """
+    try:
+        os.utime(PIPELINE_LOCK_PATH)
+    except OSError:
+        pass
 
 
 def _release_pipeline_lock() -> None:
@@ -115,8 +156,13 @@ def _sigterm_handler(signum: int, frame: Any) -> None:  # noqa: ARG001
 def _emit_json(event: dict[str, Any]) -> None:
     """Write a single JSON line to stdout.
 
+    Doubles as the worker's liveness tick: every progress event
+    refreshes the pipeline lock mtime so other processes (listener,
+    future workers) don't mistake a slow run for a crashed one.
+
     sensitivity_tier: 1
     """
+    _heartbeat_pipeline_lock()
     print(json.dumps(event, default=str), flush=True)
 
 
@@ -208,17 +254,21 @@ def _reindex_kuzu(db: Any) -> tuple[str, str | None]:
         from src.core.kuzu.indexer import GraphIndexer
         from src.core.kuzu.schema import create_schema
 
-        kuzu = GraphEngine()
-        create_schema(kuzu)
+        # Context-manage the engine: the read-write handle holds Kuzu's
+        # exclusive cross-process lock, so release must be deterministic
+        # — leaving it to GC keeps read-only query handles (ask/chat)
+        # failing on retry for longer than necessary.
+        with GraphEngine() as kuzu:
+            create_schema(kuzu)
 
-        rows = kuzu.query("MATCH (n) RETURN count(n) AS cnt")
-        node_count = rows[0]["cnt"] if rows else 0
+            rows = kuzu.query("MATCH (n) RETURN count(n) AS cnt")
+            node_count = rows[0]["cnt"] if rows else 0
 
-        indexer = GraphIndexer(duckdb=db, kuzu=kuzu)
-        if node_count == 0:
-            counts = indexer.full_reindex()
-        else:
-            counts = indexer.incremental_index()
+            indexer = GraphIndexer(duckdb=db, kuzu=kuzu)
+            if node_count == 0:
+                counts = indexer.full_reindex()
+            else:
+                counts = indexer.incremental_index()
 
         _emit_json({
             "type": "graph_reindex_complete",

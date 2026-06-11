@@ -15,11 +15,12 @@ sensitivity_tier: 1
 from __future__ import annotations
 
 import logging
-import sqlite3
 import threading
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+
+from src.core.sqlite.engine import connect_with_pragmas
 
 logger = logging.getLogger(__name__)
 
@@ -62,8 +63,8 @@ class AgentBlockStore:
         self._path = path or DEFAULT_DB_PATH
         self._path.parent.mkdir(parents=True, exist_ok=True)
         self._lock = threading.Lock()
-        self._conn = sqlite3.connect(
-            self._path, isolation_level=None, check_same_thread=False,
+        self._conn = connect_with_pragmas(
+            self._path, check_same_thread=False,
         )
         self._conn.execute(_SCHEMA)
 

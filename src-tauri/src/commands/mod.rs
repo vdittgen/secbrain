@@ -132,6 +132,14 @@ pub const PIPELINE_HARD_TIMEOUT: std::time::Duration =
 const PIPELINE_KILL_GRACE: std::time::Duration =
     std::time::Duration::from_secs(5);
 
+/// Wall-clock budget for a single `ask` CLI invocation.
+///
+/// Normal answers take 5–30s; the worst case stacks a full SQLite
+/// busy_timeout queue (30s, pipeline writing) on top of offline-Ollama
+/// embedding retries (~30s).  Without a bound the UI freezes silently
+/// for as long as the subprocess blocks.
+const ASK_TIMEOUT_SECS: u64 = 120;
+
 /// Send SIGTERM then SIGKILL to *pid* with a brief grace period.
 ///
 /// No-op on the (rare) `None` pid case.  Errors from `kill(1)` are
@@ -160,10 +168,12 @@ async fn terminate_worker_pid(pid: Option<u32>) {
 }
 
 /// Reap any orphan pipeline worker still tracked in state, then clear
-/// the slot.  Called both from the `PIPELINE_MAX_AGE` auto-reset and
-/// from `trigger_pipeline_run_stream` as a defensive guard before
-/// spawning a new worker.
-async fn reap_orphan_worker(state: &AppState) {
+/// the slot.  Called from the `PIPELINE_MAX_AGE` auto-reset, from
+/// `trigger_pipeline_run_stream` as a defensive guard before spawning
+/// a new worker, and from the `ExitRequested` handler in `lib.rs` so a
+/// graceful app quit never strands a worker holding the SQLite write
+/// lock.
+pub(crate) async fn reap_orphan_worker(state: &AppState) {
     let pid = {
         let mut guard = state.pipeline_worker.lock().await;
         guard.take().and_then(|h| h.pid)
@@ -555,9 +565,14 @@ pub async fn ask_brain(
     state: State<'_, AppState>,
 ) -> Result<BrainResponse, String> {
     let session_id = ensure_active_session(&state).await?;
-    let output = call_python_cli(
+    // Bounded: an unbounded call freezes the UI silently when the CLI
+    // queues on the SQLite busy_timeout (pipeline writing) or retries
+    // embeddings against an offline Ollama. 120s covers the worst case
+    // (30s busy wait + 30s embedding retries + query time) with margin.
+    let output = call_python_cli_with_timeout(
         &["ask", &question, "--session-id", &session_id],
         &state.project_root,
+        ASK_TIMEOUT_SECS,
     )
     .await?;
     let response: BrainResponse = serde_json::from_str(&output)
@@ -576,7 +591,12 @@ pub async fn ask_brain_internal(
     question: String,
     state: State<'_, AppState>,
 ) -> Result<BrainResponse, String> {
-    let output = call_python_cli(&["ask", &question], &state.project_root).await?;
+    let output = call_python_cli_with_timeout(
+        &["ask", &question],
+        &state.project_root,
+        ASK_TIMEOUT_SECS,
+    )
+    .await?;
     serde_json::from_str(&output)
         .map_err(|e| format!("Failed to parse brain response: {e}"))
 }

@@ -45,7 +45,7 @@ class SyncStats:
     connector_id: str
     started_at: datetime
     completed_at: datetime | None = None
-    status: str = "running"  # "running" | "success" | "error"
+    status: str = "running"  # "running" | "success" | "error" | "skipped"
     rows_synced: int = 0
     error: str | None = None
     duration_seconds: float = 0.0
@@ -94,6 +94,12 @@ class SyncScheduler:
         self._lock = threading.Lock()
         self._sync_fn = sync_fn
         self._stopped = False
+        # Connectors with a sync currently running.  Guards against
+        # overlapping runs of the SAME connector (timer + retry timer,
+        # timer + run_now, re-schedule while a fire is mid-sync), which
+        # would race in the ingestion adapter and abort on UNIQUE
+        # constraint violations.
+        self._in_flight: set[str] = set()
 
     def schedule(
         self,
@@ -277,7 +283,12 @@ class SyncScheduler:
             if entry is None or self._stopped:
                 return
 
-            if stats.status == "success":
+            if stats.status == "skipped":
+                # Another run of this connector is still in flight —
+                # neither a success nor a failure; just keep the
+                # regular cadence.
+                self._schedule_next(entry)
+            elif stats.status == "success":
                 entry.consecutive_failures = 0
                 self._schedule_next(entry)
             else:
@@ -327,29 +338,44 @@ class SyncScheduler:
             started_at=now,
         )
 
-        try:
-            if self._sync_fn is not None:
-                stats = self._sync_fn(connector_id)
-            else:
-                stats.status = "success"
-                stats.completed_at = datetime.now(timezone.utc)
-        except Exception as exc:
-            stats.status = "error"
-            stats.error = str(exc)
-            stats.completed_at = datetime.now(timezone.utc)
-            logger.exception(
-                "Sync failed for %s: %s", connector_id, exc,
-            )
-
-        if stats.completed_at and stats.started_at:
-            stats.duration_seconds = (
-                stats.completed_at - stats.started_at
-            ).total_seconds()
-
         with self._lock:
-            entry = self._entries.get(connector_id)
-            if entry:
-                entry.last_sync = stats.completed_at or now
-                entry.last_stats = stats
+            if connector_id in self._in_flight:
+                stats.status = "skipped"
+                stats.completed_at = now
+                logger.info(
+                    "Sync already in flight for %s — skipping",
+                    connector_id,
+                )
+                return stats
+            self._in_flight.add(connector_id)
+
+        try:
+            try:
+                if self._sync_fn is not None:
+                    stats = self._sync_fn(connector_id)
+                else:
+                    stats.status = "success"
+                    stats.completed_at = datetime.now(timezone.utc)
+            except Exception as exc:
+                stats.status = "error"
+                stats.error = str(exc)
+                stats.completed_at = datetime.now(timezone.utc)
+                logger.exception(
+                    "Sync failed for %s: %s", connector_id, exc,
+                )
+
+            if stats.completed_at and stats.started_at:
+                stats.duration_seconds = (
+                    stats.completed_at - stats.started_at
+                ).total_seconds()
+
+            with self._lock:
+                entry = self._entries.get(connector_id)
+                if entry:
+                    entry.last_sync = stats.completed_at or now
+                    entry.last_stats = stats
+        finally:
+            with self._lock:
+                self._in_flight.discard(connector_id)
 
         return stats

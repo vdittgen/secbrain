@@ -81,6 +81,22 @@ def _is_process_running(
     return expected_cmd_substring in cmdline
 
 
+def _pipeline_pid_alive() -> bool:
+    """Return True if the PID recorded in the pipeline lock file is alive.
+
+    Used before stealing a stale-looking pipeline lock — a slow worker
+    that is still running must keep its lock (see staleness protocol in
+    ``src/pipeline/worker.py``).
+
+    sensitivity_tier: 1
+    """
+    try:
+        pid = int(_PIPELINE_LOCK_PATH.read_text(encoding="utf-8").strip())
+    except (OSError, ValueError):
+        return False
+    return _is_process_running(pid)
+
+
 def _write_json_atomic(path: Path, payload: dict[str, Any]) -> None:
     """Write JSON atomically to avoid partial state files."""
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -1511,19 +1527,28 @@ def run_whatsapp_listener(
 
                     # Skip writes while the pipeline is running to avoid
                     # SQLite write-lock contention (DDL needs exclusive lock).
-                    # Stale lock files (>15 min old) are ignored — the
-                    # pipeline worker likely crashed without cleanup.
+                    # Staleness protocol (mirrored from pipeline/worker.py —
+                    # keep in sync): the worker heartbeats the lock mtime on
+                    # every progress event, so the lock is stale only when
+                    # the mtime is old (>15 min) AND the recorded PID is
+                    # dead — never steal the lock from a live worker before
+                    # the 1h hard cap (matches the Tauri-side auto-reset).
                     pipeline_active = False
                     if _PIPELINE_LOCK_PATH.exists():
                         try:
                             age = time.time() - _PIPELINE_LOCK_PATH.stat().st_mtime
-                            pipeline_active = age < 900  # 15 min max
+                            pipeline_active = age < 900  # 15 min heartbeat window
                             if not pipeline_active:
-                                _PIPELINE_LOCK_PATH.unlink(missing_ok=True)
-                                logger.info(
-                                    "Removed stale pipeline lock (%.0fs old)",
-                                    age,
-                                )
+                                if _pipeline_pid_alive() and age < 3600:
+                                    # Slow-but-alive worker — keep skipping
+                                    # writes, leave its lock alone.
+                                    pipeline_active = True
+                                else:
+                                    _PIPELINE_LOCK_PATH.unlink(missing_ok=True)
+                                    logger.info(
+                                        "Removed stale pipeline lock (%.0fs old)",
+                                        age,
+                                    )
                         except OSError:
                             pass
                     if pipeline_active:

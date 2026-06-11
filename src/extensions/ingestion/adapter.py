@@ -1272,29 +1272,34 @@ class IngestionAdapter:
         # the bridge's ORDER BY decides which copy that is.
         records = _collapse_by_key(records, dedup_key)
 
-        # Build lookup of existing records
-        existing = self._build_existing_lookup(records, dedup_key)
-
-        new_records: list[dict[str, Any]] = []
-        update_records: list[dict[str, Any]] = []
-        unchanged = 0
-
-        for record in records:
-            key_tuple = tuple(
-                str(record.get(k, "")) for k in dedup_key
-            )
-            existing_row = existing.get(key_tuple)
-
-            if existing_row is None:
-                new_records.append(record)
-            elif self._record_has_changed(record, existing_row):
-                update_records.append(record)
-            else:
-                unchanged += 1
-
-        # Execute all DML in a transaction
-        self._db.execute("BEGIN TRANSACTION")
+        # Take the write lock up front (IMMEDIATE queues on busy_timeout)
+        # so the existing-rows lookup below sees a snapshot no concurrent
+        # writer can invalidate before our INSERTs run.  With the lookup
+        # outside the transaction, a row inserted in the gap by another
+        # connector or the listener hit the UNIQUE constraint and rolled
+        # back the whole batch.
+        self._db.execute("BEGIN IMMEDIATE TRANSACTION")
         try:
+            # Build lookup of existing records
+            existing = self._build_existing_lookup(records, dedup_key)
+
+            new_records: list[dict[str, Any]] = []
+            update_records: list[dict[str, Any]] = []
+            unchanged = 0
+
+            for record in records:
+                key_tuple = tuple(
+                    str(record.get(k, "")) for k in dedup_key
+                )
+                existing_row = existing.get(key_tuple)
+
+                if existing_row is None:
+                    new_records.append(record)
+                elif self._record_has_changed(record, existing_row):
+                    update_records.append(record)
+                else:
+                    unchanged += 1
+
             if new_records:
                 self._insert_batch(new_records)
             for record in update_records:
