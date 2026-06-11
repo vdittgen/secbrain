@@ -830,6 +830,47 @@ class TestEvaluateAll:
         proactive.evaluate_all()
         assert proactive._get_stored_fingerprint() is not None
 
+    def test_failed_goal_mining_does_not_starve_task_proposing(
+        self,
+        proactive: ProactiveIntelligence,
+        tmp_db: DatabaseEngine,
+        monkeypatch,
+    ) -> None:
+        """A transient goal-mining failure (provider blip, firewall
+        false-positive on one evidence batch) must not block the rest
+        of the pillar — observed live: one rejected goal prompt starved
+        task proposing for the whole cycle."""
+        from src.core.db_helpers import utc_ago_iso
+
+        _seed_messages(tmp_db)
+        # The pillar's window predicate compares ISO-T strings (the
+        # production format); seed one in-window row in that format.
+        tmp_db.execute(
+            "INSERT INTO raw_messages (id, source, sender, content, "
+            "timestamp) VALUES ('fresh1', 'whatsapp', 's', "
+            "'send the contract tomorrow', ?)",
+            [utc_ago_iso(minutes=30)],
+        )
+        called = {"propose": False}
+        monkeypatch.setattr(
+            "src.agents.tasks.TaskCurator.mine_goals",
+            lambda self, **kwargs: None,
+        )
+
+        def fake_propose(self, msgs):  # noqa: ANN001
+            called["propose"] = True
+            return []
+
+        monkeypatch.setattr(
+            "src.agents.tasks.TaskCurator.propose_from_messages",
+            fake_propose,
+        )
+        proactive.evaluate_all()
+        # The proposer still ran, and the failure still blocked the
+        # fingerprint so the cycle retries.
+        assert called["propose"] is True
+        assert proactive._get_stored_fingerprint() is None
+
 
 # ================================================================
 # Test: Data class serialization
