@@ -13,8 +13,8 @@ import { lazy, Suspense, useMemo } from "react";
 import { AlertCircle, Loader2 } from "lucide-react";
 import type { ArtifactRendererProps } from "./registry";
 
-const VegaEmbed = lazy(() =>
-  import("react-vega").then((m) => ({ default: m.VegaEmbed })),
+const VegaLite = lazy(() =>
+  import("react-vega").then((m) => ({ default: m.VegaLite })),
 );
 
 function parseSpec(data: unknown): { spec: object | null; error?: string } {
@@ -81,12 +81,9 @@ export function ChartArtifact({ part }: ArtifactRendererProps) {
       }
     >
       <div className="w-full">
-        <VegaEmbed
+        <VegaLite
           spec={responsiveSpec as never}
-          options={{
-            mode: "vega-lite",
-            actions: { export: true, source: false, compiled: false, editor: false },
-          }}
+          actions={{ export: true, source: false, compiled: false, editor: false }}
         />
       </div>
     </Suspense>
