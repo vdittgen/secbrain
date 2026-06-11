@@ -216,35 +216,40 @@ class ChatStore:
 
         message_id = str(uuid.uuid4())
         now = _now_iso()
-        self._db.execute(
-            "INSERT INTO _chat_messages "
-            "(id, session_id, role, content, timestamp, parts_json, "
-            "sources_json, latency_ms, model, thinking, query_id) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            [
-                message_id,
-                session_id,
-                role,
-                content,
-                now,
-                json.dumps(parts) if parts else None,
-                json.dumps(sources) if sources else None,
-                latency_ms,
-                model,
-                thinking,
-                query_id,
-            ],
-        )
+        # Single transaction: the message INSERT, the title UPDATE and the
+        # message_count bump must land together or not at all — a crash
+        # between auto-committed statements would desync the session row
+        # from the actual messages.
+        with self._db.transaction():
+            self._db.execute(
+                "INSERT INTO _chat_messages "
+                "(id, session_id, role, content, timestamp, parts_json, "
+                "sources_json, latency_ms, model, thinking, query_id) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                [
+                    message_id,
+                    session_id,
+                    role,
+                    content,
+                    now,
+                    json.dumps(parts) if parts else None,
+                    json.dumps(sources) if sources else None,
+                    latency_ms,
+                    model,
+                    thinking,
+                    query_id,
+                ],
+            )
 
-        if role == "user":
-            self._maybe_set_title(session_id, content)
+            if role == "user":
+                self._maybe_set_title(session_id, content)
 
-        self._db.execute(
-            "UPDATE _chat_sessions "
-            "SET updated_at = ?, message_count = message_count + 1 "
-            "WHERE id = ?",
-            [now, session_id],
-        )
+            self._db.execute(
+                "UPDATE _chat_sessions "
+                "SET updated_at = ?, message_count = message_count + 1 "
+                "WHERE id = ?",
+                [now, session_id],
+            )
         return message_id
 
     def _maybe_set_title(self, session_id: str, first_user_text: str) -> None:

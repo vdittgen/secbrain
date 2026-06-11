@@ -18,7 +18,6 @@ from __future__ import annotations
 
 import json
 import logging
-import sqlite3
 import sys
 from dataclasses import asdict, is_dataclass
 from pathlib import Path
@@ -94,14 +93,17 @@ def _config_store() -> Any:
     that hasn't run a pipeline migration yet.
     """
     from src.agents.core.config_store import AgentConfigStore
+    from src.core.sqlite.engine import connect_with_pragmas
 
     path = _agents_db_path()
     path.parent.mkdir(parents=True, exist_ok=True)
-    # ``isolation_level=None`` puts the connection in autocommit mode —
-    # essential here because each CLI invocation opens a fresh
-    # connection that exits immediately after the handler returns;
-    # without autocommit the override write is rolled back.
-    conn = sqlite3.connect(path, isolation_level=None)
+    # ``connect_with_pragmas`` opens in autocommit mode — essential here
+    # because each CLI invocation opens a fresh connection that exits
+    # immediately after the handler returns; without autocommit the
+    # override write is rolled back.  It also applies the engine's WAL +
+    # busy_timeout pragmas so this connection queues on contention like
+    # every other writer instead of failing after the 5s default.
+    conn = connect_with_pragmas(path)
     store = AgentConfigStore(conn)
     store.initialize()
     return store

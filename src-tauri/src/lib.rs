@@ -538,6 +538,15 @@ pub fn run() {
                         sup.shutdown(Duration::from_secs(6)).await;
                     });
                 }
+                // Terminate any in-flight pipeline worker.  kill_on_drop
+                // only covers handle drops inside a live runtime; without
+                // this, quitting mid-run strands a Python worker holding
+                // the SQLite write lock until the next-launch orphan sweep.
+                if let Some(state) = app_handle.try_state::<commands::AppState>() {
+                    tauri::async_runtime::block_on(async {
+                        commands::reap_orphan_worker(state.inner()).await;
+                    });
+                }
             }
         });
 }

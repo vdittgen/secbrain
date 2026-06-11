@@ -17,7 +17,10 @@ from __future__ import annotations
 import json
 import logging
 import sqlite3
+import threading
 import time
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any
@@ -36,6 +39,32 @@ _PRAGMAS = [
     ("foreign_keys", "ON"),         # Enforce FK constraints
     ("cache_size", "-32000"),       # 32 MB page cache
 ]
+
+
+def connect_with_pragmas(
+    db_path: Path | str,
+    *,
+    check_same_thread: bool = True,
+) -> sqlite3.Connection:
+    """Open a raw ``sqlite3`` connection with the engine's pragmas applied.
+
+    For stores that hold their own connection instead of a full
+    ``DatabaseEngine`` (agent block store, run log, config stores).
+    Keeps every connection to the shared database on the same WAL +
+    ``busy_timeout`` discipline — a bare ``sqlite3.connect()`` gets the
+    5s default busy timeout instead of 30s and silently drifts from the
+    engine's configuration.
+
+    sensitivity_tier: N/A (infrastructure)
+    """
+    conn = sqlite3.connect(
+        str(db_path),
+        check_same_thread=check_same_thread,
+        isolation_level=None,
+    )
+    for pragma, value in _PRAGMAS:
+        conn.execute(f"PRAGMA {pragma} = {value}")
+    return conn
 
 
 # ------------------------------------------------------------------
@@ -77,6 +106,10 @@ class QueryCache:
         self._order: list[str] = []
         self._hits = 0
         self._misses = 0
+        # Guards _cache/_order/_hits/_misses: the engine is shared across
+        # threads (query_engine runs plan + vector search in a
+        # ThreadPoolExecutor) and dict/list mutation is not atomic.
+        self._lock = threading.Lock()
 
     def _make_key(
         self,
@@ -104,23 +137,24 @@ class QueryCache:
         sensitivity_tier: N/A
         """
         key = self._make_key(sql, parameters)
-        entry = self._cache.get(key)
-        if entry is None:
-            self._misses += 1
-            return None
+        with self._lock:
+            entry = self._cache.get(key)
+            if entry is None:
+                self._misses += 1
+                return None
 
-        ts, result = entry
-        if (time.monotonic() - ts) > self._ttl:
-            del self._cache[key]
+            ts, result = entry
+            if (time.monotonic() - ts) > self._ttl:
+                del self._cache[key]
+                self._order.remove(key)
+                self._misses += 1
+                return None
+
+            # Move to end (most recently used)
             self._order.remove(key)
-            self._misses += 1
-            return None
-
-        # Move to end (most recently used)
-        self._order.remove(key)
-        self._order.append(key)
-        self._hits += 1
-        return result
+            self._order.append(key)
+            self._hits += 1
+            return result
 
     def put(
         self,
@@ -134,36 +168,39 @@ class QueryCache:
         """
         key = self._make_key(sql, parameters)
 
-        if key in self._cache:
-            self._order.remove(key)
-        elif len(self._cache) >= self._maxsize:
-            oldest = self._order.pop(0)
-            del self._cache[oldest]
+        with self._lock:
+            if key in self._cache:
+                self._order.remove(key)
+            elif len(self._cache) >= self._maxsize:
+                oldest = self._order.pop(0)
+                del self._cache[oldest]
 
-        self._cache[key] = (time.monotonic(), result)
-        self._order.append(key)
+            self._cache[key] = (time.monotonic(), result)
+            self._order.append(key)
 
     def invalidate(self) -> None:
         """Clear all cached entries.
 
         sensitivity_tier: N/A
         """
-        self._cache.clear()
-        self._order.clear()
+        with self._lock:
+            self._cache.clear()
+            self._order.clear()
 
     def stats(self) -> dict[str, Any]:
         """Return cache performance statistics.
 
         sensitivity_tier: N/A
         """
-        total = self._hits + self._misses
-        return {
-            "hits": self._hits,
-            "misses": self._misses,
-            "size": len(self._cache),
-            "maxsize": self._maxsize,
-            "hit_rate": self._hits / total if total > 0 else 0.0,
-        }
+        with self._lock:
+            total = self._hits + self._misses
+            return {
+                "hits": self._hits,
+                "misses": self._misses,
+                "size": len(self._cache),
+                "maxsize": self._maxsize,
+                "hit_rate": self._hits / total if total > 0 else 0.0,
+            }
 
 
 class DatabaseEngine:
@@ -204,14 +241,10 @@ class DatabaseEngine:
 
         sensitivity_tier: N/A (infrastructure)
         """
-        conn = sqlite3.connect(
-            str(self._db_path),
+        conn = connect_with_pragmas(
+            self._db_path,
             check_same_thread=False,
-            isolation_level=None,
         )
-
-        for pragma, value in _PRAGMAS:
-            conn.execute(f"PRAGMA {pragma} = {value}")
 
         logger.info(
             "SQLite connected: %s (WAL mode)",
@@ -311,6 +344,30 @@ class DatabaseEngine:
         result = [dict(zip(columns, row)) for row in cursor.fetchall()]
         self._cache.put(sql, parameters, result)
         return result
+
+    @contextmanager
+    def transaction(self) -> Iterator[DatabaseEngine]:
+        """Run a block of statements as a single atomic transaction.
+
+        Commits on normal exit, rolls back if the block raises.  With
+        ``isolation_level=None`` each ``execute()`` otherwise
+        auto-commits, so multi-statement invariants (e.g. insert a row
+        + bump a counter) need this wrapper to survive crashes between
+        statements.
+
+        Not reentrant: SQLite does not support nested ``BEGIN``, so a
+        ``transaction()`` block must not be opened inside another one.
+
+        sensitivity_tier: N/A (infrastructure)
+        """
+        self.execute("BEGIN")
+        try:
+            yield self
+        except BaseException:
+            self.execute("ROLLBACK")
+            raise
+        else:
+            self.execute("COMMIT")
 
     def invalidate_cache(self) -> None:
         """Clear the query cache.

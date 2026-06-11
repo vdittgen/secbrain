@@ -58,13 +58,12 @@ def _resolve_user_agent_prompt(row: UserAgentRow) -> str:
     sensitivity_tier: 1
     """
     try:
-        import sqlite3
-
         from src.agents.core.config_store import DEFAULT_DB_PATH
+        from src.core.sqlite.engine import connect_with_pragmas
 
         if not DEFAULT_DB_PATH.exists():
             return row.system_prompt
-        conn = sqlite3.connect(DEFAULT_DB_PATH, isolation_level=None)
+        conn = connect_with_pragmas(DEFAULT_DB_PATH)
         try:
             cur = conn.execute(
                 "SELECT system_prompt FROM agent_configs "

@@ -299,9 +299,11 @@ class ConnectionManager:
             connector_id, template.default_schedule,
         )
 
-        # Step 6: Run first sync immediately
+        # Step 6: Run first sync immediately.  "skipped" (a sync for
+        # this connector is already in flight) is not a failure — the
+        # running sync delivers the data this one would have.
         first_sync = self.sync_now(connector_id)
-        if first_sync.status != "success":
+        if first_sync.status not in ("success", "skipped"):
             return EnableResult(
                 status="error",
                 connector_id=connector_id,

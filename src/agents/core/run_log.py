@@ -27,6 +27,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from src.core.sqlite.engine import connect_with_pragmas
+
 logger = logging.getLogger(__name__)
 
 MAX_PER_AGENT = 1000
@@ -145,8 +147,8 @@ class AgentRunLog:
         self._path = path or DEFAULT_DB_PATH
         self._path.parent.mkdir(parents=True, exist_ok=True)
         self._max = max_per_agent
-        self._conn = sqlite3.connect(
-            self._path, isolation_level=None, check_same_thread=False,
+        self._conn = connect_with_pragmas(
+            self._path, check_same_thread=False,
         )
         self._lock = threading.Lock()
         self._ensure_schema()
