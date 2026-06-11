@@ -120,7 +120,12 @@ class ModelFactory:
     """
 
     def __init__(self) -> None:
-        self._cache: dict[tuple[str, str | None], Any] = {}
+        # Each entry pairs the built model with the endpoint it was
+        # built for, so `get` can rebuild when the resolved endpoint
+        # drifts (rotated credentials, edited settings).
+        self._cache: dict[
+            tuple[str, str | None], tuple[Any, ModelEndpoint],
+        ] = {}
 
     def endpoint_for(
         self,
@@ -154,14 +159,22 @@ class ModelFactory:
         When ``model_override`` is set, the model name is replaced but
         the route's base_url + api_key are preserved.
 
+        The endpoint is re-resolved on every call and the cached model
+        rebuilt when it no longer matches. A long-lived process must
+        not keep using credentials or settings that have since changed
+        — e.g. a bearer token with an hourly expiry stays pinned in a
+        forever-cached model and every call starts failing with 401s
+        until the process restarts.
+
         sensitivity_tier: 1
         """
         key = (route, model_override or None)
-        if key in self._cache:
-            return self._cache[key]
         endpoint = self.endpoint_for(route, model_override=model_override)
+        cached = self._cache.get(key)
+        if cached is not None and cached[1] == endpoint:
+            return cached[0]
         model = _build_pydantic_ai_model(endpoint)
-        self._cache[key] = model
+        self._cache[key] = (model, endpoint)
         return model
 
     def reset(self) -> None:
