@@ -183,6 +183,35 @@ class InjectionRejected(Exception):  # noqa: N818
         self.verdict = verdict
 
 
+def _reconcile_verdict(
+    verdict: InjectionVerdict, calling_agent_id: str,
+) -> InjectionVerdict:
+    """Repair internally inconsistent verdicts before they take effect.
+
+    The semantic LLM judge sometimes emits a self-contradictory
+    verdict — ``category="safe"`` with high confidence yet
+    ``allowed=False`` — which blocks an entirely benign prompt. This is
+    pronounced with cloud models under native structured output, where
+    ``allowed`` and ``category`` can be populated inconsistently. The
+    ``category`` carries the actual attack classification, so a "safe"
+    category must never block: trust it over the boolean.
+
+    Logged at WARNING so the over-trigger stays visible even though the
+    prompt is no longer wrongly rejected.
+
+    sensitivity_tier: 1
+    """
+    if verdict.category == "safe" and not verdict.allowed:
+        logger.warning(
+            "Injection verdict reconciled for %s: category=safe but "
+            "allowed=False (confidence=%.2f) — treating as allowed",
+            calling_agent_id,
+            verdict.confidence,
+        )
+        return verdict.model_copy(update={"allowed": True})
+    return verdict
+
+
 class InjectionFirewall:
     """Non-editable prompt-injection guard.
 
@@ -240,6 +269,7 @@ class InjectionFirewall:
             else:
                 verdict = self._semantic_scan(prompt, context_data)
 
+        verdict = _reconcile_verdict(verdict, calling_agent_id)
         self._store(key, verdict)
         # Persist the scanned prompt + context under the same
         # payload_hash so the audit row is clickable. Imported lazily
