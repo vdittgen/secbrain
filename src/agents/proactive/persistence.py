@@ -489,10 +489,13 @@ class ProactiveIntelligence:
         from src.agents.tasks import TaskCurator
 
         curator = TaskCurator(db_engine=self._db)
-        if curator.mine_goals() is None:
-            # Surface model/provider failure to evaluate_all so the
-            # fingerprint is not stored and the cycle retries.
-            raise RuntimeError("goal mining failed (model error)")
+        # Run every step even when an earlier one fails — a transient
+        # goal-mining failure (provider blip, firewall false-positive
+        # on one evidence batch) must not starve task proposing for
+        # the whole cycle. Failure still surfaces to evaluate_all at
+        # the end so the fingerprint is not stored and the cycle
+        # retries.
+        mining_failed = curator.mine_goals() is None
 
         try:
             # ISO-T column: bind a Python cutoff. SQLite's
@@ -513,6 +516,10 @@ class ProactiveIntelligence:
             curator.detect_completions(msgs)
 
         curator.regenerate_habits()
+
+        if mining_failed:
+            # Raised last: tasks/completions/habits above already ran.
+            raise RuntimeError("goal mining failed (model error)")
 
     def _load_cached_result(self) -> ProactiveResult:
         """Load previously stored results when data hasn't changed.
